@@ -1,4 +1,5 @@
 from discord.ext import commands
+from cogs.utilities import credential_checks
 
 import discord
 import datetime
@@ -11,8 +12,9 @@ class Admin:
     def __init__(self, client):
         self.client = client
 
-    @commands.command(no_pm=True)
-    async def kick(self, *, member : discord.Member):
+    @commands.command(no_pm=True, pass_context=True)
+    @credential_checks.hasPermissions(kick_members=True)
+    async def kick(self, member : discord.Member):
         """Kicks a member from the server.
         In order for this to work, the bot must have Kick Member permissions.
         To use this command you must have Kick Members permission or have the

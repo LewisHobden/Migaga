@@ -1,7 +1,11 @@
 from discord.ext import commands
+from cogs.utilities.error_handling import ErrorHandling
 import discord
 import datetime
 import logging
+import sys
+import traceback
+
 
 # Begin logging
 logger = logging.getLogger('discord')
@@ -19,13 +23,11 @@ extensions = ["cogs.admin"]
 @client.event
 async def on_command_error(error, ctx):
     if isinstance(error, commands.DisabledCommand):
-        await bot.send_message(ctx.message.author, 'This command has been disabled for now.')
+        await client.send_message(ctx.message.author, 'This command has been disabled for now.')
     if isinstance(error, commands.NoPrivateMessage):
-        await bot.send_message(ctx.message.author, 'You will have to do this command in a server, not PMs sorry!')
+        await client.send_message(ctx.message.author, 'You will have to do this command in a server, not PMs sorry!')
     elif isinstance(error, commands.CommandInvokeError):
-        print('In {0.command.qualified_name}:'.format(ctx), file=sys.stderr)
-        traceback.print_tb(error.original.__traceback__)
-        print('{0.__class__.__name__}: {0}'.format(error.original), file=sys.stderr)
+        await ErrorHandling.postErrorToChannel(ctx, error, "CommandInvokeError")
 
 
 @client.event
@@ -58,7 +60,7 @@ async def on_message(message):
 
 if __name__ == '__main__':
     token            = "MTk3OTg3Nzk0NDA3MTI5MDg5.CyG-Wg.pbAtNfwpI0WNqOzU7rQvhGDaJLE"
-    client.client_id     = "197987769732038656"
+    client.client_id = "197987769732038656"
 
     for extension in extensions:
         try:
