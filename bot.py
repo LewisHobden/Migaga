@@ -27,7 +27,24 @@ async def on_command_error(error, ctx):
     if isinstance(error, commands.NoPrivateMessage):
         await client.send_message(ctx.message.author, 'You will have to do this command in a server, not PMs sorry!')
     elif isinstance(error, commands.CommandInvokeError):
-        await ErrorHandling.postErrorToChannel(ctx, error, "CommandInvokeError")
+        exceptions_channel = discord.utils.get(client.get_all_channels(), server__id='197972184466063381', id='254215930416988170')
+        
+        msg = discord.Embed(title="CommandInvokeError", timestamp=datetime.datetime.utcnow(), description=str(error), color=discord.Colour(15021879))
+        msg.add_field(name="Command", value=ctx.command.qualified_name)
+        msg.add_field(name="Server", value=ctx.message.server.name)
+        msg.add_field(name="Channel", value=ctx.message.channel.name)
+        try:
+            msg.add_field(name="Location", value=str(traceback.format_tb(error.original.__traceback__)[1]))
+        except:
+            msg.add_field(name="Location", value=str(traceback.format_tb(error.original.__traceback__)))
+
+        msg.set_footer(text=str(sys.stderr), icon_url="https://cdn0.iconfinder.com/data/icons/shift-free/32/Error-128.png")
+
+        member = ctx.message.author
+        avatar = member.avatar_url if member.avatar else member.default_avatar_url
+        msg.set_author(name=str(member), icon_url=avatar)
+
+        await client.send_message(exceptions_channel, embed=msg)
 
 
 @client.event
@@ -63,7 +80,7 @@ if __name__ == '__main__':
     client.client_id = "197987769732038656"
 
     for extension in extensions:
-        try:
+		try:
             client.load_extension(extension)
         except Exception as e:
             print('Failed to load extension {}\n{}: {}'.format(extension, type(e).__name__, e))
