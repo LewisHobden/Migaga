@@ -18,7 +18,7 @@ bot_description = """ Lewis' Discord Bot Version 3 """
 prefix          = ["-", "Migaga, "]
 client          = commands.Bot(command_prefix=prefix, description=bot_description, pm_help=None)
 
-extensions = ["cogs.admin"]
+extensions = ["cogs.admin", "cogs.games.currency", "cogs.games.games"]
 
 @client.event
 async def on_command_error(error, ctx):
@@ -72,7 +72,7 @@ async def on_command(command, ctx):
 async def on_message(message):
     if message.author == client.user:
         return
-
+    
     await client.process_commands(message)
 
 if __name__ == '__main__':
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     client.client_id = "197987769732038656"
 
     for extension in extensions:
-		try:
+        try:
             client.load_extension(extension)
         except Exception as e:
             print('Failed to load extension {}\n{}: {}'.format(extension, type(e).__name__, e))
