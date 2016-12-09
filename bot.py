@@ -1,5 +1,8 @@
 from discord.ext import commands
+
 from cogs.utilities.error_handling import ErrorHandling
+from cogs.customcommands import CustomCommands
+
 import discord
 import datetime
 import logging
@@ -15,10 +18,10 @@ handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(me
 logger.addHandler(handler)
 
 bot_description = """ Lewis' Discord Bot Version 3 """
-prefix          = ["-", "Migaga, "]
+prefix          = "-"
 client          = commands.Bot(command_prefix=prefix, description=bot_description, pm_help=None)
 
-extensions = ["cogs.admin", "cogs.games.currency", "cogs.games.games"]
+extensions = ["cogs.admin", "cogs.games.currency", "cogs.games.games", "cogs.customcommands", "cogs.games.fun"]
 
 @client.event
 async def on_command_error(error, ctx):
@@ -55,6 +58,8 @@ async def on_ready():
     if not hasattr(client, 'uptime'):
         client.uptime = datetime.datetime.utcnow()
 
+    await CustomCommands.readCommands(CustomCommands)
+
 @client.event
 async def on_command(command, ctx):
     #increment commands used in db
@@ -73,6 +78,13 @@ async def on_message(message):
     if message.author == client.user:
         return
     
+    if message.content.startswith(prefix):
+        response = await CustomCommands.checkIfCommandTriggered(CustomCommands, message)
+        
+        if response != False:
+            await client.send_message(message.channel, response)
+            
+            
     await client.process_commands(message)
 
 if __name__ == '__main__':

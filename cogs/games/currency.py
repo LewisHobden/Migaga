@@ -27,10 +27,18 @@ class Money:
         self.client = client
 	
     @commands.command(no_pm=True, pass_context=True)
-    async def money(self, ctx, member : discord.Member):
+    async def money(self, ctx):
         """ See how much you have earned! """
+        money = await self.checkMoney(ctx.message.author.id)
+        await self.client.say("**"+ctx.message.author.name+"**, You have earned "+str(money['money'])+" "+self.CURRENCY_NAME+" after playing "+str(money['times_played'])+" games!")
+
+    @commands.command(no_pm=True, pass_context=True)
+    async def moneyfor(self, ctx, member : discord.Member):
+        """ See how much somebody else has earned.
+
+        Mention another user with it!"""
         money = await self.checkMoney(member.id)
-        await self.client.say("You have earned "+str(money['money'])+" "+self.CURRENCY_NAME+" after playing "+str(money['times_played'])+" games!")
+        await self.client.say("**"+member.name+"**, You have earned "+str(money['money'])+" "+self.CURRENCY_NAME+" after playing "+str(money['times_played'])+" games!")
 
     @commands.command(no_pm=True, pass_context=True)
     async def give(self, ctx, recipient : discord.Member, amount):    
