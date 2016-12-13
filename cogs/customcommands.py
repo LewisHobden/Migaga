@@ -37,7 +37,7 @@ class CustomCommands:
             connection.close()
 
         for row in cursor:
-            await self.setCommand(self, row["name"], row["description"], row["response"], row["server_id"])
+            await self.setCommand(row["name"], row["description"], row["response"], row["server_id"])
 
     async def checkIfCommandTriggered(self, message):
         try:
@@ -89,6 +89,65 @@ class CustomCommands:
             self.COMMANDS[server_id].append(command)
         except KeyError:
             self.COMMANDS[server_id] = [command]
+
+
+    @commands.command(no_pm=True, pass_context=True)
+    @credential_checks.hasPermissions(manage_emojis=True)
+    async def deletecommand(self, ctx, commandName):
+        """ Delete a command from the server """
+        sql = "SELECT `id`, `response`, `name` FROM `discord_commands` WHERE `server_id`=%s AND `name` LIKE %s"
+
+        connection = connectToDatabase()
+        with connection.cursor() as cursor:
+            cursor.execute(sql, [ctx.message.server.id, "%"+commandName+"%"])
+            results = []
+            for row in cursor:
+                results.append(row)
+
+            if len(results) == 0:
+                await self.client.say("No commands were found using that search term!")
+                return
+            elif len(results) == 1:
+                await self.deleteCommandFromDatabase(results[0]['id'])
+                await self.client.say("Nice! Deleted the command **-{0}**!".format(results[0]['name']))
+            else:
+                counter = 0
+                msg = "Multiple commands have been found.. Respond with the command number for it to be deleted. Separate them with commas for multiple to be deleted!\n"
+                for command in results:
+                    msg += "{0!s}. **{1}** - responding with `{2}`\n".format(counter+1, command['name'], command['response'])
+                    counter += 1
+
+                await self.client.say(msg)
+                response = await self.client.wait_for_message(author=ctx.message.author)
+                response = response.content
+                if response.find(",") != -1:
+                    ids_to_delete = response.split(",")
+                    for command_id in ids_to_delete:
+                        try:
+                            command_id -= 1
+                            await self.deleteCommandFromDatabase(results[command_id]['id'])
+                        except:
+                            print("User inputting a non-numeric figure inside a comma separated check")
+                else:
+                    try:
+                        print(response)
+                        command_id = int(response)-1
+                        await self.deleteCommandFromDatabase(results[command_id]['id'])
+                    except ValueError:
+                        print("Number detected when trying to delete a command was not a number at all!")
+                        return
+
+                await self.client.say("Done! Deleted!")
+                await self.readCommands()                        
+                    
+                    
+
+
+    async def deleteCommandFromDatabase(self, command_id):
+        sql = "DELETE FROM `discord_commands` WHERE `id`=%s"
+        connection = connectToDatabase()
+        with connection.cursor() as cursor:
+            cursor.execute(sql, command_id)
                 
         
 def setup(client):
