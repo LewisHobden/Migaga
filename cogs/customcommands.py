@@ -37,7 +37,7 @@ class CustomCommands:
             connection.close()
 
         for row in cursor:
-            await self.setCommand(row["name"], row["description"], row["response"], row["server_id"])
+            await self.setCommand(self, row["name"], row["description"], row["response"], row["server_id"], row["id"])
 
     async def checkIfCommandTriggered(self, message):
         try:
@@ -77,13 +77,15 @@ class CustomCommands:
             sql = "INSERT INTO `discord_commands` VALUES (0, %s, %s, %s, %s)"
             cursor.execute(sql, [commandName, response[0], response[1], ctx.message.server.id])
 
-        await self.client.say("Whew! All done! I have added the command **"+commandName+"**, with a response: **"+response[0]+"** and description: **"+response[1]+"** to the server **"+ctx.message.server.name+"**")
-        await self.setCommand(commandName, response[1], response[0], ctx.message.server.id)
+            await self.client.say("Whew! All done! I have added the command **"+commandName+"**, with a response: **"+response[0]+"** and description: **"+response[1]+"** to the server **"+ctx.message.server.name+"**")
+            await self.setCommand(commandName, response[1], response[0], ctx.message.server.id, cursor.lastrowid)
+
+        connection.commit()
     
         
 
-    async def setCommand(self, name, description, response, server_id):
-        command = {"name" : name, "response" : response, "description" : description}
+    async def setCommand(self, name, description, response, server_id, command_id):
+        command = {"name" : name, "response" : response, "description" : description, "id" : command_id}
 
         try:
             self.COMMANDS[server_id].append(command)
@@ -124,21 +126,22 @@ class CustomCommands:
                     ids_to_delete = response.split(",")
                     for command_id in ids_to_delete:
                         try:
-                            command_id -= 1
+                            command_id = int(command_id.strip()) - 1
+                            for self.COMMANDS[ctx.message.server.id] as command:
+                                if command["id"] == command_id:
+                                    self.COMMANDS[ctx.message.server.id].remove(command)
                             await self.deleteCommandFromDatabase(results[command_id]['id'])
-                        except:
+                        except ValueError:
                             print("User inputting a non-numeric figure inside a comma separated check")
                 else:
                     try:
-                        print(response)
                         command_id = int(response)-1
                         await self.deleteCommandFromDatabase(results[command_id]['id'])
                     except ValueError:
                         print("Number detected when trying to delete a command was not a number at all!")
                         return
 
-                await self.client.say("Done! Deleted!")
-                await self.readCommands()                        
+                await self.client.say("Done! Deleted!")               
                     
                     
 
@@ -148,6 +151,8 @@ class CustomCommands:
         connection = connectToDatabase()
         with connection.cursor() as cursor:
             cursor.execute(sql, command_id)
+
+        connection.commit()
                 
         
 def setup(client):

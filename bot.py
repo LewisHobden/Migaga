@@ -69,7 +69,7 @@ async def on_command(command, ctx):
     if message.channel.is_private:
         destination = 'Private Message'
     else:
-        destination = '#{0.channel.name} - {0.server.name}'.format(message)
+        destination = '#s{0.channel.name} - {0.server.name}'.format(message)
 
     logger.info('{0.timestamp}: {0.author.name} in {1}: {0.content}'.format(message, destination))
     
