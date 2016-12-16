@@ -57,7 +57,7 @@ async def on_ready():
     print('------')
     if not hasattr(client, 'uptime'):
         client.uptime = datetime.datetime.utcnow()
-
+    
     await CustomCommands.readCommands(CustomCommands)
 
 @client.event
