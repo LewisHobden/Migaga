@@ -21,7 +21,7 @@ bot_description = """ Lewis' Discord Bot Version 3 """
 prefix          = "-"
 client          = commands.Bot(command_prefix=prefix, description=bot_description, pm_help=None)
 
-extensions = ["cogs.admin", "cogs.games.currency", "cogs.games.games", "cogs.customcommands", "cogs.games.fun"]
+extensions = ["cogs.admin", "cogs.games.currency", "cogs.games.games", "cogs.customcommands", "cogs.games.fun", "cogs.people"]
 
 @client.event
 async def on_command_error(error, ctx):
