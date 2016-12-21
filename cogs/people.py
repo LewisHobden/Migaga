@@ -12,7 +12,7 @@ import random
 import time
 
 class People:
-    """ Silly, assorted commands. """
+    """ Commands relating to getting details on people. """
     def __init__(self, client):
         self.client = client
 
@@ -74,18 +74,21 @@ class People:
         
     @commands.command(pass_context=True)
     async def myinfo(self, ctx):
+        """ Get information on yourself! """
         embed = await self.renderInfoAsEmbed(ctx.message.author)
 
         await self.client.send_message(ctx.message.channel, embed=embed)
 
     @commands.command(pass_context=True)
     async def userinfo(self, ctx, member : discord.Member):
+        """ Get information on another user! """
         embed = await self.renderInfoAsEmbed(member)
 
         await self.client.send_message(ctx.message.channel, embed=embed)
 
     @commands.command(pass_context=True)
     async def warnings(self, ctx):
+        """ See what warnings you've been given! """
         user_warnings = await self.getWarningsForUser(ctx.message.author.id, ctx.message.server.id)
         member = ctx.message.author
         
