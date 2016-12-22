@@ -2,6 +2,7 @@ from discord.ext import commands
 from cogs.utilities import credential_checks
 from cogs.games.currency import Money
 from cogs.customcommands import connectToDatabase
+from cogs.utilities.tools import Tools
 
 import discord
 import datetime
@@ -111,9 +112,91 @@ class People:
 
         try:
             await self.client.send_message(ctx.message.channel, embed=embed)
-        except HTTPException:
+        except:
             await self.client.say("There was an error, it's likely they have too many warnings to fit on one screen. I'm working on formatting this better - however I recommend you ban somebody with this many warnings :l")
-            
+
+    async def getUserProfileInformation(self, user_id):
+        connection = connectToDatabase()
+        with connection.cursor() as csr:
+            sql = "SELECT * FROM `discord_profiles` WHERE `user_id`=%s"
+            csr.execute(sql, user_id)
+
+            for row in csr:
+                return row
+
+    async def makeProfileEmbedFromUser(self, member):
+        profile = await self.getUserProfileInformation(member.id)
+        if None == profile:
+            return None
+        
+        embed = discord.Embed(colour=await Tools.ifNoneReplaceWith(Tools, profile["colour"], discord.Colour.teal()), description=await Tools.ifNoneReplaceWith(Tools, profile["message"], ""), title=await Tools.ifNoneReplaceWith(Tools, profile["tag"], member.display_name))
+        embed.add_field(name="NNID:", value=await Tools.ifNoneReplaceWith(Tools, profile["nnid"], "Not set"))
+        embed.add_field(name="Region:", value=await Tools.ifNoneReplaceWith(Tools, profile["region"], "Not Set"))
+        embed.add_field(name="Main:", value=await Tools.ifNoneReplaceWith(Tools, profile["main"], "Not Set"))
+        embed.add_field(name="Twitter:", value=await Tools.ifNoneReplaceWith(Tools, profile["twitter"], "Not Set"))
+
+        avatar = member.avatar_url if member.avatar else member.default_avatar_url
+        embed.set_author(name=str(member), icon_url=avatar)
+
+        return embed
+        
+        
+    @commands.command(pass_context=True)
+    async def myprofile(self, ctx):
+        """ View your own profile! """        
+        embed = await self.makeProfileEmbedFromUser(ctx.message.author)
+
+        if None == embed:
+            await self.client.say("You have not set up a profile! Use -set [field] to get started!")
+            return
+        
+        await self.client.send_message(ctx.message.channel, embed=embed)
+
+    @commands.command(pass_context=True)
+    async def profile(self, ctx, member : discord.Member):
+        """ View your own profile! """
+        embed = await self.makeProfileEmbedFromUser(member)
+
+        if None == embed:
+            await self.client.say("This user does not have a profile!")
+            return
+        
+        await self.client.send_message(ctx.message.channel, embed=embed)
+
+
+    @commands.command(pass_context=True)
+    async def set(self, ctx, field, *, response):
+        """ Set a field of your profile!
+
+        Possible fields:
+        - Colour
+        - Message
+        - Tag
+        - NNID
+        - Region
+        - Main
+        - Twitter"""
+        connection = connectToDatabase()
+
+        if field == "color" or field == "colour":
+            field = "colour"
+            if response[:1] == "#":
+                response = int(response[1:], 16)
+
+        with connection.cursor() as csr:
+            sql = "INSERT INTO `discord_profiles`(`user_id`, `"+connection.escape(field)[1:-1]+"`) VALUES (%(user_id)s, %(response)s) ON DUPLICATE KEY UPDATE `discord_profiles`.`"+connection.escape(field)[1:-1]+"`=%(response)s"
+            try:
+                csr.execute(sql, {"response" : response, "user_id" : ctx.message.author.id})
+                await self.client.say("Successfully set your `"+field+"` to `"+str(response)+"`!")
+            except:
+                await self.client.say("Setting your `"+field+"` failed! Perhaps it doesn't exist yet?")
+                return
+
+    @commands.command()
+    async def avatar(self, member : discord.Member):
+        """ Shows a bigger version of somebody's Avatar! """
+        avatar = member.avatar_url if member.avatar else member.default_avatar_url
+        await self.client.say(avatar)
 
     
 def setup(client):
