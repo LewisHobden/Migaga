@@ -14,7 +14,6 @@ import json
 from urllib.request import urlopen, Request
 from urllib.error import URLError
 
-
 class Fun:
     """ Silly, assorted commands. """
     def __init__(self, client):
