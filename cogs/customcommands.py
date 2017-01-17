@@ -11,10 +11,10 @@ import time
 log = logging.getLogger(__name__)
 
 def connectToDatabase():
-    return pymysql.connect(host='108.167.181.32',
-                           user='lewis_robots',
+    return pymysql.connect(host='discord.crtejrmgafyl.us-east-1.rds.amazonaws.com',
+                           user='lewis',
                            password='ImABot12',
-                           db='lewis_discord',
+                           db='discord',
                            charset='utf8mb4',
                            cursorclass=pymysql.cursors.DictCursor)
 
