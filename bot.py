@@ -2,6 +2,7 @@ from discord.ext import commands
 
 from cogs.utilities.error_handling import ErrorHandling
 from cogs.customcommands import CustomCommands
+from cogs.serverlogs import ServerLogs
 
 import discord
 import datetime
@@ -21,7 +22,7 @@ bot_description = """ Lewis' Discord Bot Version 3 """
 prefix          = "-"
 client          = commands.Bot(command_prefix=prefix, description=bot_description, pm_help=None)
 
-extensions = ["cogs.admin", "cogs.games.currency", "cogs.games.games", "cogs.customcommands", "cogs.games.fun", "cogs.people", "cogs.starboard"]
+extensions = ["cogs.admin", "cogs.games.currency", "cogs.games.games", "cogs.customcommands", "cogs.games.fun", "cogs.people", "cogs.starboard", "cogs.serverlogs"]
 
 @client.event
 async def on_command_error(error, ctx):
@@ -59,6 +60,62 @@ async def on_ready():
         client.uptime = datetime.datetime.utcnow()
     
     await CustomCommands.readCommands(CustomCommands)
+
+@client.event
+async def on_member_join(member):
+    channel = discord.utils.get(member.server.channels, name='server_logs')
+    e = await ServerLogs.showMemberJoin(member)
+
+    if None != e:
+        await client.send_message(channel, embed=e)
+
+@client.event
+async def on_member_remove(member):
+    channel = discord.utils.get(member.server.channels, name='server_logs')
+    e = await ServerLogs.showMemberLeave(member)
+
+    if None != e:
+        await client.send_message(channel, embed=e)
+
+@client.event
+async def on_member_update(member_before,member_after):
+    channel = discord.utils.get(member_after.server.channels, name='server_logs')
+    e = await ServerLogs.determineUserChange(member_before,member_after)
+
+    if None != e:
+        await client.send_message(channel, embed=e)
+
+@client.event
+async def on_message_edit(message_before,message_after):
+    channel = discord.utils.get(message_after.server.channels, name='server_logs')
+    e = await ServerLogs.showMessageEdit(message_before,message_after)
+
+    if None != e:
+        await client.send_message(channel, embed=e)
+
+@client.event
+async def on_member_ban(member):
+    channel = discord.utils.get(member.server.channels, name='server_logs')
+    e = await ServerLogs.showMemberBan(member)
+
+    if None != e:
+        await client.send_message(channel, embed=e)
+
+@client.event
+async def on_member_unban(server,user):
+    channel = discord.utils.get(server.channels, name='server_logs')
+    e = await ServerLogs.showMemberUnban(user)
+
+    if None != e:
+        await client.send_message(channel, embed=e)
+
+@client.event
+async def on_message_delete(message):
+    channel = discord.utils.get(message.server.channels, name='server_logs')
+    e = await ServerLogs.showMessageDelete(message)
+
+    if None != e:
+        await client.send_message(channel, embed=e)
 
 @client.event
 async def on_command(command, ctx):
