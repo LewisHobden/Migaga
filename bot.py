@@ -31,7 +31,7 @@ async def on_command_error(error, ctx):
     if isinstance(error, commands.NoPrivateMessage):
         await client.send_message(ctx.message.author, 'You will have to do this command in a server, not PMs sorry!')
     elif isinstance(error, commands.CommandInvokeError):
-        exceptions_channel = discord.utils.get(client.get_all_channels(), server__id='197972184466063381', id='254215930416988170')
+        exceptions_channel = client.get_channel("254215930416988170")
         
         msg = discord.Embed(title="CommandInvokeError", timestamp=datetime.datetime.utcnow(), description=str(error), color=discord.Colour(15021879))
         msg.add_field(name="Command", value=ctx.command.qualified_name)
@@ -80,7 +80,7 @@ async def on_member_remove(member):
 @client.event
 async def on_member_update(member_before,member_after):
     channel = discord.utils.get(member_after.server.channels, name='server_logs')
-    e = await ServerLogs.determineUserChange(member_before,member_after)
+    e = await ServerLogs.determineUserChange(client,member_before,member_after)
 
     if None != e:
         await client.send_message(channel, embed=e)
@@ -143,6 +143,7 @@ async def on_message(message):
             
             
     await client.process_commands(message)
+    
 
 if __name__ == '__main__':
     token            = "MTk3OTg3Nzk0NDA3MTI5MDg5.CyG-Wg.pbAtNfwpI0WNqOzU7rQvhGDaJLE"

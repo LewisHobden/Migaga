@@ -54,6 +54,8 @@ class ServerLogs:
 		return e
 
 	async def showMessageDelete(message):
+		if [] != message.embeds or [] != message.attachments:
+			return None
 		e = await ServerLogs.generateBoilerPlateEmbed(message.author,'11346466',message.channel)
 		e.title = ":x: Message Deleted :x:"
 		e.description = message.content
@@ -70,7 +72,7 @@ class ServerLogs:
 
 		return e
 
-	async def determineUserChange(member_before,member_after):
+	async def determineUserChange(client,member_before,member_after):
 		if member_before.avatar_url != member_after.avatar_url:
 			return await ServerLogs.showAvatarChange(client,member_before,member_after)
 		elif member_before.name != member_after.name:
@@ -106,8 +108,8 @@ class ServerLogs:
 		return e
 
 	async def showAvatarChange(client,user_before,user_after):
-		e = ServerLogs.generateBoilerPlateEmbed(user_after)
-		e.title       = "Avatar Change"
+		e = await ServerLogs.generateBoilerPlateEmbed(user_after,"4359924")
+		e.title       = ":frame_photo: Avatar Change :frame_photo:"
 		e.description = "Before / After";
 		
 		channel = client.get_channel("242963032844533761")
@@ -119,7 +121,6 @@ class ServerLogs:
 		image_url = image.attachments[0]['proxy_url']
 
 		e.set_image(url=image_url)
-		await client.delete_message(image)
 		return e
 
 	async def downloadImageFromURL(url,file_name):
@@ -175,7 +176,6 @@ class ServerLogs:
 				string += ", "
 			
 			i += 1
-
 
 		return string
 
