@@ -31,12 +31,6 @@ class CustomCommands:
         except KeyError:
             print("Key error. No commands in this server.")
             return False
-        
-        space_location = message.content.find(" ")
-        if space_location == -1:
-            command = message.content[1:]
-        else:
-            command = message.content[1:space_location]
 
         results = []
         for check in CustomCommands.COMMANDS[message.server.id]:

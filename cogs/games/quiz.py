@@ -44,10 +44,11 @@ class Quiz:
 
 		await self.client.say(ctx.message.author.mention+", "+question+" \nYou have "+str(time)+" seconds to answer.")
 		theirAnswer = await self.client.wait_for_message(author=ctx.message.author, timeout=int(time))
-
+		
+		awarded = -50
+		theirAnswer.content = theirAnswer.content.lower()
+			
 		try:
-			awarded = -50
-			theirAnswer.content = theirAnswer.content.lower()
 			if theirAnswer.content.strip() == answer:
 				await self.client.say("★ Congratulations " + ctx.message.author.mention + " you answered correctly! ★\nYou will be awarded 50 gold!")
 				awarded = 50
@@ -75,11 +76,11 @@ class Quiz:
 
 		with connection.cursor() as cursor:
 			sql = "INSERT INTO `discord_quiz_questions` VALUES (0, %s, %s, %s, %s)"
-			#try:
-			cursor.execute(sql, [question.content,answer.content.strip().lower(),int(time_limit.content.strip()),ctx.message.server.id])
-			#except:
-			#	await self.client.say("Sorry, there was an error somewhere.. ensure you have properly provided me with information. If this problem persists contact the admin")
-			#	return
+			try:
+				cursor.execute(sql, [question.content,answer.content.strip().lower(),int(time_limit.content.strip()),ctx.message.server.id])
+			except:
+				await self.client.say("Sorry, there was an error somewhere.. ensure you have properly provided me with information. If this problem persists contact the admin")
+				return
 
 		await self.client.say("Whew! All done! I have added the question **"+question.content+"**, with the answer: **"+answer.content.strip()+"** and a time limit of: **"+time_limit.content.strip()+"** seconds to the server **"+ctx.message.server.name+"**")
 

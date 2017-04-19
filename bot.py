@@ -2,7 +2,9 @@ from discord.ext import commands
 
 from cogs.utilities.error_handling import ErrorHandling
 from cogs.customcommands import CustomCommands
+from cogs.admin import Admin
 from cogs.serverlogs import ServerLogs
+from cogs.games.currency import connectToDatabase
 
 import discord
 import datetime
@@ -74,6 +76,18 @@ async def on_member_join(member):
     if None != e:
         await client.send_message(channel, embed=e)
 
+    connection = connectToDatabase()
+    with connection.cursor() as cursor:
+        sql = "SELECT `message`,`channel_id` FROM `discord_welcome_messages` WHERE `server_id`=%s"
+        cursor.execute(sql, member.server.id)
+        result = cursor.fetchone()
+
+    if None == result:
+        return
+
+    channel = client.get_channel(str(result['channel_id']))
+    await client.send_message(channel,result['message'].format(member.mention,member.display_name,member.server.name))
+
 @client.event
 async def on_member_remove(member):
     channel = discord.utils.get(member.server.channels, name='server_logs')
@@ -139,6 +153,18 @@ async def on_message(message):
         return
     
     if message.content.startswith(prefix):
+        admin = client.get_cog('Admin')
+        
+        space_location = message.content.find(" ")
+        if space_location == -1:
+            command = message.content[1:]
+        else:
+            command = message.content[1:space_location]
+
+        if admin:        
+            if await admin.checkAndAssignRole(command,message):
+                return
+            
         response = await CustomCommands.checkIfCommandTriggered(CustomCommands, message)
         
         if response != False:
