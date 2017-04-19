@@ -29,6 +29,7 @@ class CustomCommands:
         try:
             a = CustomCommands.COMMANDS[message.server.id]
         except KeyError:
+            print("Key error. No commands in this server.")
             return False
         
         space_location = message.content.find(" ")
@@ -39,22 +40,23 @@ class CustomCommands:
 
         results = []
         for check in CustomCommands.COMMANDS[message.server.id]:
-            if check["name"] == command:
+            if check["name"].lower() == command.lower():
                 results.append(check["response"])
-
+        
         if results:
             return random.choice(results)
         else:
             return False
 
     async def checkIfServerCanAddMoreCommands(self, server_id):
+        whitelist = ['84142598456901632']
         connection = connectToDatabase()
         with connection.cursor() as csr:
             sql = "SELECT COUNT(*) AS `total` FROM `discord_commands` WHERE `server_id` = %s"
             csr.execute(sql, server_id)
 
             for result in csr:
-                if result["total"] >= 50:
+                if result["total"] >= 50 and not server_id in whitelist:
                     return False
 
         return True
@@ -67,7 +69,7 @@ class CustomCommands:
         You must have the Manage Emojis permission to do this. Servers have a limit of 50 commands each. If you think you deserve more, let me know."""
         can_add_commands = await self.checkIfServerCanAddMoreCommands(ctx.message.server.id)
         if not can_add_commands:
-            await client.say("Sorry! Your server has over 50 custom commands attached to it! Delete some with -deletecommand or wait to see if you can have more!")
+            await self.client.say("Sorry! Your server has over 50 custom commands attached to it! Delete some with -deletecommand or wait to see if you can have more!")
             return
         
         await self.client.say("Okay, can do. What should it respond with? Once you've finished the response, put a \"##\" and then write the command description.\n__Example__\n:eyes:##Make the bot give you the eyes.")
