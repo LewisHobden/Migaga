@@ -2,7 +2,9 @@ from discord.ext import commands
 
 from cogs.utilities.error_handling import ErrorHandling
 from cogs.customcommands import CustomCommands
+from cogs.admin import Admin
 from cogs.serverlogs import ServerLogs
+from cogs.games.currency import connectToDatabase
 
 import discord
 import datetime
@@ -19,20 +21,25 @@ handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(me
 logger.addHandler(handler)
 
 bot_description = """ Lewis' Discord Bot Version 3 """
-prefix          = "-"
+prefix          = "!"
 client          = commands.Bot(command_prefix=prefix, description=bot_description, pm_help=None)
 
-extensions = ["cogs.admin", "cogs.games.currency", "cogs.games.games", "cogs.customcommands", "cogs.games.fun", "cogs.people", "cogs.starboard", "cogs.serverlogs"]
+debug = True
+
+extensions = ["cogs.admin", "cogs.games.currency", "cogs.games.games", "cogs.customcommands", "cogs.games.fun", "cogs.people", "cogs.starboard", "cogs.serverlogs","cogs.games.quiz"]
 
 @client.event
 async def on_command_error(error, ctx):
+    exceptions_channel = discord.utils.get(client.get_all_channels(), server__id='197972184466063381', id='254215930416988170')
+
+    if debug == True:
+        exceptions_channel = ctx.message.channel
+    
     if isinstance(error, commands.DisabledCommand):
         await client.send_message(ctx.message.author, 'This command has been disabled for now.')
     if isinstance(error, commands.NoPrivateMessage):
         await client.send_message(ctx.message.author, 'You will have to do this command in a server, not PMs sorry!')
     elif isinstance(error, commands.CommandInvokeError):
-        exceptions_channel = client.get_channel("254215930416988170")
-        
         msg = discord.Embed(title="CommandInvokeError", timestamp=datetime.datetime.utcnow(), description=str(error), color=discord.Colour(15021879))
         msg.add_field(name="Command", value=ctx.command.qualified_name)
         msg.add_field(name="Server", value=ctx.message.server.name)
@@ -69,6 +76,18 @@ async def on_member_join(member):
     if None != e:
         await client.send_message(channel, embed=e)
 
+    connection = connectToDatabase()
+    with connection.cursor() as cursor:
+        sql = "SELECT `message`,`channel_id` FROM `discord_welcome_messages` WHERE `server_id`=%s"
+        cursor.execute(sql, member.server.id)
+        result = cursor.fetchone()
+
+    if None == result:
+        return
+
+    channel = client.get_channel(str(result['channel_id']))
+    await client.send_message(channel,result['message'].format(member.mention,member.display_name,member.server.name))
+
 @client.event
 async def on_member_remove(member):
     channel = discord.utils.get(member.server.channels, name='server_logs')
@@ -80,7 +99,7 @@ async def on_member_remove(member):
 @client.event
 async def on_member_update(member_before,member_after):
     channel = discord.utils.get(member_after.server.channels, name='server_logs')
-    e = await ServerLogs.determineUserChange(client,member_before,member_after)
+    e = await ServerLogs.determineUserChange(member_before,member_after)
 
     if None != e:
         await client.send_message(channel, embed=e)
@@ -119,8 +138,6 @@ async def on_message_delete(message):
 
 @client.event
 async def on_command(command, ctx):
-    #increment commands used in db
-
     message = ctx.message
     destination = None
     if message.channel.is_private:
@@ -136,6 +153,18 @@ async def on_message(message):
         return
     
     if message.content.startswith(prefix):
+        admin = client.get_cog('Admin')
+        
+        space_location = message.content.find(" ")
+        if space_location == -1:
+            command = message.content[1:]
+        else:
+            command = message.content[1:space_location]
+
+        if admin:        
+            if await admin.checkAndAssignRole(command,message):
+                return
+            
         response = await CustomCommands.checkIfCommandTriggered(CustomCommands, message)
         
         if response != False:
@@ -143,7 +172,6 @@ async def on_message(message):
             
             
     await client.process_commands(message)
-    
 
 if __name__ == '__main__':
     token            = "MTk3OTg3Nzk0NDA3MTI5MDg5.CyG-Wg.pbAtNfwpI0WNqOzU7rQvhGDaJLE"

@@ -49,7 +49,7 @@ class Starboard:
         event_name = data.get('t')
         payload    = data.get('d')
         
-        if event_name == 'MESSAGE_REACTION_ADD':
+        if event_name == 'MESSAGE_REACTION_ADD' or event_name == 'MESSAGE_REACTION_REMOVE':
             if payload['emoji']['name'] != "⭐":
                 return
             
@@ -61,23 +61,18 @@ class Starboard:
             # Check if this message has already been starred.
             server = channel.server
             db = self.stars.get(server.id)
-            starboard = self.client.get_channel(db.get('channel'))
             message = await self.client.get_message(channel, payload['message_id'])
-            member = channel.server.get_member(payload['user_id'])
+            member  = message.author
 
-            
-            if message.id in db['messages']:
-                message_data = db['messages'][message.id]
-                message_data['starred_user_ids'].append(member.id)
-
-                number_of_stars = len(message_data['starred_user_ids'])
-                star_emoji      = await self.getEmojiForStar(number_of_stars)
-                                                        
-                bot_message = message_data['bot_message']
-                await self.client.edit_message(bot_message, star_emoji+" - "+str(number_of_stars))
+            if event_name == 'MESSAGE_REACTION_ADD':
+                data = await self.starMessage(message,db)
             else:
-                bot_message = await self.client.send_message(starboard, embed=await self.createEmbedForStarredMessage(message))
-                db['messages'][message.id] = {"bot_message" : bot_message, "starred_user_ids" : [member.id]}
+                data = await self.unstarMessage(message,db)
+
+            if None == data:
+                await self.stars.remove(message.id)
+            else:
+                await self.stars.put(message.id, data)
             
             if member is None or member.bot:
                 return
@@ -117,7 +112,7 @@ class Starboard:
         # Make sure that people cannot send messages in the starboard.
         if bot_permissions.manage_roles:
             mine = discord.PermissionOverwrite(send_messages=True, manage_messages=True, embed_links=True)
-            everyone = discord.PermissionOverwrite(read_messages=True, send_messages=False, read_message_history=True)
+            everyone = discord.PermissionOverwrite(read_messages=True, send_messages=False, read_message_history=True,add_reactions=False)
             args.append((server.me, mine))
             args.append((server.default_role, everyone))
 
@@ -134,7 +129,7 @@ class Starboard:
             await self.stars.put(server.id, stars)
             await self.client.say('\N{GLOWING STAR} Starboard created at ' + channel.mention)
 
-    async def createEmbedForStarredMessage(self,message):
+    async def createEmbedForStarredMessage(self,message,db):        
         e = discord.Embed()
         e.timestamp = message.timestamp
         author = message.author
@@ -143,11 +138,47 @@ class Starboard:
         avatar = avatar.replace('.gif', '.jpg')
         e.set_author(name=author.display_name, icon_url=avatar)
 
-        e.title = "Message Starred"
         e.description = message.content
         e.timestamp   = message.timestamp
 
+        message_data = db['messages'][message.id]
+        number_of_stars = len(message_data['starred_user_ids'])
+        star_emoji      = await self.getEmojiForStar(number_of_stars)   
+
+        e.add_field(name="Stars",value=star_emoji+" **"+str(number_of_stars)+"**")
         return e
+
+    async def starMessage(self,message,db):
+        starboard = self.client.get_channel(db.get('channel'))
+        
+        if message.id in db['messages']:
+            message_data = db['messages'][message.id]
+            print(message_data)
+            bot_message = await self.client.get_message(starboard,message_data['bot_message_id'])
+            db['messages'][message.id]['starred_user_ids'].append(message.author.id)
+        else:
+            bot_message = await self.client.send_message(starboard, "In <#"+message.channel.id+">")
+            db['messages'][message.id] = {"bot_message_id" : bot_message.id, "starred_user_ids" : [message.author.id]}
+            message_data = db['messages'][message.id]
+
+        await self.client.edit_message(bot_message, embed=await self.createEmbedForStarredMessage(message,db))
+                           
+        return message_data
+
+    async def unstarMessage(self,message,db):
+        starboard = self.client.get_channel(db.get('channel'))
+        
+        message_data = db['messages'][message.id]
+        bot_message = await self.client.get_message(starboard,message_data['bot_message_id'])
+        db['messages'][message.id]['starred_user_ids'].remove(message.author.id)
+
+        if len(db['messages'][message.id]['starred_user_ids']) == 0:
+            await self.client.delete_message(bot_message)
+            return None
+
+        await self.client.edit_message(bot_message, "In <#"+message.channel.id+">",embed=await self.createEmbedForStarredMessage(message,db))
+
+        return message_data
 
 
     async def getEmojiForStar(self,stars):
