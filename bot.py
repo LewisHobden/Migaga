@@ -22,17 +22,22 @@ bot_description = """ Lewis' Discord Bot Version 3 """
 prefix          = "!"
 client          = commands.Bot(command_prefix=prefix, description=bot_description, pm_help=None)
 
+debug = True
+
 extensions = ["cogs.admin", "cogs.games.currency", "cogs.games.games", "cogs.customcommands", "cogs.games.fun", "cogs.people", "cogs.starboard", "cogs.serverlogs","cogs.games.quiz"]
 
 @client.event
 async def on_command_error(error, ctx):
+    exceptions_channel = discord.utils.get(client.get_all_channels(), server__id='197972184466063381', id='254215930416988170')
+
+    if debug == True:
+        exceptions_channel = ctx.message.channel
+    
     if isinstance(error, commands.DisabledCommand):
         await client.send_message(ctx.message.author, 'This command has been disabled for now.')
     if isinstance(error, commands.NoPrivateMessage):
         await client.send_message(ctx.message.author, 'You will have to do this command in a server, not PMs sorry!')
     elif isinstance(error, commands.CommandInvokeError):
-        exceptions_channel = discord.utils.get(client.get_all_channels(), server__id='197972184466063381', id='254215930416988170')
-        
         msg = discord.Embed(title="CommandInvokeError", timestamp=datetime.datetime.utcnow(), description=str(error), color=discord.Colour(15021879))
         msg.add_field(name="Command", value=ctx.command.qualified_name)
         msg.add_field(name="Server", value=ctx.message.server.name)
@@ -119,8 +124,6 @@ async def on_message_delete(message):
 
 @client.event
 async def on_command(command, ctx):
-    #increment commands used in db
-
     message = ctx.message
     destination = None
     if message.channel.is_private:

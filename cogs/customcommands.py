@@ -63,7 +63,7 @@ class CustomCommands:
 
     @commands.command(no_pm=True, pass_context=True)
     @credential_checks.hasPermissions(manage_emojis=True)
-    async def addcommand(self, ctx, commandName):
+    async def addcommand(self, ctx, command_name):
         """ Add a new command to the server!
 
         You must have the Manage Emojis permission to do this. Servers have a limit of 50 commands each. If you think you deserve more, let me know."""
@@ -80,10 +80,10 @@ class CustomCommands:
 
         with connection.cursor() as cursor:
             sql = "INSERT INTO `discord_commands` VALUES (0, %s, %s, %s, %s)"
-            cursor.execute(sql, [commandName, response[0], response[1], ctx.message.server.id])
+            cursor.execute(sql, [command_name, response[0], response[1], ctx.message.server.id])
 
-            await self.client.say("Whew! All done! I have added the command **"+commandName+"**, with a response: **"+response[0]+"** and description: **"+response[1]+"** to the server **"+ctx.message.server.name+"**")
-            await self.setCommand(commandName, response[1], response[0], ctx.message.server.id, cursor.lastrowid)
+            await self.client.say("Whew! All done! I have added the command **"+command_name+"**, with a response: **"+response[0]+"** and description: **"+response[1]+"** to the server **"+ctx.message.server.name+"**")
+            await self.setCommand(command_name, response[1], response[0], ctx.message.server.id, cursor.lastrowid)
 
         connection.commit()
 
@@ -94,7 +94,7 @@ class CustomCommands:
         """ Delete a command from the server """
         results = []
         for command in self.COMMANDS[ctx.message.server.id]:
-            if command["name"].find(commandName) != -1:
+            if command["name"].find(command_name) != -1:
                 results.append(command)
 
         if len(results) == 0:
