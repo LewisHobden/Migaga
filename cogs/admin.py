@@ -150,5 +150,18 @@ class Admin:
 		
 		return True
 	
+	@commands.command(no_pm=True,hidden=True,pass_context=True)
+	@credential_checks.hasPermissions(administrator=True)
+	async def sql(self,ctx,*,sql):
+		if ctx.message.author.id != "133736489568829440":
+			return await self.client.say("Oh no, only Lewis can use this command. Far too dangerous.")
+			
+		connection = connectToDatabase()
+		
+		with connection.cursor() as cursor:
+			cursor.execute(sql)
+		
+		await self.client.say("SQL executed!")
+			
 def setup(client):
 		client.add_cog(Admin(client))
