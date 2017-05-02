@@ -3,7 +3,6 @@ from discord.ext import commands
 from cogs.utilities.error_handling import ErrorHandling
 from cogs.customcommands import CustomCommands
 from cogs.admin import Admin
-from cogs.serverlogs import ServerLogs
 from cogs.games.currency import connectToDatabase
 
 import discord
@@ -71,7 +70,8 @@ async def on_ready():
 @client.event
 async def on_member_join(member):
     channel = discord.utils.get(member.server.channels, name='server_logs')
-    e = await ServerLogs.showMemberJoin(member)
+    logs    = client.get_cog('ServerLogs')
+    e       = await logs.showMemberJoin(member)
 
     if None != e:
         await client.send_message(channel, embed=e)
@@ -91,7 +91,8 @@ async def on_member_join(member):
 @client.event
 async def on_member_remove(member):
     channel = discord.utils.get(member.server.channels, name='server_logs')
-    e = await ServerLogs.showMemberLeave(member)
+    logs    = client.get_cog('ServerLogs')
+    e       = await logs.showMemberLeave(member)
 
     if None != e:
         await client.send_message(channel, embed=e)
@@ -99,7 +100,8 @@ async def on_member_remove(member):
 @client.event
 async def on_member_update(member_before,member_after):
     channel = discord.utils.get(member_after.server.channels, name='server_logs')
-    e = await ServerLogs.determineUserChange(member_before,member_after)
+    logs    = client.get_cog('ServerLogs')
+    e = await logs.determineUserChange(member_before,member_after)
 
     if None != e:
         await client.send_message(channel, embed=e)
@@ -107,7 +109,8 @@ async def on_member_update(member_before,member_after):
 @client.event
 async def on_message_edit(message_before,message_after):
     channel = discord.utils.get(message_after.server.channels, name='server_logs')
-    e = await ServerLogs.showMessageEdit(message_before,message_after)
+    logs    = client.get_cog('ServerLogs')
+    e = await logs.showMessageEdit(message_before,message_after)
 
     if None != e:
         await client.send_message(channel, embed=e)
@@ -115,7 +118,8 @@ async def on_message_edit(message_before,message_after):
 @client.event
 async def on_member_ban(member):
     channel = discord.utils.get(member.server.channels, name='server_logs')
-    e = await ServerLogs.showMemberBan(member)
+    logs    = client.get_cog('ServerLogs')
+    e       = await logs.showMemberBan(member)
 
     if None != e:
         await client.send_message(channel, embed=e)
@@ -123,7 +127,8 @@ async def on_member_ban(member):
 @client.event
 async def on_member_unban(server,user):
     channel = discord.utils.get(server.channels, name='server_logs')
-    e = await ServerLogs.showMemberUnban(user)
+    logs    = client.get_cog('ServerLogs')
+    e       = await logs.showMemberUnban(user)
 
     if None != e:
         await client.send_message(channel, embed=e)
@@ -131,7 +136,8 @@ async def on_member_unban(server,user):
 @client.event
 async def on_message_delete(message):
     channel = discord.utils.get(message.server.channels, name='server_logs')
-    e = await ServerLogs.showMessageDelete(message)
+    logs    = client.get_cog('ServerLogs')
+    e       = await logs.showMessageDelete(message)
 
     if None != e:
         await client.send_message(channel, embed=e)
@@ -165,13 +171,12 @@ async def on_message(message):
             if await admin.checkAndAssignRole(command,message):
                 return
             
-        response = await CustomCommands.checkIfCommandTriggered(CustomCommands, message)
+        response = await CustomCommands.checkIfCommandTriggered(CustomCommands,message,command)
         
         if response != False:
             await client.send_message(message.channel, response)
-            
-            
-    await client.process_commands(message)
+        else:
+            await client.process_commands(message)
 
 if __name__ == '__main__':
     token            = "MTk3OTg3Nzk0NDA3MTI5MDg5.CyG-Wg.pbAtNfwpI0WNqOzU7rQvhGDaJLE"
