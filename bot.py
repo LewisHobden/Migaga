@@ -69,7 +69,7 @@ async def on_ready():
 
 @client.event
 async def on_member_join(member):
-    channel = discord.utils.get(member.server.channels, name='server_logs')
+    channel = discord.utils.get(member.server.channels, name='server-logs')
     logs    = client.get_cog('ServerLogs')
     e       = await logs.showMemberJoin(member)
 
@@ -90,56 +90,56 @@ async def on_member_join(member):
 
 @client.event
 async def on_member_remove(member):
-    channel = discord.utils.get(member.server.channels, name='server_logs')
+    channel = discord.utils.get(member.server.channels, name='server-logs')
     logs    = client.get_cog('ServerLogs')
     e       = await logs.showMemberLeave(member)
 
-    if None != e:
+    if None != e and None != channel:
         await client.send_message(channel, embed=e)
 
 @client.event
 async def on_member_update(member_before,member_after):
-    channel = discord.utils.get(member_after.server.channels, name='server_logs')
+    channel = discord.utils.get(member_after.server.channels, name='server-logs')
     logs    = client.get_cog('ServerLogs')
     e = await logs.determineUserChange(member_before,member_after)
 
-    if None != e:
+    if None != e and None != channel:
         await client.send_message(channel, embed=e)
 
 @client.event
 async def on_message_edit(message_before,message_after):
-    channel = discord.utils.get(message_after.server.channels, name='server_logs')
+    channel = discord.utils.get(message_after.server.channels, name='server-logs')
     logs    = client.get_cog('ServerLogs')
     e = await logs.showMessageEdit(message_before,message_after)
 
-    if None != e:
+    if None != e and None != channel:
         await client.send_message(channel, embed=e)
 
 @client.event
 async def on_member_ban(member):
-    channel = discord.utils.get(member.server.channels, name='server_logs')
+    channel = discord.utils.get(member.server.channels, name='server-logs')
     logs    = client.get_cog('ServerLogs')
     e       = await logs.showMemberBan(member)
 
-    if None != e:
+    if None != e and None != channel:
         await client.send_message(channel, embed=e)
 
 @client.event
 async def on_member_unban(server,user):
-    channel = discord.utils.get(server.channels, name='server_logs')
+    channel = discord.utils.get(server.channels, name='server-logs')
     logs    = client.get_cog('ServerLogs')
     e       = await logs.showMemberUnban(user)
 
-    if None != e:
+    if None != e and None != channel:
         await client.send_message(channel, embed=e)
 
 @client.event
 async def on_message_delete(message):
-    channel = discord.utils.get(message.server.channels, name='server_logs')
+    channel = discord.utils.get(message.server.channels, name='server-logs')
     logs    = client.get_cog('ServerLogs')
     e       = await logs.showMessageDelete(message)
 
-    if None != e:
+    if None != e and None != channel:
         await client.send_message(channel, embed=e)
 
 @client.event
@@ -179,8 +179,8 @@ async def on_message(message):
             await client.process_commands(message)
 
 if __name__ == '__main__':
-    token            = "MTg1ODYwNDA0NjE3MDE5Mzky.C-nXTA.5Jyc7ygpJFZUVtfmcdH32Q7FhIA"
-    client.client_id = "197987769732038656"
+    token            = "MzA5NzY1MDYwOTA4Mjg1OTUy.C-0Ktg.othlpKUSje-Vtq8xZ41IWcXK5dY"
+    client.client_id = "309765060908285952"
 
     for extension in extensions:
         try:
@@ -188,7 +188,14 @@ if __name__ == '__main__':
         except Exception as e:
             print('Failed to load extension {}\n{}: {}'.format(extension, type(e).__name__, e))
 
-    client.run(token)
+    while True:
+        try:
+            client.run(token)
+            asyncio.sleep(30)
+        except:
+            p = subprocess.Popen(r'C:\Users\Administrator\Desktop\start.bat', creationflags=subprocess.CREATE_NEW_CONSOLE)
+            break
+    
     handlers = logger.handlers[:]
     for hdlr in handlers:
         hdlr.close()

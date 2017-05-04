@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 class ServerLogs:
 	""" Logging server activity. """
-	def __init__(self,client):
+	def __init__(self, client):
 		self.client = client
 
 	async def showMemberLeave(self,member):
@@ -54,6 +54,8 @@ class ServerLogs:
 		return e
 
 	async def showMessageDelete(self,message):
+		if [] != message.embeds or [] != message.attachments:
+			return None
 		e = await ServerLogs.generateBoilerPlateEmbed(message.author,'11346466',message.channel)
 		e.title = ":x: Message Deleted :x:"
 		e.description = message.content
@@ -70,18 +72,18 @@ class ServerLogs:
 
 		return e
 
-	async def determineUserChange(self,member_before,member_after):
-		# if member_before.avatar_url != member_after.avatar_url:
-			# return await self.showAvatarChange(member_before,member_after)
+	async def determineUserChange(client,member_before,member_after):
+	#	if member_before.avatar_url != member_after.avatar_url:
+	#		return await ServerLogs.showAvatarChange(client,member_before,member_after)
 		if member_before.name != member_after.name:
-			return await self.showUserNameChange(member_before,member_after)
+			return await ServerLogs.showUserNameChange(member_before,member_after)
 		elif member_before.nick != member_after.nick:
-			return await self.showNickNameChange(member_before,member_after)
+			return await ServerLogs.showNickNameChange(member_before,member_after)
 		elif member_before.roles != member_after.roles:
-			return await self.showRoleChanges(member_before,member_after)
+			return await ServerLogs.showRoleChanges(member_before,member_after)
 
 
-	async def showRoleChanges(self,member_before,member_after):
+	async def showRoleChanges(member_before,member_after):
 		e = await ServerLogs.generateBoilerPlateEmbed(member_after,member_before.top_role.colour.value)
 		e.title = ":grey_exclamation: Role Alteration :grey_exclamation:"
 		e.description = member_after.display_name+"'s roles have changed."
@@ -91,37 +93,35 @@ class ServerLogs:
 
 		return e
 
-	async def showUserNameChange(self,user_before,user_after):
+	async def showUserNameChange(user_before,user_after):
 		e = await ServerLogs.generateBoilerPlateEmbed(user_after,"7748003")
 		e.title       = ":exclamation: Username Change :exclamation:"
 		e.add_field(name="Before",value=user_before.name)
 		e.add_field(name="After",value=user_after.name)
 		return e
 
-	async def showNickNameChange(self,user_before,user_after):
+	async def showNickNameChange(user_before,user_after):
 		e = await ServerLogs.generateBoilerPlateEmbed(user_after,"10047446")
 		e.title       = ":exclamation: Nickname Change :exclamation:"
 		e.add_field(name="Before",value=await Tools.ifNoneReplaceWith(Tools, user_before.nick, "No Nickname"))
 		e.add_field(name="After",value=await Tools.ifNoneReplaceWith(Tools, user_after.nick, "No Nickname"))
 		return e
 
-	# async def showAvatarChange(self,user_before,user_after):
-		# e = await ServerLogs.generateBoilerPlateEmbed(user_after)
-		# e.title       = "Avatar Change"
-		# e.description = "Before / After";
-		
-		# channel = self.client.get_channel("242963032844533761")
-
-		# image1 = await ServerLogs.downloadImageFromURL(user_before.avatar_url if "" != user_before.avatar_url else user_before.default_avatar_url,"image_1")
-		# image2 = await ServerLogs.downloadImageFromURL(user_after.avatar_url if "" != user_after.avatar_url else user_after.default_avatar_url,"image_2")
-
-		# image = await self.client.send_file(channel,open(await ServerLogs.stitchTogetherTwoPhotos(image1, image2),"rb"))
-		# image_url = image.attachments[0]['proxy_url']
-		# await asyncio.sleep(3)
-
-		# e.set_image(url=image_url)
-		# await self.client.delete_message(image)
-		# return e
+	#async def showAvatarChange(self,user_before,user_after):
+	#	e = await ServerLogs.generateBoilerPlateEmbed(user_after,"4359924")
+	#	e.title       = ":frame_photo: Avatar Change :frame_photo:"
+	#	e.description = "Before / After";
+	#	
+	#	channel = self.client.get_channel("242963032844533761")
+#
+#		image1 = await ServerLogs.downloadImageFromURL(user_before.avatar_url,"image_1")
+#		image2 = await ServerLogs.downloadImageFromURL(user_after.avatar_url,"image_2")
+#
+#		image = await client.send_file(channel,open(await ServerLogs.stitchTogetherTwoPhotos(image1, image2),"rb"))
+#		image_url = image.attachments[0]['proxy_url']
+#
+#		e.set_image(url=image_url)
+#		return e
 
 	async def downloadImageFromURL(url,file_name):
 		req = Request(url, headers={'User-Agent': 'Mozilla/5.0 (X11; U; Linux i686) Gecko/20071127 Firefox/2.0.0.11'})
@@ -176,7 +176,6 @@ class ServerLogs:
 				string += ", "
 			
 			i += 1
-
 
 		return string
 

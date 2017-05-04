@@ -12,6 +12,11 @@ class Admin:
 	"""Moderation related commands."""
 	def __init__(self, client):
 		self.client = client
+	
+	@commands.command(is_disabled=True)
+	async def invite(self):
+		""" Get a URL to invite the bot to your own server! """
+		await self.client.say(discord.utils.oauth_url(self.client.client_id))
 
 	@commands.command(no_pm=True, pass_context=True)
 	@credential_checks.hasPermissions(ban_members=True)
