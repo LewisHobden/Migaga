@@ -16,7 +16,8 @@ class Smash:
 		self.client = client
 		self.cache  = {}
 			
-	API_URL = "http://api.kuroganehammer.com/api/"
+	API_URL      = "http://api.kuroganehammer.com/api/"
+	KUROGANE_URL = "http://kuroganehammer.com/Smash4/"
 	
 	@commands.command(pass_context=True)
 	async def attack(self,ctx,*,character_name):
@@ -35,8 +36,13 @@ class Smash:
 		req_move = req_move.content.strip()
 		
 		for move in response:
-			if move["moveName"] == req_move:
-				await self.client.say(move)
+			if move["moveName"].lower() == req_move.lower():
+				e = discord.Embed(title=move["moveName"])
+				e.set_author(name="Kurogane Hammer",url=self.KUROGANE_URL+character_name,icon_url="http://kuroganehammer.com/Smash4/character/character-shulk.png")
+				e.add_field(name="Base Damage",value=move['baseDamage']['hitbox1'])
+				e.add_field(name="Base Knockback",value=move['baseKnockback']['hitbox1'])
+				e.add_field(name="First Actionable Frame",value="Frame "+move['firstActionableFrame']['frame'])
+				await self.client.say(embed=e)
 				return
 				
 		await self.client.say("That move couldn't be found!")
