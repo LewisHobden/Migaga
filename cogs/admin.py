@@ -140,7 +140,7 @@ class Admin:
 		try:
 			with connection.cursor() as cursor:
 				sql = "SELECT `role_id` FROM `discord_role_aliases` WHERE `server_id`=%s AND `alias`=%s"
-				cursor.execute(sql, [message.server.id,role])
+				cursor.execute(sql, [message.server.id,role])	
 				result = cursor.fetchone()
 		finally:
 			connection.close()
@@ -154,6 +154,15 @@ class Admin:
 		await self.client.delete_message(message)
 		
 		return True
+	
+	@commands.command(no_pm=True,hidden=True,pass_context=True)
+	@credential_checks.hasPermissions(manage_messages=True)
+	async def purge(self,ctx,number_of_messages : int):
+		"""Delete a number of messages from the channel you type it in!"""
+		try:
+			await self.client.purge_from(ctx.message.channel,limit=number_of_messages+1)
+		except:
+			await self.client.say("There was an error deleting. Be aware that Discord does not allow bots to bulk delete messages that are under 14 days old.")
 	
 	@commands.command(no_pm=True,hidden=True,pass_context=True)
 	@credential_checks.hasPermissions(administrator=True)
