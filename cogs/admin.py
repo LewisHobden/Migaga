@@ -156,9 +156,15 @@ class Admin:
 		
 		try:
 			with connection.cursor() as cursor:
+<<<<<<< HEAD
 				sql = "SELECT `overwrite_role_id` FROM `discord_role_overwrites` WHERE `role_id`=%s"
 				cursor.execute(sql, [role.id])
 				overwrites = cursor.fetchall()
+=======
+				sql = "SELECT `role_id` FROM `discord_role_aliases` WHERE `server_id`=%s AND `alias`=%s"
+				cursor.execute(sql, [message.server.id,role])	
+				result = cursor.fetchone()
+>>>>>>> 797bd952f612a598065746546b59fd89cb308b8e
 		finally:
 			connection.commit()
 			connection.close()
@@ -269,6 +275,15 @@ class Admin:
 		
 		await self.client.send_message(ctx.message.channel,embed=embed)
 		
+	@commands.command(no_pm=True,hidden=True,pass_context=True)
+	@credential_checks.hasPermissions(manage_messages=True)
+	async def purge(self,ctx,number_of_messages : int):
+		"""Delete a number of messages from the channel you type it in!"""
+		try:
+			await self.client.purge_from(ctx.message.channel,limit=number_of_messages+1)
+		except:
+			await self.client.say("There was an error deleting. Be aware that Discord does not allow bots to bulk delete messages that are under 14 days old.")
+	
 	@commands.command(no_pm=True,hidden=True,pass_context=True)
 	@credential_checks.hasPermissions(administrator=True)
 	async def sql(self,ctx,*,sql):
