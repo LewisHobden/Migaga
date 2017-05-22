@@ -23,9 +23,19 @@ bot_description = """ Lewis' Discord Bot Version 3 """
 prefix          = "!"
 client          = commands.Bot(command_prefix=prefix, description=bot_description, pm_help=None)
 
-debug = False
+debug = True
 
-extensions = ["cogs.admin", "cogs.games.currency", "cogs.games.games", "cogs.customcommands", "cogs.games.fun", "cogs.people", "cogs.starboard", "cogs.serverlogs","cogs.games.quiz"]
+extensions = [
+                    "cogs.smash",
+                    "cogs.admin",
+                    "cogs.games.currency",
+                    "cogs.games.games",
+                    "cogs.customcommands",
+                    "cogs.games.fun",
+                    "cogs.people",
+                    "cogs.starboard",
+                    "cogs.serverlogs",
+                    "cogs.games.quiz"]
 
 @client.event
 async def on_command_error(error, ctx):
@@ -179,7 +189,10 @@ async def on_message(message):
             await client.process_commands(message)
 
 if __name__ == '__main__':
-    token            = "MzA5NzY1MDYwOTA4Mjg1OTUy.C-0Ktg.othlpKUSje-Vtq8xZ41IWcXK5dY"
+    token = "MzA5NzY1MDYwOTA4Mjg1OTUy.C-0Ktg.othlpKUSje-Vtq8xZ41IWcXK5dY"
+    if debug == True:
+        token = "MTk3OTg3Nzk0NDA3MTI5MDg5.DAMYyA.-L3z0CVwPRz_f9S5hyP6Mxn3YXQ"
+        
     client.client_id = "309765060908285952"
 
     for extension in extensions:
@@ -200,4 +213,7 @@ if __name__ == '__main__':
     for hdlr in handlers:
         hdlr.close()
         logger.removeHandler(hdlr)
+
+# MTk3OTg3Nzk0NDA3MTI5MDg5.DAMYyA.-L3z0CVwPRz_f9S5hyP6Mxn3YXQ - Test bot
+# MTg1ODYwNDA0NjE3MDE5Mzky.DAMY4w.IN5ARNBbOb4ilvSwgz7DZmcbuKM - Migaga
     
