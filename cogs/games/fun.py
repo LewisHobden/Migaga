@@ -104,6 +104,7 @@ class Fun:
 		output = open("awwh.jpg","wb")
 		output.write(response.read())
 		await self.client.send_file(ctx.message.channel,open("awwh.jpg","rb"))
+		
 
 def setup(client):
 	client.add_cog(Fun(client))

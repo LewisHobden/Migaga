@@ -23,7 +23,7 @@ bot_description = """ Lewis' Discord Bot Version 3 """
 prefix          = "!"
 client          = commands.Bot(command_prefix=prefix, description=bot_description, pm_help=None)
 
-debug = False
+debug = True
 
 extensions = ["cogs.admin", "cogs.games.currency", "cogs.games.games", "cogs.customcommands", "cogs.games.fun", "cogs.people", "cogs.starboard", "cogs.serverlogs","cogs.games.quiz"]
 
@@ -174,12 +174,12 @@ async def on_message(message):
         response = await CustomCommands.checkIfCommandTriggered(CustomCommands,message,command)
         
         if response != False:
-            await client.send_message(message.channel, response)
+            await client.send_message(message.channel,response)
         else:
             await client.process_commands(message)
 
 if __name__ == '__main__':
-    token            = "MzA5NzY1MDYwOTA4Mjg1OTUy.C-0Ktg.othlpKUSje-Vtq8xZ41IWcXK5dY"
+    token            = "MTk3OTg3Nzk0NDA3MTI5MDg5.DAGsZg.Ati3G0mv7TT8cDoYyuPHlj4Mk0s"
     client.client_id = "309765060908285952"
 
     for extension in extensions:

@@ -20,7 +20,7 @@ class ServerLogs:
 
 	async def showMemberLeave(self,member):
 		e = await ServerLogs.generateBoilerPlateEmbed(member,'9319990')
-		e.title = ":negative_squared_cross_mark: Member Left the Server! :negative_squared_cross_mark:"
+		e.title = "\N{CROSS MARK} Member Left the Server! \N{CROSS MARK}"
 		e.description = member.display_name+" has left this server. Sad to see them go!.. Or am I?"
 
 		e.add_field(name="Member Since:",value=member.joined_at.strftime("%d of %b %Y at\n%H:%M:%S"))
@@ -29,26 +29,26 @@ class ServerLogs:
 
 	async def showMemberJoin(self,member):
 		e = await ServerLogs.generateBoilerPlateEmbed(member,'6278268')
-		e.title = ":white_check_mark: User Joined the Server! :white_check_mark:"
+		e.title = "\N{CHECK MARK} User Joined the Server! \N{CHECK MARK}"
 		e.description = member.display_name+" has joined the server. Welcome!"
 
 		date_created = member.created_at.strftime("%d of %b %Y at\n%H:%M:%S")
 #		if member.created_at < datetime.datetime.now()-datetime.timedelta(days=1):
-#			date_created = ":warning: "+date_created+" :warning: **NEW ACCOUNT**"
+#			date_created = "\N{WARNING SIGN} "+date_created+" \N{WARNING SIGN} **NEW ACCOUNT**"
 
 		e.add_field(name="Account Created:",value=date_created)
 		return e
 
 	async def showMemberUnban(self,user):
 		e = await ServerLogs.generateBoilerPlateEmbed(user,'1219369')
-		e.title = ":low_brightness: Member Unbanned :low_brightness:"
+		e.title = "\N{LOW BRIGHTNESS SYMBOL} Member Unbanned \N{LOW BRIGHTNESS SYMBOL}"
 		e.description = user.display_name+" was unbanned from the server. I hope they learned their lesson!"
 
 		return e
 
 	async def showMemberBan(self,member):
 		e = await ServerLogs.generateBoilerPlateEmbed(member,'10162706')
-		e.title = ":name_badge: Member Banned :name_badge:"
+		e.title = "\N{NAME BADGE} Member Banned \N{NAME BADGE}"
 		e.description = member.display_name+" was banned from this server. Sad to see them go!.. Or am I?"
 
 		return e
@@ -57,7 +57,7 @@ class ServerLogs:
 		if [] != message.embeds or [] != message.attachments:
 			return None
 		e = await ServerLogs.generateBoilerPlateEmbed(message.author,'11346466',message.channel)
-		e.title = ":x: Message Deleted :x:"
+		e.title = "\N{CROSS MARK} Message Deleted \N{CROSS MARK}"
 		e.description = message.content
 
 		return e
@@ -67,7 +67,7 @@ class ServerLogs:
 			return None
 
 		e = await ServerLogs.generateBoilerPlateEmbed(message_after.author,'16235052',message_after.channel)
-		e.title = ":warning: Message Edit :warning:"
+		e.title = "\N{WARNING SIGN} Message Edit \N{WARNING SIGN}"
 		e.description = "**Before:**\n"+message_before.content+"\n**After:**\n"+message_after.content
 
 		return e
@@ -85,7 +85,7 @@ class ServerLogs:
 
 	async def showRoleChanges(member_before,member_after):
 		e = await ServerLogs.generateBoilerPlateEmbed(member_after,member_before.top_role.colour.value)
-		e.title = ":grey_exclamation: Role Alteration :grey_exclamation:"
+		e.title = "\N{EXCLAMATION MARK} Role Alteration \N{EXCLAMATION MARK}"
 		e.description = member_after.display_name+"'s roles have changed."
 
 		e.add_field(name="Before",value=await ServerLogs.getRolesAsText(member_before))
@@ -95,14 +95,14 @@ class ServerLogs:
 
 	async def showUserNameChange(user_before,user_after):
 		e = await ServerLogs.generateBoilerPlateEmbed(user_after,"7748003")
-		e.title       = ":exclamation: Username Change :exclamation:"
+		e.title       = "\N{LOWER RIGHT PENCIL} Username Change \N{LOWER RIGHT PENCIL}"
 		e.add_field(name="Before",value=user_before.name)
 		e.add_field(name="After",value=user_after.name)
 		return e
 
 	async def showNickNameChange(user_before,user_after):
 		e = await ServerLogs.generateBoilerPlateEmbed(user_after,"10047446")
-		e.title       = ":exclamation: Nickname Change :exclamation:"
+		e.title       = "\N{LOWER RIGHT PENCIL} Nickname Change \N{LOWER RIGHT PENCIL}"
 		e.add_field(name="Before",value=await Tools.ifNoneReplaceWith(Tools, user_before.nick, "No Nickname"))
 		e.add_field(name="After",value=await Tools.ifNoneReplaceWith(Tools, user_after.nick, "No Nickname"))
 		return e
