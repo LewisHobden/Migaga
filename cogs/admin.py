@@ -117,7 +117,7 @@ class Admin:
 		
 		connection = connectToDatabase()
 		await self.client.say("What channel should that message be posted in?")
-		channel    = await self.client.wait_for_message(author=ctx.message.author)
+		channel	   = await self.client.wait_for_message(author=ctx.message.author)
 		try:
 			channel = channel.channel_mentions[0]
 		except:
@@ -156,15 +156,13 @@ class Admin:
 		
 		try:
 			with connection.cursor() as cursor:
-<<<<<<< HEAD
 				sql = "SELECT `overwrite_role_id` FROM `discord_role_overwrites` WHERE `role_id`=%s"
 				cursor.execute(sql, [role.id])
 				overwrites = cursor.fetchall()
-=======
+				
 				sql = "SELECT `role_id` FROM `discord_role_aliases` WHERE `server_id`=%s AND `alias`=%s"
 				cursor.execute(sql, [message.server.id,role])	
 				result = cursor.fetchone()
->>>>>>> 797bd952f612a598065746546b59fd89cb308b8e
 		finally:
 			connection.commit()
 			connection.close()

@@ -1,6 +1,7 @@
 from discord.ext import commands
-from .utilities import credential_checks, config
+from cogs.utilities import credential_checks, config
 from cogs.games.currency import connectToDatabase
+from cogs.smash.attack import Attack
 
 import discord
 import datetime
@@ -60,6 +61,7 @@ class Smash:
 		
 		for move in response:
 			if move["moveName"].lower() == req_move.lower():
+				print(move)
 				character_details = self.cache.get(character_name)['details']
 				e = discord.Embed(title=move["moveName"],colour=int(character_details['colorTheme'].replace("#",""),16))
 				e.set_author(name="Kurogane Hammer / "+character_details['displayName'],url=character_details['fullUrl'],icon_url=character_details['thumbnailUrl'])
@@ -70,6 +72,18 @@ class Smash:
 				return
 				
 		await self.client.say("That move couldn't be found!")
+		
+	@commands.command()
+	async def testClasses(self,value : int):
+		attack = Attack()
+		attack.setDamage(value,1)
+		
+		x = attack.getDamage(1)
+		
+		print(x)
+		
+		await self.client.say("The damage for hitbox 1 is "+str(attack.getDamage(1)))
+		
 	
 def setup(client):
 		client.add_cog(Smash(client))
