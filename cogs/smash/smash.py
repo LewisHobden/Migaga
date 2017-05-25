@@ -2,6 +2,7 @@ from discord.ext import commands
 from cogs.utilities import credential_checks, config
 from cogs.games.currency import connectToDatabase
 from cogs.smash.attack import Attack
+from cogs.smash.hitbox import Hitbox
 
 import discord
 import datetime
@@ -51,7 +52,7 @@ class Smash:
 	@commands.command(pass_context=True)
 	async def attack(self,ctx,*,character_name):
 		"""Gets the frame data for a certain move. Tell it the character name and then the move in a follow up."""
-		character_name = character_name.replace(" ","")
+		character_name = character_name.replace(" ","").lower()
 		self.typing_channel = ctx.message.channel
 		response = await self.getCharacterDetailedMoves(character_name)
 		
@@ -59,17 +60,31 @@ class Smash:
 		req_move = await self.client.wait_for_message(author=ctx.message.author)
 		req_move = req_move.content.strip()
 		
+		possible_moves = []
 		for move in response:
-			if move["moveName"].lower() == req_move.lower():
-				print(move)
-				character_details = self.cache.get(character_name)['details']
-				e = discord.Embed(title=move["moveName"],colour=int(character_details['colorTheme'].replace("#",""),16))
-				e.set_author(name="Kurogane Hammer / "+character_details['displayName'],url=character_details['fullUrl'],icon_url=character_details['thumbnailUrl'])
-				e.add_field(name="Base Damage",value=move['baseDamage']['hitbox1'])
-				e.add_field(name="Base Knockback",value=move['baseKnockback']['hitbox1'])
-				e.add_field(name="First Actionable Frame",value="Frame "+move['firstActionableFrame']['frame'])
-				await self.client.say(embed=e)
-				return
+			if move["moveName"].lower().find(req_move.lower()) != -1:
+				possible_moves.append(move)
+				
+		if 
+		attack = Attack(move)
+		character_details = self.cache.get(character_name)['details']
+		e = discord.Embed(title=attack.getName(),colour=int(character_details['colorTheme'].replace("#",""),16))
+		e.set_author(name="Kurogane Hammer / "+character_details['displayName'],url=character_details['fullUrl'],icon_url=character_details['thumbnailUrl'])
+				
+		e.add_field(name="FAF",value=attack.getFirstActionableFrame())
+		e.add_field(name="FAF",value=attack.getFirstActionableFrame())
+		e.add_field(name="FAF",value=attack.getFirstActionableFrame())
+				
+		for i in range(1,6):
+			hitbox = attack.getHitbox(i)
+			if False == hitbox.hasData():
+				continue
+					
+			info = "Base Damage: {0}\nBase Knockback: {1}\nAngle: {2}\nFrames Active: {3}".format(hitbox.getBaseDamage()+"%",hitbox.getBaseKnockback(),hitbox.getAngle(),hitbox.getActiveFrames())
+			e.add_field(name="Hitbox {}".format(i),value=info)
+				
+			wait self.client.say(embed=e)
+				
 				
 		await self.client.say("That move couldn't be found!")
 		
