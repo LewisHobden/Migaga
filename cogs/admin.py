@@ -12,6 +12,11 @@ class Admin:
 	"""Moderation related commands."""
 	def __init__(self, client):
 		self.client = client
+	
+	@commands.command(is_disabled=True)
+	async def invite(self):
+		""" Get a URL to invite the bot to your own server! """
+		await self.client.say(discord.utils.oauth_url(self.client.client_id))
 
 	@commands.command(no_pm=True, pass_context=True)
 	@credential_checks.hasPermissions(ban_members=True)
@@ -112,7 +117,7 @@ class Admin:
 		
 		connection = connectToDatabase()
 		await self.client.say("What channel should that message be posted in?")
-		channel    = await self.client.wait_for_message(author=ctx.message.author)
+		channel	   = await self.client.wait_for_message(author=ctx.message.author)
 		try:
 			channel = channel.channel_mentions[0]
 		except:
@@ -132,23 +137,150 @@ class Admin:
 	async def checkAndAssignRole(self,role,message : discord.Message):
 		member = message.author
 		connection = connectToDatabase()
-		try:
-			with connection.cursor() as cursor:
-				sql = "SELECT `role_id` FROM `discord_role_aliases` WHERE `server_id`=%s AND `alias`=%s"
-				cursor.execute(sql, [message.server.id,role])
-				result = cursor.fetchone()
-		finally:
-			connection.close()
+		
+		with connection.cursor() as cursor:
+			sql = "SELECT `role_id`,`is_admin_only` FROM `discord_role_aliases` WHERE `server_id`=%s AND `alias`=%s"
+			cursor.execute(sql, [message.server.id,role])
+			result = cursor.fetchone()
 			
 		if not result:
 			return
-			
-		role = discord.utils.get(message.server.roles, id=str(result['role_id']))
-			
-		await self.client.add_roles(message.author,role)
-		await self.client.delete_message(message)
 		
+		role = discord.utils.get(message.server.roles, id=str(result['role_id']))
+		await self.client.add_roles(message.author,role)
+		
+		with connection.cursor() as cursor:
+			sql = "UPDATE `discord_role_aliases` SET `uses`=`uses`+1 WHERE `server_id`=%s AND `role_id`=%s"
+			cursor.execute(sql, [message.server.id,role.id])
+			result = cursor.fetchone()
+		
+		try:
+			with connection.cursor() as cursor:
+				sql = "SELECT `overwrite_role_id` FROM `discord_role_overwrites` WHERE `role_id`=%s"
+				cursor.execute(sql, [role.id])
+				overwrites = cursor.fetchall()
+				
+				sql = "SELECT `role_id` FROM `discord_role_aliases` WHERE `server_id`=%s AND `alias`=%s"
+				cursor.execute(sql, [message.server.id,role])	
+				result = cursor.fetchone()
+		finally:
+			connection.commit()
+			connection.close()
+			
+		for role_result in overwrites:
+			found_role = await self.findRoleById(role_result['overwrite_role_id'],message.server)
+			try:
+				await self.client.remove_roles(message.author,found_role)
+			except:
+				if None == found_role:
+					print("Role found from the database is none idk why. Likely the role has been deleted.")
+					await self.client.delete_message(message)
+					return True
+				print("Couldn't remove role "+found_role.name+" from "+member.display_name)
+		
+		await self.client.delete_message(message)
 		return True
+	
+	async def findRoleByName(self,role_name,server):
+		for role in server.roles:
+			if role.name.lower() == role_name.lower():
+				return role
+		
+		return None
+		
+	async def findRoleById(self,id,server):
+		for role in server.roles:
+			if str(role.id) == str(id):
+				return role
+		
+		return None
+		
+	@commands.command(no_pm=True,hidden=True,pass_context=True)
+	@credential_checks.hasPermissions(manage_roles=True)
+	async def roleoverwrites(self,ctx,*,role_name):
+		"""When a role has been assigned a command, any overwrite will remove that role when the command is used.
+		
+		If you have roles with the same name the last one will be chosen.
+		You must have the "Manage Roles" privilege in order to use this command."""
+		server = ctx.message.server
+		assign_role = None
+		for role in server.roles:
+			if role.name.lower() == role_name.lower():
+				assign_role = role
+			
+		if assign_role == None:
+			await self.client.say("This role could not be found.")
+			return
+			
+		await self.client.say("Reply with the names of the roles you want to find here. If you want to overwrite more than one, seperate it with a comma.")
+		choices = await self.client.wait_for_message(author=ctx.message.author)
+		
+		choices = choices.content.split(",")
+		for role_name in choices:
+			chosen_role = await self.findRoleByName(role_name.strip(),server)
+			
+			if None == chosen_role or chosen_role == assign_role:
+				continue
+				
+			connection = connectToDatabase()
+			with connection.cursor() as cursor:
+				sql = "INSERT INTO `discord_role_overwrites` VALUES(0,%s,%s,%s)"
+				cursor.execute(sql,[assign_role.id,chosen_role.id,server.id])
+				connection.commit()
+
+		connection.close()
+		await self.client.say("Done! Roles will be overwritten when they use the command.")
+		
+	@commands.command(no_pm=True,hidden=True,pass_context=True)
+	@credential_checks.hasPermissions(manage_roles=True)
+	async def roleinfo(self,ctx,*,role_name):
+		"""Get information on a role
+		
+		If you have roles with the same name the last one will be chosen.
+		You must have the "Manage Roles" privilege in order to use this command."""
+		server = ctx.message.server
+		assign_role = None
+		for role in server.roles:
+			if role.name.lower() == role_name.lower():
+				assign_role = role
+		
+		if assign_role == None:
+			await self.client.say("This role could not be found.")
+			return
+		
+		connection = connectToDatabase()
+		try:
+			with connection.cursor() as cursor:
+				sql = "SELECT * FROM `discord_role_aliases` WHERE `server_id`=%s AND `role_id`=%s"
+				cursor.execute(sql, [server.id,assign_role.id])
+				result = cursor.fetchone()
+		finally:
+			connection.close()
+		
+		total_users = 0
+		for member in server.members:
+			if assign_role in member.roles:
+				total_users = total_users + 1
+			
+		embed = discord.Embed(title=assign_role.name,colour=assign_role.colour,description="Role information for \""+assign_role.name+"\"")
+		embed.add_field(name="Members",value=total_users)
+		embed.add_field(name="Can be mentioned?",value="Yes" if assign_role.mentionable else "No")
+		embed.add_field(name="Created",value=assign_role.created_at.strftime("%d of %b (%Y) %H:%M:%S"))
+		
+		if result:
+			embed.add_field(name="Command Name",value=result['alias'])
+			embed.add_field(name="Command Uses",value=result['uses'])
+		
+		await self.client.send_message(ctx.message.channel,embed=embed)
+		
+	@commands.command(no_pm=True,hidden=True,pass_context=True)
+	@credential_checks.hasPermissions(manage_messages=True)
+	async def purge(self,ctx,number_of_messages : int):
+		"""Delete a number of messages from the channel you type it in!"""
+		try:
+			await self.client.purge_from(ctx.message.channel,limit=number_of_messages+1)
+		except:
+			await self.client.say("There was an error deleting. Be aware that Discord does not allow bots to bulk delete messages that are under 14 days old.")
 	
 	@commands.command(no_pm=True,hidden=True,pass_context=True)
 	@credential_checks.hasPermissions(administrator=True)

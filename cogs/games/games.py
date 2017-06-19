@@ -121,14 +121,14 @@ class Games:
         total  = 0
         
         await self.client.say("Welcome to blackjack! I am your host, I am going to draw my cards and see if you can beat me! But first of all, how much "+Money.CURRENCY_NAME+" would you like to bet?")
-        betAmount = await self.client.wait_for_message(author=ctx.message.author, channel=ctx.message.channel)
+        bet_amount = await self.client.wait_for_message(author=ctx.message.author, channel=ctx.message.channel)
             
         try:
-            betAmount = int(betAmount.content)
-            if betAmount > 1000:
+            bet_amount = int(bet_amount.content)
+            if bet_amount > 1000:
                 await self.client.say("Whoa big spender, we can't let you bet more than 1000!")
                 return
-            elif betAmount < 0:
+            elif bet_amount < 0:
                 await self.client.say("GASP!**CHEATER!!**")
                 return
         except:
@@ -170,7 +170,7 @@ class Games:
             if total <= 21:
                 await self.client.say("**"+ctx.message.author.name+"**, "+"You now have a total of " + str(total) + "!")
             elif total > 21:
-                await self.client.say(await self.endBlackjack(2, ctx.message.author, betAmount*-1, total))
+                await self.client.say(await self.endBlackjack(2, ctx.message.author, bet_amount*-1, total))
                 return
 
             will_continue = await self.client.wait_for_message(author=ctx.message.author, channel=ctx.message.channel)
@@ -184,9 +184,9 @@ class Games:
     
     async def checkForBlackjackWins(self, player, total, botTotal):
         if total > botTotal:
-            await self.client.say(await self.endBlackjack(1, player, betAmount*2, total))
+            await self.client.say(await self.endBlackjack(1, player, bet_amount*2, total))
         elif total < botTotal:
-            await self.client.say(await self.endBlackjack(1, player, betAmount*-1, total))
+            await self.client.say(await self.endBlackjack(1, player, bet_amount*-1, total))
         else:
             await self.client.say(await self.endBlackjack(1, player, 0, total))
 

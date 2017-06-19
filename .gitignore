@@ -1,2 +1,5 @@
-/cogs/__pycache__
-/cogs/games/__pycache__
+/cogs/__pycache__/
+/cogs/games/__pycache__/
+/cogs/utilities/__pycache__/
+migagalogs.logger
+cogs/smash/__pycache__/

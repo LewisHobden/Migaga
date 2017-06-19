@@ -140,7 +140,6 @@ class People:
 
         return embed
         
-        
     @commands.command(pass_context=True)
     async def myprofile(self, ctx):
         """ View your own profile! """        
