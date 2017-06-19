@@ -23,7 +23,7 @@ bot_description = """ Lewis' Discord Bot Version 3 """
 prefix          = "!"
 client          = commands.Bot(command_prefix=prefix, description=bot_description, pm_help=None)
 
-debug = True
+debug = False
 
 extensions = [
                 "cogs.smash.smash",
@@ -197,7 +197,7 @@ async def on_message(message):
             await client.process_commands(message)
 
 if __name__ == '__main__':
-    token            = "MTk3OTg3Nzk0NDA3MTI5MDg5.DAGsZg.Ati3G0mv7TT8cDoYyuPHlj4Mk0s"
+    token            = "MTk3OTg3Nzk0NDA3MTI5MDg5.DAGsZg.Ati3G0mv7TT8cDoYyuPHlj4Mk0s" if debug else "MzA5NzY1MDYwOTA4Mjg1OTUy.DCmGDA.Ks7CD0NinKJWGy280A_Rcf2AD0k"
     client.client_id = "309765060908285952"
 
     for extension in extensions:
