@@ -37,7 +37,7 @@ class Attack(object):
 				continue
 
 			self.getHitbox(i).setBaseDamage(list['baseDamage']["hitbox"+str(i)])
-			self.getHitbox(i).setAngle(list['angle']["hitbox"+str(i)])
+ 			self.getHitbox(i).setAngle(list['angle']["hitbox"+str(i)])
 			self.getHitbox(i).setBaseKnockback(list['baseKnockback']["hitbox"+str(i)])
 			self.getHitbox(i).setActiveFrames(list['hitbox']["hitbox"+str(i)])
 			#self.getHitbox(i).setNote(list['note']['hitbox{}'.format(str(i))])
