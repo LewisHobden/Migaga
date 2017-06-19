@@ -168,6 +168,13 @@ async def on_command(command, ctx):
 async def on_message(message):
     if message.author == client.user:
         return
+
+    connection = connectToDatabase()
+    with connection.cursor() as csr:
+        sql = "INSERT INTO `discord_persons` VALUES(0,%s,\"0\",\"0\",\"1\") ON DUPLICATE KEY UPDATE `messages_sent`=`messages_sent`+1"
+        csr.execute(sql,message.author.id)
+    connection.commit()
+    connection.close()
     
     if message.content.startswith(prefix):
         admin = client.get_cog('Admin')

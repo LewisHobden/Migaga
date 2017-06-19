@@ -40,8 +40,7 @@ class Attack(object):
 			self.getHitbox(i).setAngle(list['angle']["hitbox"+str(i)])
 			self.getHitbox(i).setBaseKnockback(list['baseKnockback']["hitbox"+str(i)])
 			self.getHitbox(i).setActiveFrames(list['hitbox']["hitbox"+str(i)])
-			self.getHitbox(i).setNote(list['note']['hitbox{}'.format(str(i))])
-
+			#self.getHitbox(i).setNote(list['note']['hitbox{}'.format(str(i))])
 
 	def loadKbgFromCache(self):
 		cache = json.load(open("khkbgs.json","r"))
