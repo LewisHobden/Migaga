@@ -48,6 +48,23 @@ class Admin:
 		else:
 			await self.client.say("BOOM. Kicked "+member.name)
 
+	@commands.command(no_pm=True,pass_context=True)
+	@credential_checks.hasPermissions(manage_roles=True)
+	async def unflaired(self,ctx):
+		unflaired_users = []
+		for member in ctx.message.server.members:
+			if len(member.roles) == 1:
+				unflaired_users.append(member)
+
+		try:
+			await self.client.say("There are "+str(len(unflaired_users))+" without a role in this server.\n")
+			message = "Members:\n"
+			for member in unflaired_users:
+				message += member.mention+"\n"
+			await self.client.say(message)
+		except:
+			await self.client.say("Something went wrong! Perhaps there were too many people?")
+
 	@commands.command(no_pm=True, pass_context=True)
 	@credential_checks.hasPermissions(ban_members=True)
 	async def softban(self, ctx, member : discord.Member):

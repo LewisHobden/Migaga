@@ -42,7 +42,7 @@ class CustomCommands:
 			return False
 
 	async def checkIfServerCanAddMoreCommands(self, server_id):
-		whitelist = ['84142598456901632']
+		whitelist = ['84142598456901632','139310504655978496']
 		connection = connectToDatabase()
 		with connection.cursor() as csr:
 			sql = "SELECT COUNT(*) AS `total` FROM `discord_commands` WHERE `server_id` = %s"
