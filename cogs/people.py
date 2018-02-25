@@ -40,7 +40,7 @@ class People:
         with connection.cursor() as csr:
             sql = "SELECT `reason`, `type`, `time_warned` FROM `discord_warnings` WHERE `user_id`=%s AND `server_id`=%s"
             csr.execute(sql, [user_id, server_id])
-            
+
             for result in csr:
                 warnings.append(result)
 
@@ -61,7 +61,7 @@ class People:
 
         avatar = member.avatar_url if member.avatar else member.default_avatar_url
         embed.set_author(name=str(member), icon_url=avatar)
-        
+
         embed.add_field(name="Created:", value=member.created_at.strftime("%d of %b %Y at\n%H:%M:%S"))
         embed.add_field(name="Joined Server:", value=member.joined_at.strftime("%d of %b %Y at\n%H:%M:%S"))
         embed.add_field(name="ID:", value=member.id)
@@ -71,19 +71,11 @@ class People:
         embed.add_field(name="Messages Sent:", value=await self.getTotalSentMessages(member.id))
 
         return embed
-        
-        
-    @commands.command(pass_context=True)
-    async def myinfo(self, ctx):
-        """ Get information on yourself! """
-        embed = await self.renderInfoAsEmbed(ctx.message.author)
-
-        await self.client.send_message(ctx.message.channel, embed=embed)
 
     @commands.command(pass_context=True)
-    async def userinfo(self, ctx, member : discord.Member):
+    async def userinfo(self, ctx, member : discord.Member = None):
         """ Get information on another user! """
-        embed = await self.renderInfoAsEmbed(member)
+        embed = await self.renderInfoAsEmbed(member if member else ctx.message.author)
 
         await self.client.send_message(ctx.message.channel, embed=embed)
 
@@ -92,7 +84,7 @@ class People:
         """ See what warnings you've been given! """
         user_warnings = await self.getWarningsForUser(ctx.message.author.id, ctx.message.server.id)
         member = ctx.message.author
-        
+
         embed = discord.Embed(description="Warnings for "+member.display_name, colour=7576022)
 
         avatar = member.avatar_url if member.avatar else member.default_avatar_url
@@ -128,7 +120,7 @@ class People:
         profile = await self.getUserProfileInformation(member.id)
         if None == profile:
             return None
-        
+
         embed = discord.Embed(colour=await Tools.ifNoneReplaceWith(Tools, profile["colour"], discord.Colour.teal()), description=await Tools.ifNoneReplaceWith(Tools, profile["message"], ""), title=await Tools.ifNoneReplaceWith(Tools, profile["tag"], member.display_name))
         embed.add_field(name="NNID:", value=await Tools.ifNoneReplaceWith(Tools, profile["nnid"], "Not set"))
         embed.add_field(name="Region:", value=await Tools.ifNoneReplaceWith(Tools, profile["region"], "Not Set"))
@@ -139,27 +131,16 @@ class People:
         embed.set_author(name=str(member), icon_url=avatar)
 
         return embed
-        
-    @commands.command(pass_context=True)
-    async def myprofile(self, ctx):
-        """ View your own profile! """        
-        embed = await self.makeProfileEmbedFromUser(ctx.message.author)
-
-        if None == embed:
-            await self.client.say("You have not set up a profile! Use -set [field] to get started!")
-            return
-        
-        await self.client.send_message(ctx.message.channel, embed=embed)
 
     @commands.command(pass_context=True)
-    async def profile(self, ctx, member : discord.Member):
+    async def profile(self, ctx, member : discord.Member = None):
         """ View your own profile! """
-        embed = await self.makeProfileEmbedFromUser(member)
+        embed = await self.makeProfileEmbedFromUser(member if member else ctx.message.author)
 
         if None == embed:
             await self.client.say("This user does not have a profile!")
             return
-        
+
         await self.client.send_message(ctx.message.channel, embed=embed)
 
 
@@ -197,6 +178,6 @@ class People:
         avatar = member.avatar_url if member.avatar else member.default_avatar_url
         await self.client.say(avatar)
 
-    
+
 def setup(client):
     client.add_cog(People(client))
