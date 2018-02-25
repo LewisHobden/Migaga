@@ -252,8 +252,9 @@ class Admin:
 
 		If an emoji is provided then it will clear all reactions of a specific emoji. However due to a limitation with Discord it can only remove the messages by the bot, or a provided user."""
 		# A quick and dirty way of handling custom emoji.
-		if(emoji and emoji.startswith("<")):
-			emoji.replace(":","").replace("<","").replace(">","")
+		if(emoji):
+			if(emoji.startswith("<")):
+				emoji.replace(":","").replace("<","").replace(">","")
 
 		if limit > 100:
 			await self.client.say("Discord Bots are only allowed to get 100 messages at a time.")
