@@ -2,6 +2,7 @@ from discord.ext import commands
 from cogs.utilities import credential_checks
 from cogs.games.currency import connectToDatabase
 
+from cogs.storage.database import Database
 import discord
 import datetime
 import logging
@@ -48,6 +49,23 @@ class Admin:
 		else:
 			await self.client.say("BOOM. Kicked "+member.name)
 
+	@commands.command(no_pm=True,pass_context=True)
+	@credential_checks.hasPermissions(manage_roles=True)
+	async def unflaired(self,ctx):
+		unflaired_users = []
+		for member in ctx.message.server.members:
+			if len(member.roles) == 1:
+				unflaired_users.append(member)
+
+		try:
+			await self.client.say("There are "+str(len(unflaired_users))+" without a role in this server.\n")
+			message = "Members:\n"
+			for member in unflaired_users:
+				message += member.mention+"\n"
+			await self.client.say(message)
+		except:
+			await self.client.say("Something went wrong! Perhaps there were too many people?")
+
 	@commands.command(no_pm=True, pass_context=True)
 	@credential_checks.hasPermissions(ban_members=True)
 	async def softban(self, ctx, member : discord.Member):
@@ -68,51 +86,8 @@ class Admin:
 			await self.client.say("Softbanned "+member.name+". Their messages should be gone now.")
 
 	@commands.command(no_pm=True, pass_context=True)
-	@credential_checks.hasPermissions(manage_messages=True,add_reactions=True)
-	async def react(self,ctx,emoji : str,channel : discord.Channel, limit=50):
-		""" Reacts to messages in the channel. """
-		# A quick and dirty way of handling custom emoji.
-		if(emoji.startswith("<")):
-			emoji = emoji.replace(":","",1).replace("<","").replace(">","")
-
-		if limit > 100:
-			await self.client.say("Discord Bots are only allowed to get 100 messages at a time.")
-			return
-
-		get_message = self.client.get_cog("GetMessages")
-		data = await get_message.getMessages(channel.id,limit)
-
-		for x in data:
-			message = self.client.connection._create_message(channel=channel,**x)
-			await self.client.add_reaction(message,emoji)
-
-	@commands.command(no_pm=True, pass_context=True)
-	@credential_checks.hasPermissions(manage_messages=True,add_reactions=True)
-	async def clearreacts(self,ctx,channel : discord.Channel, emoji : str=None, user : discord.User = None, limit=50):
-		""" Clears reactions to messages in the channel.
-
-		If an emoji is provided then it will clear all reactions of a specific emoji. However due to a limitation with Discord it can only remove the messages by the bot, or a provided user."""
-		# A quick and dirty way of handling custom emoji.
-		if(emoji.startswith("<")):
-			emoji.replace(":","").replace("<","").replace(">","")
-
-		if limit > 100:
-			await self.client.say("Discord Bots are only allowed to get 100 messages at a time.")
-			return
-
-		get_message = self.client.get_cog("GetMessages")
-		data = await get_message.getMessages(channel.id,limit)
-
-		for x in data:
-			message = self.client.connection._create_message(channel=channel,**x)
-			if(emoji):
-				await self.client.remove_reaction(message,emoji,user if user else self.client.user)
-			else:
-				await self.client.clear_reactions(message)
-
-	@commands.command(no_pm=True, pass_context=True)
 	@credential_checks.hasPermissions(manage_roles=True)
-	async def registerrole(self,ctx,*,role_name):
+	async def addrole(self,ctx,*,role_name):
 		"""Adds a role to the bot so that it can either be self assigned by a user or given by an admin.
 
 		If you have roles with the same name the last one will be chosen.
@@ -135,14 +110,21 @@ class Admin:
 
 		connection = connectToDatabase()
 
-		with connection.cursor() as cursor:
-			sql = "INSERT INTO `discord_role_aliases` VALUES (0, %s, %s, %s, '0');"
+		database = Database()
 
-			try:
-				cursor.execute(sql, [alias,assign_role.id,server.id])
-			except:
-				await self.client.say("Sorry, there was an error somewhere.. ensure you have properly provided me with information. If this problem persists contact the admin")
-				return
+		with connection.cursor() as cursor:
+			sql = "SELECT * FROM `discord_role_aliases` WHERE `role_id`=%s"
+
+			#try:
+			cursor.execute(sql, [assign_role.id])
+			result = cursor.fetchone()
+			if None == result:
+				print("This shit don't exist yo")
+			else:
+				await self.client.say("This role already has an alias, it is "+result['alias']+" this command will override it.")
+				database.query("DELETE FROM `discord_role_aliases` WHERE `role_id`=%s",assign_role.id)
+
+		database.query("INSERT INTO `discord_role_aliases` VALUES (0, %s, %s, %s, '0','0');",[alias,assign_role.id,server.id])
 
 		connection.commit()
 		await self.client.say("Whew! All done! I have added the role **"+assign_role.name+"**, to the alias: **"+alias+"** in this server: **"+server.name+"**")
@@ -160,7 +142,7 @@ class Admin:
 
 		connection = connectToDatabase()
 		await self.client.say("What channel should that message be posted in?")
-		channel	   = await self.client.wait_for_message(author=ctx.message.author)
+		channel    = await self.client.wait_for_message(author=ctx.message.author)
 		try:
 			channel = channel.channel_mentions[0]
 		except:
@@ -202,27 +184,33 @@ class Admin:
 				sql = "SELECT `overwrite_role_id` FROM `discord_role_overwrites` WHERE `role_id`=%s"
 				cursor.execute(sql, [role.id])
 				overwrites = cursor.fetchall()
-
-				sql = "SELECT `role_id` FROM `discord_role_aliases` WHERE `server_id`=%s AND `alias`=%s"
-				cursor.execute(sql, [message.server.id,role])
-				result = cursor.fetchone()
 		finally:
 			connection.commit()
 			connection.close()
 
-		for role_result in overwrites:
-			found_role = await self.findRoleById(role_result['overwrite_role_id'],message.server)
-			try:
-				await self.client.remove_roles(message.author,found_role)
-			except:
-				if None == found_role:
-					print("Role found from the database is none idk why. Likely the role has been deleted.")
-					await self.client.delete_message(message)
-					return True
-				print("Couldn't remove role "+found_role.name+" from "+member.display_name)
+	@commands.command(no_pm=True,pass_context=True)
+	@credential_checks.hasPermissions(kick_members=True)
+	async def names(self,ctx,member : discord.Member):
+		""" See the history of name changes the bot has for a person.
 
-		await self.client.delete_message(message)
-		return True
+		You must have kick members permission to do this."""
+		connection = connectToDatabase()
+		with connection.cursor() as cursor:
+			sql = "SELECT `name` FROM `discord_username_changes` WHERE `user_id`=%s"
+			cursor.execute(sql, [member.id])
+			names = cursor.fetchall()
+
+			msg = ""
+
+			for name in names:
+				   msg += name['name']+"\n"
+
+		if("" == msg):
+			msg = "No name changes found."
+		else:
+			msg = "These are the name changes I have stored: \n"+msg;
+
+		await self.client.say(msg)
 
 	async def findRoleByName(self,role_name,server):
 		for role in server.roles:
@@ -238,7 +226,50 @@ class Admin:
 
 		return None
 
-	@commands.command(no_pm=True,hidden=True,pass_context=True)
+		@commands.command(no_pm=True, pass_context=True)
+		@credential_checks.hasPermissions(manage_messages=True,add_reactions=True)
+		async def react(self,ctx,emoji : str,channel : discord.Channel, limit=50):
+			""" Reacts to messages in the channel. """
+			# A quick and dirty way of handling custom emoji.
+			if(emoji.startswith("<")):
+				emoji = emoji.replace(":","",1).replace("<","").replace(">","")
+
+			if limit > 100:
+				await self.client.say("Discord Bots are only allowed to get 100 messages at a time.")
+				return
+
+			get_message = self.client.get_cog("GetMessages")
+			data = await get_message.getMessages(channel.id,limit)
+
+			for x in data:
+				message = self.client.connection._create_message(channel=channel,**x)
+				await self.client.add_reaction(message,emoji)
+
+		@commands.command(no_pm=True, pass_context=True)
+		@credential_checks.hasPermissions(manage_messages=True,add_reactions=True)
+		async def clearreacts(self,ctx,channel : discord.Channel, emoji : str=None, user : discord.User = None, limit=50):
+			""" Clears reactions to messages in the channel.
+
+			If an emoji is provided then it will clear all reactions of a specific emoji. However due to a limitation with Discord it can only remove the messages by the bot, or a provided user."""
+			# A quick and dirty way of handling custom emoji.
+			if(emoji.startswith("<")):
+				emoji.replace(":","").replace("<","").replace(">","")
+
+			if limit > 100:
+				await self.client.say("Discord Bots are only allowed to get 100 messages at a time.")
+				return
+
+			get_message = self.client.get_cog("GetMessages")
+			data = await get_message.getMessages(channel.id,limit)
+
+			for x in data:
+				message = self.client.connection._create_message(channel=channel,**x)
+				if(emoji):
+					await self.client.remove_reaction(message,emoji,user if user else self.client.user)
+				else:
+					await self.client.clear_reactions(message)
+
+	@commands.command(no_pm=True,pass_context=True)
 	@credential_checks.hasPermissions(manage_roles=True)
 	async def roleoverwrites(self,ctx,*,role_name):
 		"""When a role has been assigned a command, any overwrite will remove that role when the command is used.

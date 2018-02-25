@@ -178,11 +178,11 @@ class Games:
             if will_continue.content.lower() == "stop":
                 botTotal = random.randint(16, 21)
                 await self.client.say("And that's the end of the game! Let's see how we compared.. \n \n I got **" + str(botTotal) + "** and you got **" + str(total) + "**!")
-                await self.checkForBlackjackWins(ctx, total, botTotal)
+                await self.checkForBlackjackWins(ctx, total, botTotal, bet_amount)
                 return
 
     
-    async def checkForBlackjackWins(self, player, total, botTotal):
+    async def checkForBlackjackWins(self, player, total, botTotal, bet_amount):
         if total > botTotal:
             await self.client.say(await self.endBlackjack(1, player, bet_amount*2, total))
         elif total < botTotal:
