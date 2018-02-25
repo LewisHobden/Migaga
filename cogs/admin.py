@@ -226,48 +226,48 @@ class Admin:
 
 		return None
 
-		@commands.command(no_pm=True, pass_context=True)
-		@credential_checks.hasPermissions(manage_messages=True,add_reactions=True)
-		async def react(self,ctx,emoji : str,channel : discord.Channel, limit=50):
-			""" Reacts to messages in the channel. """
-			# A quick and dirty way of handling custom emoji.
-			if(emoji.startswith("<")):
-				emoji = emoji.replace(":","",1).replace("<","").replace(">","")
+	@commands.command(no_pm=True, pass_context=True)
+	@credential_checks.hasPermissions(manage_messages=True,add_reactions=True)
+	async def react(self,ctx,emoji : str,channel : discord.Channel, limit=50):
+		""" Reacts to messages in the channel. """
+		# A quick and dirty way of handling custom emoji.
+		if(emoji.startswith("<")):
+			emoji = emoji.replace(":","",1).replace("<","").replace(">","")
 
-			if limit > 100:
-				await self.client.say("Discord Bots are only allowed to get 100 messages at a time.")
-				return
+		if limit > 100:
+			await self.client.say("Discord Bots are only allowed to get 100 messages at a time.")
+			return
 
-			get_message = self.client.get_cog("GetMessages")
-			data = await get_message.getMessages(channel.id,limit)
+		get_message = self.client.get_cog("GetMessages")
+		data = await get_message.getMessages(channel.id,limit)
 
-			for x in data:
-				message = self.client.connection._create_message(channel=channel,**x)
-				await self.client.add_reaction(message,emoji)
+		for x in data:
+			message = self.client.connection._create_message(channel=channel,**x)
+			await self.client.add_reaction(message,emoji)
 
-		@commands.command(no_pm=True, pass_context=True)
-		@credential_checks.hasPermissions(manage_messages=True,add_reactions=True)
-		async def clearreacts(self,ctx,channel : discord.Channel, emoji : str=None, user : discord.User = None, limit=50):
-			""" Clears reactions to messages in the channel.
+	@commands.command(no_pm=True, pass_context=True)
+	@credential_checks.hasPermissions(manage_messages=True,add_reactions=True)
+	async def clearreacts(self,ctx,channel : discord.Channel, emoji : str=None, user : discord.User = None, limit=50):
+		""" Clears reactions to messages in the channel.
 
-			If an emoji is provided then it will clear all reactions of a specific emoji. However due to a limitation with Discord it can only remove the messages by the bot, or a provided user."""
-			# A quick and dirty way of handling custom emoji.
-			if(emoji.startswith("<")):
-				emoji.replace(":","").replace("<","").replace(">","")
+		If an emoji is provided then it will clear all reactions of a specific emoji. However due to a limitation with Discord it can only remove the messages by the bot, or a provided user."""
+		# A quick and dirty way of handling custom emoji.
+		if(emoji.startswith("<")):
+			emoji.replace(":","").replace("<","").replace(">","")
 
-			if limit > 100:
-				await self.client.say("Discord Bots are only allowed to get 100 messages at a time.")
-				return
+		if limit > 100:
+			await self.client.say("Discord Bots are only allowed to get 100 messages at a time.")
+			return
 
-			get_message = self.client.get_cog("GetMessages")
-			data = await get_message.getMessages(channel.id,limit)
+		get_message = self.client.get_cog("GetMessages")
+		data = await get_message.getMessages(channel.id,limit)
 
-			for x in data:
-				message = self.client.connection._create_message(channel=channel,**x)
-				if(emoji):
-					await self.client.remove_reaction(message,emoji,user if user else self.client.user)
-				else:
-					await self.client.clear_reactions(message)
+		for x in data:
+			message = self.client.connection._create_message(channel=channel,**x)
+			if(emoji):
+				await self.client.remove_reaction(message,emoji,user if user else self.client.user)
+			else:
+				await self.client.clear_reactions(message)
 
 	@commands.command(no_pm=True,pass_context=True)
 	@credential_checks.hasPermissions(manage_roles=True)

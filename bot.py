@@ -27,7 +27,7 @@ bot_description = """ Lewis' Discord Bot Version 3 """
 prefix          = "!"
 client          = commands.Bot(command_prefix=prefix, description=bot_description, pm_help=None)
 
-debug = False
+debug = True
 
 extensions = [
                 "cogs.smash.smash",
@@ -39,7 +39,8 @@ extensions = [
                 "cogs.people",
                 "cogs.starboard",
                 "cogs.serverlogs",
-                "cogs.games.quiz"
+                "cogs.games.quiz",
+                "cogs.utilities.get_messages",
             ]
 
 @client.event
