@@ -34,7 +34,7 @@ class Starboard:
         # message_id: as follows ->
         # bot_message: <bot message>
         # starred_user_ids : [<starred user ids>]
-        self.stars = config.Config('stars.json')
+        self.stars = config.Config(r'C:\Users\Administrator\python-discord-bot\cogs\utilities\stars.json')
 
         # cache message objects.
         self._message_cache = {}
@@ -60,7 +60,7 @@ class Starboard:
 
             # Check if this message has already been starred.
             server = channel.server
-            db = self.stars.get(server.id)
+            db     = self.stars.get(server.id)
             message = await self.client.get_message(channel, payload['message_id'])
             member  = message.author
 
@@ -137,6 +137,9 @@ class Starboard:
         avatar = author.default_avatar_url if not author.avatar else author.avatar_url
         avatar = avatar.replace('.gif', '.jpg')
         e.set_author(name=author.display_name, icon_url=avatar)
+
+        if message.attachments:
+            e.set_image(url=message.attachments[0]['proxy_url'])
 
         e.description = message.content
         e.timestamp   = message.timestamp

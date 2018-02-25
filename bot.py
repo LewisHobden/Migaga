@@ -3,8 +3,9 @@ from discord.ext import commands
 from cogs.utilities.error_handling import ErrorHandling
 from cogs.customcommands import CustomCommands
 from cogs.admin import Admin
-from cogs.serverlogs import ServerLogs
 from cogs.games.currency import connectToDatabase
+from cogs.storage.database import Database
+from time import gmtime, strftime
 
 import discord
 import datetime
@@ -12,6 +13,8 @@ import logging
 import sys
 import traceback
 
+
+most_recent_name_change = None
 
 # Begin logging
 logger = logging.getLogger('discord')
@@ -26,7 +29,18 @@ client          = commands.Bot(command_prefix=prefix, description=bot_descriptio
 
 debug = False
 
-extensions = ["cogs.admin", "cogs.games.currency", "cogs.games.games", "cogs.customcommands", "cogs.games.fun", "cogs.people", "cogs.starboard", "cogs.serverlogs","cogs.games.quiz"]
+extensions = [
+                "cogs.smash.smash",
+                "cogs.admin",
+                "cogs.games.currency",
+                "cogs.games.games",
+                "cogs.customcommands",
+                "cogs.games.fun",
+                "cogs.people",
+                "cogs.starboard",
+                "cogs.serverlogs",
+                "cogs.games.quiz"
+            ]
 
 @client.event
 async def on_command_error(error, ctx):
@@ -65,15 +79,18 @@ async def on_ready():
     print('------')
     if not hasattr(client, 'uptime'):
         client.uptime = datetime.datetime.utcnow()
+
+    await client.change_presence(game=discord.Game(name="In charge of sacred object",type=1,url='http://shulk101.com/'))
     
     await CustomCommands.readCommands(CustomCommands)
 
 @client.event
 async def on_member_join(member):
-    channel = discord.utils.get(member.server.channels, name='server_logs')
-    e = await ServerLogs.showMemberJoin(member)
+    channel = discord.utils.get(member.server.channels, name='server-logs')
+    logs    = client.get_cog('ServerLogs')
+    e       = await logs.showMemberJoin(member)
 
-    if None != e:
+    if None != e and None != channel:
         await client.send_message(channel, embed=e)
 
     connection = connectToDatabase()
@@ -86,54 +103,73 @@ async def on_member_join(member):
         return
 
     channel = client.get_channel(str(result['channel_id']))
+
+    if None == channel:
+        raise Exception
+    
     await client.send_message(channel,result['message'].format(member.mention,member.display_name,member.server.name))
 
 @client.event
 async def on_member_remove(member):
-    channel = discord.utils.get(member.server.channels, name='server_logs')
-    e = await ServerLogs.showMemberLeave(member)
+    channel = discord.utils.get(member.server.channels, name='server-logs')
+    logs    = client.get_cog('ServerLogs')
+    e       = await logs.showMemberLeave(member)
 
-    if None != e:
+    if None != e and None != channel:
         await client.send_message(channel, embed=e)
 
 @client.event
 async def on_member_update(member_before,member_after):
-    channel = discord.utils.get(member_after.server.channels, name='server_logs')
-    e = await ServerLogs.determineUserChange(member_before,member_after)
+    global most_recent_name_change
+    
+    channel = discord.utils.get(member_after.server.channels, name='server-logs')
+    logs    = client.get_cog('ServerLogs')
+    e = await logs.determineUserChange(member_before,member_after)
 
-    if None != e:
+    database = Database()
+
+    if member_before.name != member_after.name and None != most_recent_name_change and member_after.id != most_recent_name_change.id and member_after.name != most_recent_name_change.name:
+        database.query("INSERT INTO `discord_username_changes` VALUES(0,%s,%s,%s)",[member_after.name,member_after.id,strftime("%Y-%m-%d %H:%M:%S", gmtime())])
+
+    most_recent_name_change = member_after
+
+    if None != e and None != channel:
         await client.send_message(channel, embed=e)
 
 @client.event
 async def on_message_edit(message_before,message_after):
-    channel = discord.utils.get(message_after.server.channels, name='server_logs')
-    e = await ServerLogs.showMessageEdit(message_before,message_after)
+    channel = discord.utils.get(message_after.server.channels, name='server-logs')
+    logs    = client.get_cog('ServerLogs')
+    e = await logs.showMessageEdit(message_before,message_after)
 
-    if None != e:
+    if None != e and None != channel:
         await client.send_message(channel, embed=e)
 
 @client.event
 async def on_member_ban(member):
-    channel = discord.utils.get(member.server.channels, name='server_logs')
-    e = await ServerLogs.showMemberBan(member)
+    channel = discord.utils.get(member.server.channels, name='server-logs')
+    logs    = client.get_cog('ServerLogs')
+    e       = await logs.showMemberBan(member)
 
-    if None != e:
+    if None != e and None != channel:
         await client.send_message(channel, embed=e)
 
 @client.event
 async def on_member_unban(server,user):
-    channel = discord.utils.get(server.channels, name='server_logs')
-    e = await ServerLogs.showMemberUnban(user)
+    channel = discord.utils.get(server.channels, name='server-logs')
+    logs    = client.get_cog('ServerLogs')
+    e       = await logs.showMemberUnban(user)
 
-    if None != e:
+    if None != e and None != channel:
         await client.send_message(channel, embed=e)
 
 @client.event
 async def on_message_delete(message):
-    channel = discord.utils.get(message.server.channels, name='server_logs')
-    e = await ServerLogs.showMessageDelete(message)
+    channel = discord.utils.get(message.server.channels, name='server-logs')
+    logs    = client.get_cog('ServerLogs')
+    e       = await logs.showMessageDelete(message)
 
-    if None != e:
+    if None != e and None != channel:
         await client.send_message(channel, embed=e)
 
 @client.event
@@ -151,6 +187,13 @@ async def on_command(command, ctx):
 async def on_message(message):
     if message.author == client.user:
         return
+
+    connection = connectToDatabase()
+    with connection.cursor() as csr:
+        sql = "INSERT INTO `discord_persons` VALUES(0,%s,\"0\",\"0\",\"1\") ON DUPLICATE KEY UPDATE `messages_sent`=`messages_sent`+1"
+        csr.execute(sql,message.author.id)
+    connection.commit()
+    connection.close()
     
     if message.content.startswith(prefix):
         admin = client.get_cog('Admin')
@@ -165,17 +208,16 @@ async def on_message(message):
             if await admin.checkAndAssignRole(command,message):
                 return
             
-        response = await CustomCommands.checkIfCommandTriggered(CustomCommands, message)
+        response = await CustomCommands.checkIfCommandTriggered(CustomCommands,message,command)
         
         if response != False:
-            await client.send_message(message.channel, response)
-            
-            
-    await client.process_commands(message)
+            await client.send_message(message.channel,response)
+        else:
+            await client.process_commands(message)
 
 if __name__ == '__main__':
-    token            = "MTg1ODYwNDA0NjE3MDE5Mzky.C9lMfQ.NRX5bKYcECPrVLmdVLhfO67ryEw"
-    client.client_id = "197987769732038656"
+    token            = "MTk3OTg3Nzk0NDA3MTI5MDg5.DAGsZg.Ati3G0mv7TT8cDoYyuPHlj4Mk0s" if debug else "MzA5NzY1MDYwOTA4Mjg1OTUy.DCmGDA.Ks7CD0NinKJWGy280A_Rcf2AD0k"
+    client.client_id = "309765060908285952"
 
     for extension in extensions:
         try:
@@ -183,7 +225,14 @@ if __name__ == '__main__':
         except Exception as e:
             print('Failed to load extension {}\n{}: {}'.format(extension, type(e).__name__, e))
 
-    client.run(token)
+    while True:
+        try:
+            client.run(token)
+            asyncio.sleep(30)
+        except:
+            p = subprocess.Popen(r'C:\Users\Administrator\Desktop\start.bat', creationflags=subprocess.CREATE_NEW_CONSOLE)
+            break
+    
     handlers = logger.handlers[:]
     for hdlr in handlers:
         hdlr.close()
