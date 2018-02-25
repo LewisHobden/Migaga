@@ -7,10 +7,10 @@ class ErrorHandling:
 
     def __init__(self, client):
         self.client = client
-        
+
     async def postErrorToChannel(ctx, error_description, error_title):
         exceptions_channel = discord.utils.get(self.client.get_all_channels(), server__id='197972184466063381', id='254215930416988170')
-        
+
         msg  = discord.Embed(title=error_title, timestamp=datetime.datetime.utcnow(), description=error_description, color=discord.Colour(15021879))
         msg.add_field(name="Command", value=ctx.command.qualified_name)
         msg.add_field(name="Server", value=ctx.message.server.name)

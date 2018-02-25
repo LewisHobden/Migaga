@@ -26,7 +26,7 @@ client          = commands.Bot(command_prefix=prefix, description=bot_descriptio
 
 debug = False
 
-extensions = ["cogs.admin", "cogs.games.currency", "cogs.games.games", "cogs.customcommands", "cogs.games.fun", "cogs.people", "cogs.starboard", "cogs.serverlogs","cogs.games.quiz"]
+extensions = ["cogs.admin", "cogs.games.currency", "cogs.utilities.get_messages", "cogs.games.games", "cogs.customcommands", "cogs.games.fun", "cogs.people", "cogs.starboard", "cogs.serverlogs","cogs.games.quiz"]
 
 @client.event
 async def on_command_error(error, ctx):
