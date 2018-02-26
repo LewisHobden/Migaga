@@ -49,7 +49,7 @@ async def on_command_error(error, ctx):
 
     if debug == True:
         exceptions_channel = ctx.message.channel
-    
+
     if isinstance(error, commands.DisabledCommand):
         await client.send_message(ctx.message.author, 'This command has been disabled for now.')
     if isinstance(error, commands.NoPrivateMessage):
@@ -82,7 +82,7 @@ async def on_ready():
         client.uptime = datetime.datetime.utcnow()
 
     await client.change_presence(game=discord.Game(name="In charge of sacred object",type=1,url='http://shulk101.com/'))
-    
+
     await CustomCommands.readCommands(CustomCommands)
 
 @client.event
@@ -107,7 +107,7 @@ async def on_member_join(member):
 
     if None == channel:
         raise Exception
-    
+
     await client.send_message(channel,result['message'].format(member.mention,member.display_name,member.server.name))
 
 @client.event
@@ -122,7 +122,7 @@ async def on_member_remove(member):
 @client.event
 async def on_member_update(member_before,member_after):
     global most_recent_name_change
-    
+
     channel = discord.utils.get(member_after.server.channels, name='server-logs')
     logs    = client.get_cog('ServerLogs')
     e = await logs.determineUserChange(member_before,member_after)
@@ -183,7 +183,7 @@ async def on_command(command, ctx):
         destination = '#s{0.channel.name} - {0.server.name}'.format(message)
 
     logger.info('{0.timestamp}: {0.author.name} in {1}: {0.content}'.format(message, destination))
-    
+
 @client.event
 async def on_message(message):
     if message.author == client.user:
@@ -195,22 +195,22 @@ async def on_message(message):
         csr.execute(sql,message.author.id)
     connection.commit()
     connection.close()
-    
+
     if message.content.startswith(prefix):
         admin = client.get_cog('Admin')
-        
+
         space_location = message.content.find(" ")
         if space_location == -1:
             command = message.content[1:]
         else:
             command = message.content[1:space_location]
 
-        if admin:        
+        if admin:
             if await admin.checkAndAssignRole(command,message):
                 return
-            
+
         response = await CustomCommands.checkIfCommandTriggered(CustomCommands,message,command)
-        
+
         if response != False:
             await client.send_message(message.channel,response)
         else:
@@ -226,16 +226,9 @@ if __name__ == '__main__':
         except Exception as e:
             print('Failed to load extension {}\n{}: {}'.format(extension, type(e).__name__, e))
 
-    while True:
-        try:
-            client.run(token)
-            asyncio.sleep(30)
-        except:
-            p = subprocess.Popen(r'C:\Users\Administrator\Desktop\start.bat', creationflags=subprocess.CREATE_NEW_CONSOLE)
-            break
+    client.run(token)
     
     handlers = logger.handlers[:]
     for hdlr in handlers:
         hdlr.close()
         logger.removeHandler(hdlr)
-    

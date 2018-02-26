@@ -34,11 +34,11 @@ class Starboard:
         # message_id: as follows ->
         # bot_message: <bot message>
         # starred_user_ids : [<starred user ids>]
-        self.stars = config.Config(r'C:\Users\Administrator\python-discord-bot\cogs\utilities\stars.json')
+        self.stars = config.Config(r'stars.json')
 
         # cache message objects.
         self._message_cache = {}
-        
+
 
     async def on_socket_raw_receive(self, data):
         # no binary allowed please
@@ -48,13 +48,13 @@ class Starboard:
         data       = json.loads(data)
         event_name = data.get('t')
         payload    = data.get('d')
-        
+
         if event_name == 'MESSAGE_REACTION_ADD' or event_name == 'MESSAGE_REACTION_REMOVE':
             if payload['emoji']['name'] != "⭐":
                 return
-            
+
             channel = self.client.get_channel(payload.get('channel_id'))
-            
+
             if channel is None or channel.is_private:
                 return
 
@@ -73,7 +73,7 @@ class Starboard:
                 await self.stars.remove(message.id)
             else:
                 await self.stars.put(message.id, data)
-            
+
             if member is None or member.bot:
                 return
 
@@ -87,16 +87,16 @@ class Starboard:
         This creates a new channel with the specified name
         and makes it into the server's "starboard". If no
         name is passed in then it defaults to "starboard".
-        
+
         If the channel is deleted then the starboard is
         deleted as well.
-        
+
         You must have Administrator permissions to use this
         command.
         """
         server = ctx.message.server
         stars = self.stars.get(server.id, {})
-        
+
         previous_starboard = self.client.get_channel(stars.get('channel'))
         if previous_starboard is not None:
             fmt = 'This server already has a starboard ({.mention})'
@@ -129,7 +129,7 @@ class Starboard:
             await self.stars.put(server.id, stars)
             await self.client.say('\N{GLOWING STAR} Starboard created at ' + channel.mention)
 
-    async def createEmbedForStarredMessage(self,message,db):        
+    async def createEmbedForStarredMessage(self,message,db):
         e = discord.Embed()
         e.timestamp = message.timestamp
         author = message.author
@@ -146,14 +146,14 @@ class Starboard:
 
         message_data = db['messages'][message.id]
         number_of_stars = len(message_data['starred_user_ids'])
-        star_emoji      = await self.getEmojiForStar(number_of_stars)   
+        star_emoji      = await self.getEmojiForStar(number_of_stars)
 
         e.add_field(name="Stars",value=star_emoji+" **"+str(number_of_stars)+"**")
         return e
 
     async def starMessage(self,message,db):
         starboard = self.client.get_channel(db.get('channel'))
-        
+
         if message.id in db['messages']:
             message_data = db['messages'][message.id]
             print(message_data)
@@ -165,12 +165,12 @@ class Starboard:
             message_data = db['messages'][message.id]
 
         await self.client.edit_message(bot_message, embed=await self.createEmbedForStarredMessage(message,db))
-                           
+
         return message_data
 
     async def unstarMessage(self,message,db):
         starboard = self.client.get_channel(db.get('channel'))
-        
+
         message_data = db['messages'][message.id]
         bot_message = await self.client.get_message(starboard,message_data['bot_message_id'])
         db['messages'][message.id]['starred_user_ids'].remove(message.author.id)
