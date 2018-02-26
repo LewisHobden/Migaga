@@ -156,7 +156,6 @@ class Starboard:
 
         if message.id in db['messages']:
             message_data = db['messages'][message.id]
-            print(message_data)
             bot_message = await self.client.get_message(starboard,message_data['bot_message_id'])
             db['messages'][message.id]['starred_user_ids'].append(message.author.id)
         else:
