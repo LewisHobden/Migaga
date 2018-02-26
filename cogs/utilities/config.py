@@ -47,7 +47,6 @@ class Config:
     async def put(self, key, value, *args):
         """Edits a config entry."""
         self._db[key] = value
-        print(self._db)
         await self.save()
 
     async def remove(self, key):
