@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 def connectToDatabase():
     return pymysql.connect(host='discord.crtejrmgafyl.us-east-1.rds.amazonaws.com',
                            user='lewis',
-                           password='ImABot12',
+                           password='vyrs5CV4eaksQJRF',
                            db='discord',
                            charset='utf8mb4',
                            cursorclass=pymysql.cursors.DictCursor)
