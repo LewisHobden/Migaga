@@ -2,7 +2,7 @@ import pymysql
 
 class Database(object):
 	DATABASE_HOST = 'discord.crtejrmgafyl.us-east-1.rds.amazonaws.com'
-	DATABASE_PASS = 'ImABot12'
+	DATABASE_PASS = 'vyrs5CV4eaksQJRF'
 	DATABASE_USER = 'lewis'
 	DATABASE_DATA = 'discord'
 	
