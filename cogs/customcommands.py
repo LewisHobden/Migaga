@@ -76,7 +76,7 @@ class CustomCommands:
 			description = response[1] if len(response) == 2 else ""
 			cursor.execute(sql, [command_name, response[0], description, ctx.message.server.id])
 
-			await self.client.say("Whew! All done! I have added the command \"**"+command_name+"**\"!add, with a response: \"**"+response[0]+"**\" and description: \"**"+description+"**\" to the server **"+ctx.message.server.name+"**")
+			await self.client.say("Whew! All done! I have added the command \"**"+command_name+"**\", with a response: **\""+response[0]+"\"** and description: \"**"+description+"**\" to the server **"+ctx.message.server.name+"**")
 			await self.setCommand(command_name, description, response[0], ctx.message.server.id, cursor.lastrowid)
 
 		connection.commit()
