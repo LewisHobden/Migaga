@@ -26,7 +26,6 @@ class Money:
 	
 	def __init__(self, client):
 		self.client	   = client
-		self._reminder = self.client.loop.create_task(self.medicationReminder()) 
 	
 	@commands.command(no_pm=True, pass_context=True)
 	async def money(self, ctx):
