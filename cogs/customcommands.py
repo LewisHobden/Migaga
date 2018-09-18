@@ -32,7 +32,7 @@ class CustomCommands:
 			return False
 
 		results = []
-		for check in CustomCommands.COMMANDS[message.server.id]:
+		for check in CustomCommands.COMMANDS[str(message.server.id)]:
 			if check["name"].lower() == command.lower():
 				results.append(check["response"])
 
@@ -153,7 +153,7 @@ class CustomCommands:
 			connection.close()
 
 		for row in cursor:
-			await self.setCommand(self, row["name"], row["description"], row["response"], row["server_id"], row["id"])
+			await self.setCommand(self, row["name"], row["description"], row["response"], str(row["server_id"]), row["id"])
 					
 					
 	async def setCommand(self, name, description, response, server_id, command_id):
