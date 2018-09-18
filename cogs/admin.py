@@ -119,7 +119,7 @@ class Admin:
 			cursor.execute(sql, [assign_role.id])
 			result = cursor.fetchone()
 			if None == result:
-				print("This shit don't exist yo")
+				pass
 			else:
 				await self.client.say("This role already has an alias, it is "+result['alias']+" this command will override it.")
 				database.query("DELETE FROM `discord_role_aliases` WHERE `role_id`=%s",assign_role.id)
