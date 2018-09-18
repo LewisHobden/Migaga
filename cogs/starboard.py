@@ -34,7 +34,7 @@ class Starboard:
         # message_id: as follows ->
         # bot_message: <bot message>
         # starred_user_ids : [<starred user ids>]
-        self.stars = config.Config(r'C:\Users\Administrator\python-discord-bot\cogs\utilities\stars.json')
+        self.stars = config.Config('stars.json')
 
         # cache message objects.
         self._message_cache = {}

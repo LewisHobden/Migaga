@@ -73,7 +73,7 @@ class CustomCommands:
 
 		with connection.cursor() as cursor:
 			sql = "INSERT INTO `discord_commands` VALUES (0, %s, %s, %s, %s)"
-			cursor.execute(sql, [command_name, response[0], response[1], ctx.message.server.id])
+			cursor.execute(sql, [command_name, response[0], response.get(1), ctx.message.server.id])
 
 			await self.client.say("Whew! All done! I have added the command **"+command_name+"**, with a response: **"+response[0]+"** and description: **"+response[1]+"** to the server **"+ctx.message.server.name+"**")
 			await self.setCommand(command_name, response[1], response[0], ctx.message.server.id, cursor.lastrowid)

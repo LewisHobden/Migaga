@@ -60,8 +60,8 @@ class Money:
 			await self.client.say("You cannot afford give that much "+self.CURRENCY_NAME+"!")
 			return False
 
-		await self.changeMoney(giver.id, amount*-1)
-		await self.changeMoney(recipient.id, amount)
+		# await self.changeMoney(giver.id, amount*-1)
+		# await self.changeMoney(recipient.id, amount)
 
 		await self.client.say("Success! I have given **"+recipient.name+"** "+str(amount)+" "+self.CURRENCY_NAME+" from **"+giver.name+"**!")
 		
@@ -76,6 +76,9 @@ class Money:
 			connection.close()
 
 	async def checkMoney(self, user_id):
+		await self.client.say("Working on reinstating this..")
+		return
+
 		connection = connectToDatabase()
 		try:
 			with connection.cursor() as cursor:
@@ -86,20 +89,6 @@ class Money:
 			print(error)
 		finally:
 			connection.close()
-		
-	async def medicationReminder(self):
-		await self.client.wait_until_ready()
-		while not self.client.is_closed:
-			try:
-				print("Running")
-				channel = self.client.get_channel("295312577351778304")
-				await self.client.send_message(channel,"<@139048810897866752> don't forget your medication today!")
-				await asyncio.sleep(86400) #86400 is a day
-			except asyncio.CancelledError:
-				pass
-		
-		
-
 
 def setup(client):
 	client.add_cog(Money(client))

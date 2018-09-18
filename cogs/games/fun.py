@@ -78,7 +78,7 @@ class Fun:
 	@commands.command()
 	async def cat(self):
 		''' Type this to get a cute picture of a cat! '''
-		url = "http://random.cat/meow/"
+		url = "http://aws.random.cat/meow/"
 		response = urlopen(url).read()
 
 		response = str(response)
