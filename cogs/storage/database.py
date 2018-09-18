@@ -1,9 +1,9 @@
 import pymysql
 
 class Database(object):
-	DATABASE_HOST = 'discord.crtejrmgafyl.us-east-1.rds.amazonaws.com'
-	DATABASE_PASS = 'vyrs5CV4eaksQJRF'
-	DATABASE_USER = 'lewis'
+	DATABASE_HOST = 'localhost'
+	DATABASE_PASS = '6DcgvKYTXCA34eKQfuE8xhBo'
+	DATABASE_USER = 'robot'
 	DATABASE_DATA = 'discord'
 	
 	def __init__(self):
