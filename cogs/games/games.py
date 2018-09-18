@@ -86,7 +86,7 @@ class Games:
         await self.client.say(printedMessage)
 
         # Save new progress
-        await Money.changeMoney(Money, playerID, int(winnings))
+        # await Money.changeMoney(Money, playerID, int(winnings))
 
         # 10 second timeout.
         await self.client.wait_for_message(author=player, timeout=10, content="-slots")
@@ -200,7 +200,7 @@ class Games:
         elif win_state == 4:
             message = "That means.. it's a tie **" + player.name + "**?! uhh.. Keep your bet!"
             
-        await Money.changeMoney(Money, player.id, money)
+        # await Money.changeMoney(Money, player.id, money)
         return message
         
 

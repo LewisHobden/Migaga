@@ -20,6 +20,9 @@ class Quiz:
 	@commands.command(pass_context=True)
 	async def quiz(self,ctx):
 		'''Quiz yourself! How much do you know?'''
+		await self.client.say("Coming back soon, please hold tight!")
+		return
+		
 		connection = connectToDatabase()
 		
 		with connection.cursor() as cursor:
