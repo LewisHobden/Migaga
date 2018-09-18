@@ -188,6 +188,8 @@ class Admin:
 			connection.commit()
 			connection.close()
 
+		await self.client.delete_message(message)
+
 	@commands.command(no_pm=True,pass_context=True)
 	@credential_checks.hasPermissions(kick_members=True)
 	async def names(self,ctx,member : discord.Member):
