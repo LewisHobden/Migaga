@@ -27,7 +27,7 @@ bot_description = """ Lewis' Discord Bot Version 3 """
 prefix          = "!"
 client          = commands.Bot(command_prefix=prefix, description=bot_description, pm_help=None)
 
-debug = True
+debug = False
 
 extensions = [
                 "cogs.smash.smash",
