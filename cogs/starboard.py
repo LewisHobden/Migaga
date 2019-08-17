@@ -21,7 +21,7 @@ def load_starboard():
 
     return commands.check(load)
 
-class Starboard:
+class Starboard(commands.Cog):
     """ Commands related to the Starboard. """
     def __init__(self, client):
         self.client = client
@@ -59,7 +59,7 @@ class Starboard:
                 return
 
             # Check if this message has already been starred.
-            server = channel.server
+            server = channel.guild
             db     = self.stars.get(server.id)
             message = await self.client.get_message(channel, payload['message_id'])
             member  = message.author

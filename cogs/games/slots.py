@@ -8,7 +8,7 @@ import pymysql
 import time
 
 
-class Games:
+class Games(commands.Cog):
     @client.command(pass_context=True)
     async def slots(ctx):
         """ A slot machine, pay in 100 gold, you might get 200, or more out! """
@@ -43,7 +43,7 @@ class Games:
 
         if canPlay:
             fruits = [emoji.emojize(":cat:"), emoji.emojize(":dog:"), emoji.emojize(":honeybee:"), emoji.emojize(":baby_chick:"), emoji.emojize(":rabbit:")]
-                
+
             # Create Board
             board = []
             for i in range(0,3):
@@ -58,7 +58,7 @@ class Games:
 
             # Load/Add Progress
             gameCredits = await countRupees(playerID)
-            
+
             # Detect Matches
             winnings = 0
             if board[0][0] == board[1][0] and board[0][0] == board[2][0]:
@@ -84,7 +84,7 @@ class Games:
                 winnings = -100
 
             totalCredits = int(gameCredits) + int(winnings)
-            
+
             if winnings > 0:
                 playerWinnings = player.mention + " has won **" + str(winnings) + "** and now has **" + str(totalCredits) + "** Gold!"
             elif winnings < 0:
@@ -92,7 +92,7 @@ class Games:
 
             # Save new progress
             # await addRupees(playerID, totalCredits)
-            
+
             # Print Board
             line1 = board[0][0] + board[0][1] + board[0][2]
             line2 = board[1][0] + board[1][1] + board[1][2]

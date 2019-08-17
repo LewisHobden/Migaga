@@ -13,7 +13,7 @@ import random
 
 log = logging.getLogger(__name__)
 
-class Smash:
+class Smash(commands.Cog):
 	"""Super Smash Bros for Wii U  frame data and calculations."""
 	def __init__(self, client):
 		self.client = client

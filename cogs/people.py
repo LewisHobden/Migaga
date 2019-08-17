@@ -12,7 +12,7 @@ import pymysql
 import random
 import time
 
-class People:
+class People(commands.Cog):
     """ Commands relating to getting details on people. """
     def __init__(self, client):
         self.client = client

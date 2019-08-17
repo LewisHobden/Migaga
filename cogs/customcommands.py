@@ -6,7 +6,7 @@ import datetime
 import random
 import logging
 import pymysql
-import time    
+import time
 
 log = logging.getLogger(__name__)
 
@@ -18,10 +18,10 @@ def connectToDatabase():
 						   charset='utf8mb4',
 						   cursorclass=pymysql.cursors.DictCursor)
 
-class CustomCommands:
+class CustomCommands(commands.Cog):
 	""" Custom commands for your servers! """
 	COMMANDS = {}
-	
+
 	def __init__(self, client):
 		self.client = client
 
@@ -64,7 +64,7 @@ class CustomCommands:
 		if not can_add_commands:
 			await self.client.say("Sorry! Your server has over 50 custom commands attached to it! Delete some with -deletecommand or wait to see if you can have more!")
 			return
-		
+
 		await self.client.say("Okay, can do. What should it respond with? Once you've finished the response, put a \"##\" and then write the command description.\n__Example__\n:eyes:##Make the bot give you the eyes.")
 		response = await self.client.wait_for_message(author=ctx.message.author)
 		response = response.content.split("##")
@@ -80,13 +80,13 @@ class CustomCommands:
 			await self.setCommand(command_name, description, response[0], ctx.message.server.id, cursor.lastrowid)
 
 		connection.commit()
-		
+
 	async def searchCommands(self,server_id,command_name):
 		results = []
 		for command in self.COMMANDS[server_id]:
 			if command["name"].find(command_name) != -1:
 				results.append(command)
-		
+
 		return results
 
 
@@ -95,7 +95,7 @@ class CustomCommands:
 	async def deletecommand(self, ctx, command_name):
 		""" Delete a command from the server """
 		results = await self.searchCommands(ctx.message.server.id,command_name)
-		
+
 		if len(results) == 0:
 			await self.client.say("No commands were found using that search term!")
 			return
@@ -109,18 +109,18 @@ class CustomCommands:
 			for command in results:
 				msg += "{0!s}. **{1}** - responding with `{2}`\n".format(counter+1, command['name'], command['response'])
 				counter += 1
-				
+
 
 			await self.client.say(msg)
 			response = await self.client.wait_for_message(author=ctx.message.author)
 			response = response.content
 
-			
+
 			if response.find(",") != -1:
 				ids_to_delete = response.split(",")
 			else:
 				ids_to_delete = [response]
-				
+
 			for command_id in ids_to_delete:
 				try:
 					command_id = int(command_id.strip()) - 1
@@ -154,8 +154,8 @@ class CustomCommands:
 
 		for row in cursor:
 			await self.setCommand(self, row["name"], row["description"], row["response"], str(row["server_id"]), row["id"])
-					
-					
+
+
 	async def setCommand(self, name, description, response, server_id, command_id):
 		command = {"name" : name, "response" : response, "description" : description, "id" : command_id}
 
@@ -169,20 +169,19 @@ class CustomCommands:
 		results = await self.searchCommands(ctx.message.server.id,command_name)
 		result_str  = "{} commands found".format(len(results))
 		result_str += "```\n"
-		
+
 		commands = []
 		for result in results:
 			if "!{}\n".format(result['name']) in commands:
 				pass
 			else:
 				commands.append("!{}\n".format(result['name']))
-			
+
 		result_str += "".join(commands)
 		result_str += "```"
-		
+
 		await self.client.say(result_str)
-		
-		
+
+
 def setup(client):
     client.add_cog(CustomCommands(client))
-

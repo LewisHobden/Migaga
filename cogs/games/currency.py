@@ -5,7 +5,7 @@ import discord
 import datetime
 import logging
 import pymysql
-import time	   
+import time
 import asyncio
 
 log = logging.getLogger(__name__)
@@ -20,13 +20,13 @@ def connectToDatabase():
 						   charset='utf8mb4',
 						   cursorclass=pymysql.cursors.DictCursor)
 
-class Money:
+class Money(commands.Cog):
 	"""The currency of the bot."""
 	CURRENCY_NAME = "money"
-	
+
 	def __init__(self, client):
 		self.client	   = client
-	
+
 	@commands.command(no_pm=True, pass_context=True)
 	async def money(self, ctx):
 		""" See how much you have earned! """
@@ -42,11 +42,11 @@ class Money:
 		await self.client.say("**"+member.name+"**, You have earned "+str(money['money'])+" "+self.CURRENCY_NAME+" after playing "+str(money['times_played'])+" games!")
 
 	@commands.command(no_pm=True, pass_context=True)
-	async def give(self, ctx, recipient : discord.Member, amount):	  
+	async def give(self, ctx, recipient : discord.Member, amount):
 		""" Send to another person! """
 		giver		 = ctx.message.author
 		giver_budget = await self.checkMoney(giver.id)
-		
+
 		try:
 			amount = int(amount)
 		except ValueError:
@@ -63,7 +63,7 @@ class Money:
 		# await self.changeMoney(recipient.id, amount)
 
 		await self.client.say("Success! I have given **"+recipient.name+"** "+str(amount)+" "+self.CURRENCY_NAME+" from **"+giver.name+"**!")
-		
+
 	async def changeMoney(self, user_id, money):
 		# Add money to the database.
 		connection = connectToDatabase()

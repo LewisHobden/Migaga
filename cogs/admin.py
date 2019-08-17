@@ -9,7 +9,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
-class Admin:
+class Admin(commands.Cog):
 	"""Moderation related commands."""
 	def __init__(self, client):
 		self.client = client
@@ -77,7 +77,7 @@ class Admin:
 		"""
 		try:
 			await self.client.ban(member)
-			await self.client.unban(member.server, member)
+			await self.client.unban(member.guild, member)
 		except discord.Forbidden:
 			await self.client.say("The bot does not have permissions to kick members.")
 		except discord.HTTPException:
@@ -230,7 +230,7 @@ class Admin:
 
 	@commands.command(no_pm=True, pass_context=True)
 	@credential_checks.hasPermissions(manage_messages=True,add_reactions=True)
-	async def react(self,ctx,emoji : str,channel : discord.Channel, limit=50):
+	async def react(self,ctx,emoji : str,channel : discord.TextChannel, limit=50):
 		""" Reacts to messages in the channel. """
 		# A quick and dirty way of handling custom emoji.
 		if(emoji.startswith("<")):
@@ -249,7 +249,7 @@ class Admin:
 
 	@commands.command(no_pm=True, pass_context=True)
 	@credential_checks.hasPermissions(manage_messages=True,add_reactions=True)
-	async def clearreacts(self,ctx,channel : discord.Channel, emoji : str=None, user : discord.User = None, limit=50):
+	async def clearreacts(self,ctx,channel : discord.TextChannel, emoji : str=None, user : discord.User = None, limit=50):
 		""" Clears reactions to messages in the channel.
 
 		If an emoji is provided then it will clear all reactions of a specific emoji. However due to a limitation with Discord it can only remove the messages by the bot, or a provided user."""
@@ -349,6 +349,66 @@ class Admin:
 			embed.add_field(name="Command Uses",value=result['uses'])
 
 		await self.client.send_message(ctx.message.channel,embed=embed)
+
+	@commands.command(no_pm=True, pass_context=True)
+	@credential_checks.hasPermissions(manage_roles=True)
+	async def rolereact(self,ctx,*,role_name):
+		"""Adds a role to the bot so that it can be self assigned by reacting to a message.
+
+		Migaga will ask for the message ID and then the reaction, if you have roles with the same name the last one will be chosen.
+		You must have the "Manage Roles" privilege in order to use this command."""
+		server = ctx.message.server
+		assign_role = None
+		for role in server.roles:
+			if role.name.lower() == role_name.lower():
+				assign_role = role
+
+		if assign_role == None:
+			await self.client.say("This role could not be found and therefore could not be registered!")
+			return
+
+		await self.client.say("Role found: "+assign_role.name+", its ID is "+assign_role.id)
+		await self.client.say("What is the ID of the message to be reacted to? If you don't know how to get a message ID just say \"help\"!")
+
+		response = await self.client.wait_for_message(author=ctx.message.author)
+
+		while(response.content == "help"):
+			await self.client.say("Here's a helpful support post about it! https://support.discordapp.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-")
+			response = await self.client.wait_for_message(author=ctx.message.author)
+
+		message_id = response.content.strip()
+
+		try:
+			message = self.client.get_message(alias)
+		except NotFound as e:
+			await self.client.say("Sorry that message could not be found!")
+		except Forbidden as e:
+			await self.client.say("Sorry, I am forbidden to do that!")
+		except Exception as e:
+			await self.client.say("Sorry, something went wrong. Please try again?")
+			raise e
+
+		print(message)
+		connection = connectToDatabase()
+
+		database = Database()
+
+		with connection.cursor() as cursor:
+			sql = "SELECT * FROM `discord_role_aliases` WHERE `role_id`=%s"
+
+			#try:
+			cursor.execute(sql, [assign_role.id])
+			result = cursor.fetchone()
+			if None == result:
+				pass
+			else:
+				await self.client.say("This role already has an alias, it is "+result['alias']+" this command will override it.")
+				database.query("DELETE FROM `discord_role_aliases` WHERE `role_id`=%s",assign_role.id)
+
+		database.query("INSERT INTO `discord_role_aliases` VALUES (0, %s, %s, %s, '0','0');",[alias,assign_role.id,server.id])
+
+		connection.commit()
+		await self.client.say("Whew! All done! I have added the role **"+assign_role.name+"**, to the alias: **"+alias+"** in this server: **"+server.name+"**")
 
 	@commands.command(no_pm=True,hidden=True,pass_context=True)
 	@credential_checks.hasPermissions(manage_messages=True)

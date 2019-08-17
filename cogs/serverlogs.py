@@ -15,7 +15,7 @@ from urllib.request import Request, urlopen
 
 log = logging.getLogger(__name__)
 
-class ServerLogs:
+class ServerLogs(commands.Cog):
 	""" Logging server activity. """
 	def __init__(self, client):
 		self.client = client
@@ -113,7 +113,7 @@ class ServerLogs:
 	#	e = await ServerLogs.generateBoilerPlateEmbed(user_after,"4359924")
 	#	e.title       = ":frame_photo: Avatar Change :frame_photo:"
 	#	e.description = "Before / After";
-	#	
+	#
 	#	channel = self.client.get_channel("242963032844533761")
 #
 #		image1 = await ServerLogs.downloadImageFromURL(user_before.avatar_url,"image_1")
@@ -176,7 +176,7 @@ class ServerLogs:
 
 			if i < len(member.roles):
 				string += ", "
-			
+
 			i += 1
 
 		return string

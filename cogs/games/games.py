@@ -11,7 +11,7 @@ import time
 
 log = logging.getLogger(__name__)
 
-class Games:
+class Games(commands.Cog):
     """ All Games that can be played """
     def __init__(self, client):
         self.client = client
@@ -25,7 +25,7 @@ class Games:
                     board[i].append(" ")
 
         return board
-    
+
     @commands.command(pass_context=True)
     async def slots(self, ctx):
         '''A slot machine.
@@ -47,7 +47,7 @@ class Games:
         for rowNumber in range(0, 3):
             for columnNumber in range (0, 3):
                 board[rowNumber][columnNumber] = fruits[random.randint(0, len(fruits) - 1)]
-        
+
         # Detect Matches
         winnings = 0
         if board[0][0] == board[1][0] and board[0][0] == board[2][0]:
@@ -71,12 +71,12 @@ class Games:
 
         if winnings == 0:
             winnings = -100
-        
+
         if winnings > 0:
             playerWinnings = "**"+player.name+"**"+" has won **"+str(winnings)+"**!"
         elif winnings < 0:
             playerWinnings = "**"+player.name+"**"+" has lost **"+str(abs(winnings))+"**!"
-        
+
         # Print Board
         line1 = str(board[0][0])+str(board[0][1])+str(board[0][2])
         line2 = str(board[1][0])+str(board[1][1])+str(board[1][2])
@@ -101,7 +101,7 @@ class Games:
         botChoice = choices[random.randint(0,2)]
 
         matchups = {"paper": ["rock", "scissors"], "rock": ["scissors", "paper"], "scissors": ["paper", "rock"]}
-        
+
         if botChoice == playerChoice:
             await self.client.say("I choose.. " + botChoice + "! We both chose the same thing! Oops!")
             return
@@ -110,7 +110,7 @@ class Games:
             await self.client.say("I choose.. " + botChoice + "! You won! Nice!")
         else:
             await self.client.say("I choose.. " + botChoice + "! I won! Better luck next time!")
-            return 
+            return
 
 
     @commands.command(pass_context=True)
@@ -119,10 +119,10 @@ class Games:
         suits  = [":spades:", ":hearts:", ":diamonds:", ":clubs:"]
         values = [2, 3, 4, 5, 6, 7, 8, 9, 10, "King", "Queen", "Jack", "Ace"]
         total  = 0
-        
+
         await self.client.say("Welcome to blackjack! I am your host, I am going to draw my cards and see if you can beat me! But first of all, how much "+Money.CURRENCY_NAME+" would you like to bet?")
         bet_amount = await self.client.wait_for_message(author=ctx.message.author, channel=ctx.message.channel)
-            
+
         try:
             bet_amount = int(bet_amount.content)
             if bet_amount > 1000:
@@ -134,9 +134,9 @@ class Games:
         except:
             await self.client.say("A number, please.")
             return
-                
+
         await self.client.say("Done! Now let's draw your first card. Say anything to draw another card, say `stop` at any time to turn in your total!")
-        
+
         while True:
             suit  = random.choice(suits)
             value = random.choice(values)
@@ -164,7 +164,7 @@ class Games:
                     except ValueError:
                         await self.client.say("Could I have that in the form of a number, please?")
                         counter += 1
-                    
+
             total = total + value
 
             if total <= 21:
@@ -174,14 +174,14 @@ class Games:
                 return
 
             will_continue = await self.client.wait_for_message(author=ctx.message.author, channel=ctx.message.channel)
-        
+
             if will_continue.content.lower() == "stop":
                 botTotal = random.randint(16, 21)
                 await self.client.say("And that's the end of the game! Let's see how we compared.. \n \n I got **" + str(botTotal) + "** and you got **" + str(total) + "**!")
                 await self.checkForBlackjackWins(ctx, total, botTotal, bet_amount)
                 return
 
-    
+
     async def checkForBlackjackWins(self, player, total, botTotal, bet_amount):
         if total > botTotal:
             await self.client.say(await self.endBlackjack(1, player, bet_amount*2, total))
@@ -199,10 +199,10 @@ class Games:
             message = "That means.. ooh you lost, **" + player.name + "**.. Better luck next time, and your bet has been taken!"
         elif win_state == 4:
             message = "That means.. it's a tie **" + player.name + "**?! uhh.. Keep your bet!"
-            
+
         # await Money.changeMoney(Money, player.id, money)
         return message
-        
+
 
 def setup(client):
     client.add_cog(Games(client))

@@ -12,33 +12,33 @@ import time
 
 log = logging.getLogger(__name__)
 
-class Quiz:
+class Quiz(commands.Cog):
 
 	def __init__(self, client):
 		self.client = client
-		
+
 	@commands.command(pass_context=True)
 	async def quiz(self,ctx):
 		'''Quiz yourself! How much do you know?'''
 		await self.client.say("Coming back soon, please hold tight!")
 		return
-		
+
 		connection = connectToDatabase()
-		
+
 		with connection.cursor() as cursor:
 			sql = "SELECT COUNT(*) as `total` FROM `discord_quiz_questions` WHERE `server_id` = %s"
 			cursor.execute(sql, (ctx.message.server.id))
 			result = cursor.fetchone()
-			
+
 			if 0 == int(result['total']):
 				await self.client.say("There are no quiz questions in your server yet! Contact the server admin and get that sorted!")
 				return
-		
+
 			sql = "SELECT * FROM `discord_quiz_questions` WHERE `server_id` = %s"
 			cursor.execute(sql, (ctx.message.server.id))
 			questions = cursor.fetchall()
-		
-		
+
+
 		question_choice = random.choice(questions)
 
 		question = question_choice['question']
@@ -47,10 +47,10 @@ class Quiz:
 
 		await self.client.say(ctx.message.author.mention+", "+question+" \nYou have "+str(time)+" seconds to answer.")
 		theirAnswer = await self.client.wait_for_message(author=ctx.message.author, timeout=int(time))
-		
+
 		awarded = -50
 		theirAnswer.content = theirAnswer.content.lower()
-			
+
 		try:
 			if theirAnswer.content.strip() == answer:
 				await self.client.say("★ Congratulations " + ctx.message.author.mention + " you answered correctly! ★\nYou will be awarded 50 gold!")
@@ -59,9 +59,9 @@ class Quiz:
 				await self.client.say(ctx.message.author.mention + " oh no! That was not the correct answer! -50 gold for you :(")
 		except AttributeError:
 				await self.client.say(ctx.message.author.mention + " you ran out of time, that is unfortunate. Still -50 gold :c")
-				
+
 		await Money.changeMoney(Money, ctx.message.author.id, int(awarded))
-		
+
 	@commands.command(no_pm=True, pass_context=True)
 	@credential_checks.hasPermissions(manage_emojis=True)
 	async def addquestion(self, ctx):

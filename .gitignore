@@ -1,3 +1,4 @@
+# Old Temp
 /cogs/__pycache__/
 /cogs/games/__pycache__/
 /cogs/utilities/__pycache__/
@@ -7,3 +8,6 @@ awwh.jpg
 aww.jpg
 cogs/storage/__pycache__/
 khcache.json
+
+# Config
+config.ini

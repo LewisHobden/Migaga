@@ -7,6 +7,8 @@ from cogs.games.currency import connectToDatabase
 from cogs.storage.database import Database
 from time import gmtime, strftime
 
+import configparser
+
 import discord
 import datetime
 import logging
@@ -16,6 +18,10 @@ import traceback
 
 most_recent_name_change = None
 
+# Load the config
+config = configparser.ConfigParser()
+config.read("config.ini")
+
 # Begin logging
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
@@ -23,7 +29,7 @@ handler = logging.FileHandler(filename='migagalogs.logger', encoding='utf-8', mo
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
-bot_description = """ Lewis' Discord Bot Version 3 """
+bot_description = """ Lewis' Discord Bot Version 4 """
 prefix          = "!"
 client          = commands.Bot(command_prefix=prefix, description=bot_description, pm_help=None)
 
@@ -45,7 +51,7 @@ extensions = [
 
 @client.event
 async def on_command_error(error, ctx):
-    exceptions_channel = discord.utils.get(client.get_all_channels(), server__id='197972184466063381', id='254215930416988170')
+    exceptions_channel = discord.utils.get(client.get_all_channels(), guild__id='197972184466063381', id='254215930416988170')
 
     if debug == True:
         exceptions_channel = ctx.message.channel
@@ -76,18 +82,17 @@ async def on_command_error(error, ctx):
 @client.event
 async def on_ready():
     print('Logged in as: '+client.user.name)
-    print('ID: '+client.user.id)
     print('------')
     if not hasattr(client, 'uptime'):
         client.uptime = datetime.datetime.utcnow()
 
-    await client.change_presence(game=discord.Game(name="In charge of sacred object",type=1,url='http://shulk101.com/'))
+    await client.change_presence(activity=discord.Activity(name="In charge of sacred object",type=1,url='http://shulk101.com/'))
 
     await CustomCommands.readCommands(CustomCommands)
 
 @client.event
 async def on_member_join(member):
-    channel = discord.utils.get(member.server.channels, name='server-logs')
+    channel = discord.utils.get(member.guild.channels, name='server-logs')
     logs    = client.get_cog('ServerLogs')
     e       = await logs.showMemberJoin(member)
 
@@ -97,7 +102,7 @@ async def on_member_join(member):
     connection = connectToDatabase()
     with connection.cursor() as cursor:
         sql = "SELECT `message`,`channel_id` FROM `discord_welcome_messages` WHERE `server_id`=%s"
-        cursor.execute(sql, member.server.id)
+        cursor.execute(sql, member.guild.id)
         result = cursor.fetchone()
 
     if None == result:
@@ -108,11 +113,11 @@ async def on_member_join(member):
     if None == channel:
         raise Exception
 
-    await client.send_message(channel,result['message'].format(member.mention,member.display_name,member.server.name))
+    await client.send_message(channel,result['message'].format(member.mention,member.display_name,member.guild.name))
 
 @client.event
 async def on_member_remove(member):
-    channel = discord.utils.get(member.server.channels, name='server-logs')
+    channel = discord.utils.get(member.guild.channels, name='server-logs')
     logs    = client.get_cog('ServerLogs')
     e       = await logs.showMemberLeave(member)
 
@@ -123,7 +128,7 @@ async def on_member_remove(member):
 async def on_member_update(member_before,member_after):
     global most_recent_name_change
 
-    channel = discord.utils.get(member_after.server.channels, name='server-logs')
+    channel = discord.utils.get(member_after.guild.channels, name='server-logs')
     logs    = client.get_cog('ServerLogs')
     e = await logs.determineUserChange(member_before,member_after)
 
@@ -148,7 +153,7 @@ async def on_message_edit(message_before,message_after):
 
 @client.event
 async def on_member_ban(member):
-    channel = discord.utils.get(member.server.channels, name='server-logs')
+    channel = discord.utils.get(member.guild.channels, name='server-logs')
     logs    = client.get_cog('ServerLogs')
     e       = await logs.showMemberBan(member)
 
@@ -188,7 +193,7 @@ async def on_command(command, ctx):
 async def on_message(message):
     if message.author == client.user:
         return
-    
+
     if message.content.startswith(prefix):
         admin = client.get_cog('Admin')
 
@@ -210,7 +215,7 @@ async def on_message(message):
             await client.process_commands(message)
 
 if __name__ == '__main__':
-    token            = "MTk3OTg3Nzk0NDA3MTI5MDg5.DAGsZg.Ati3G0mv7TT8cDoYyuPHlj4Mk0s" if debug else "MzA5NzY1MDYwOTA4Mjg1OTUy.DCmGDA.Ks7CD0NinKJWGy280A_Rcf2AD0k"
+    token            = config.get("Env","Token")
     client.client_id = "309765060908285952"
 
     for extension in extensions:
@@ -220,7 +225,7 @@ if __name__ == '__main__':
             print('Failed to load extension {}\n{}: {}'.format(extension, type(e).__name__, e))
 
     client.run(token)
-    
+
     handlers = logger.handlers[:]
     for hdlr in handlers:
         hdlr.close()

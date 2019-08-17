@@ -13,7 +13,7 @@ import re
 import json
 from urllib.request import urlopen, Request
 
-class Fun:
+class Fun(commands.Cog):
 	""" Silly, assorted commands. """
 	def __init__(self, client):
 		self.client = client
@@ -30,7 +30,7 @@ class Fun:
 		url		 = "http://api.urbandictionary.com/v0/define?term={0}".format(query)
 		response = json.loads(urlopen(url, timeout = 15).read().decode('utf-8'))
 		result	 = response["list"][0]
-		
+
 		embed = discord.Embed(title=result["word"], description=result["definition"], url=result["permalink"], color=discord.Color("15899433"))
 		embed.add_field(name="Thumbs Up", value=result["thumbs_up"])
 		embed.add_field(name="Source", value="Urban Dictionary")
@@ -68,13 +68,13 @@ class Fun:
 		if(len(terms) == 0):
 			await self.client.say("Cannot detect any time phrases. Set time phrases using `days`, `hours`, `minutes` and `seconds`.")
 			return
-		
+
 		total = sum(terms)
 
 		await self.client.say("So, I'll remind you in "+str(total)+" seconds to "+str(thing))
 		await asyncio.sleep(total)
 		await self.client.say(person.mention+" this is your reminder to "+thing+"!")
-		
+
 	@commands.command()
 	async def cat(self):
 		''' Type this to get a cute picture of a cat! '''
@@ -84,7 +84,7 @@ class Fun:
 		response = str(response)
 		response = response[11:].replace("\/", "/").replace('"}', '').replace("'", "").replace("\/", "/")
 		await self.client.say(response)
-		
+
 	@commands.command(pass_context=True)
 	async def dog(self,ctx):
 		''' Random dog pictures! So sweet. '''
@@ -104,7 +104,7 @@ class Fun:
 		output = open("awwh.jpg","wb")
 		output.write(response.read())
 		await self.client.send_file(ctx.message.channel,open("awwh.jpg","rb"))
-		
+
 
 def setup(client):
 	client.add_cog(Fun(client))
