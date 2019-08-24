@@ -146,7 +146,7 @@ async def on_member_unban(server, user):
 
 @client.event
 async def on_command(message):
-    print(message)
+    pass
 
 
 @client.event
