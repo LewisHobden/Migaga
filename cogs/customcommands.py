@@ -107,24 +107,17 @@ class CustomCommands(commands.Cog):
 
     @commands.command(no_pm=True, pass_context=True)
     async def search(self, ctx, command_name):
-        results = CustomCommand.get_responses_by_name(ctx.message.guild.id, command_name)
-        result_str = "{} commands found".format(len(results))
+        results = CustomCommand.get_possible_commands_by_name(ctx.channel.guild.id, command_name)
+        result_str = "{} commands found!".format(len(results))
 
         if 0 == len(results):
             await ctx.send(result_str)
             return
 
-        result_str += "```\n"
+        result_str += "\n"
 
-        formatted_commands = []
         for result in results:
-            if "!{}\n".format(result.name) in formatted_commands:
-                pass
-            else:
-                formatted_commands.append("!{}\n".format(result.name))
-
-        result_str += "".join(formatted_commands)
-        result_str += "```"
+            result_str += " - {}\n".format(result.name)
 
         await ctx.send(result_str)
 

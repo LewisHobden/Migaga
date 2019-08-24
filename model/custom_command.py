@@ -10,6 +10,13 @@ class CustomCommand(Model):
     server_id = BigIntegerField()
 
     @classmethod
+    def get_possible_commands_by_name(cls, guild_id: int, command: str) -> iter:
+        return cls.select(cls.name) \
+            .where((cls.name.contains(command)) & (cls.server_id == guild_id)) \
+            .order_by(cls.name) \
+            .group_by(cls.name)
+
+    @classmethod
     def get_random_response_by_name(cls, guild_id: int, command: str) -> iter:
         data = cls.select(cls.response).where((cls.name == command) & (cls.server_id == guild_id))\
             .order_by(fn.rand())\
