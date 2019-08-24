@@ -20,22 +20,22 @@ class Quiz(commands.Cog):
 	@commands.command(pass_context=True)
 	async def quiz(self,ctx):
 		'''Quiz yourself! How much do you know?'''
-		await self.client.say("Coming back soon, please hold tight!")
+		await self.client.send("Coming back soon, please hold tight!")
 		return
 
 		connection = connectToDatabase()
 
 		with connection.cursor() as cursor:
 			sql = "SELECT COUNT(*) as `total` FROM `discord_quiz_questions` WHERE `server_id` = %s"
-			cursor.execute(sql, (ctx.message.server.id))
+			cursor.execute(sql, (ctx.message.guild.id))
 			result = cursor.fetchone()
 
 			if 0 == int(result['total']):
-				await self.client.say("There are no quiz questions in your server yet! Contact the server admin and get that sorted!")
+				await self.client.send("There are no quiz questions in your server yet! Contact the server admin and get that sorted!")
 				return
 
 			sql = "SELECT * FROM `discord_quiz_questions` WHERE `server_id` = %s"
-			cursor.execute(sql, (ctx.message.server.id))
+			cursor.execute(sql, (ctx.message.guild.id))
 			questions = cursor.fetchall()
 
 
@@ -45,20 +45,20 @@ class Quiz(commands.Cog):
 		answer	 = question_choice['answer']
 		time	 = question_choice['time_limit']
 
-		await self.client.say(ctx.message.author.mention+", "+question+" \nYou have "+str(time)+" seconds to answer.")
-		theirAnswer = await self.client.wait_for_message(author=ctx.message.author, timeout=int(time))
+		await self.client.send(ctx.message.author.mention+", "+question+" \nYou have "+str(time)+" seconds to answer.")
+		theirAnswer = await self.client.wait_for("message",check=lambda m : m.author == message.author, timeout=int(time))
 
 		awarded = -50
 		theirAnswer.content = theirAnswer.content.lower()
 
 		try:
 			if theirAnswer.content.strip() == answer:
-				await self.client.say("★ Congratulations " + ctx.message.author.mention + " you answered correctly! ★\nYou will be awarded 50 gold!")
+				await self.client.send("★ Congratulations " + ctx.message.author.mention + " you answered correctly! ★\nYou will be awarded 50 gold!")
 				awarded = 50
 			else:
-				await self.client.say(ctx.message.author.mention + " oh no! That was not the correct answer! -50 gold for you :(")
+				await self.client.send(ctx.message.author.mention + " oh no! That was not the correct answer! -50 gold for you :(")
 		except AttributeError:
-				await self.client.say(ctx.message.author.mention + " you ran out of time, that is unfortunate. Still -50 gold :c")
+				await self.client.send(ctx.message.author.mention + " you ran out of time, that is unfortunate. Still -50 gold :c")
 
 		await Money.changeMoney(Money, ctx.message.author.id, int(awarded))
 
@@ -68,24 +68,24 @@ class Quiz(commands.Cog):
 		""" Add a new quiz question to the server!
 
 		You must have the Manage Emojis permission to do this."""
-		await self.client.say("Okay, what's the question?")
-		question   = await self.client.wait_for_message(author=ctx.message.author)
-		await self.client.say("Sweet. What's the answer? (Write it exactly as you want it to be answered. Case is ignored.)")
-		answer	   = await self.client.wait_for_message(author=ctx.message.author)
-		await self.client.say("And the time limit in seconds?")
-		time_limit = await self.client.wait_for_message(author=ctx.message.author)
+		await self.client.send("Okay, what's the question?")
+		question   = await self.client.wait_for("message",check=lambda m : m.author == message.author)
+		await self.client.send("Sweet. What's the answer? (Write it exactly as you want it to be answered. Case is ignored.)")
+		answer	   = await self.client.wait_for("message",check=lambda m : m.author == message.author)
+		await self.client.send("And the time limit in seconds?")
+		time_limit = await self.client.wait_for("message",check=lambda m : m.author == message.author)
 
 		connection = connectToDatabase()
 
 		with connection.cursor() as cursor:
 			sql = "INSERT INTO `discord_quiz_questions` VALUES (0, %s, %s, %s, %s)"
 			try:
-				cursor.execute(sql, [question.content,answer.content.strip().lower(),int(time_limit.content.strip()),ctx.message.server.id])
+				cursor.execute(sql, [question.content,answer.content.strip().lower(),int(time_limit.content.strip()),ctx.message.guild.id])
 			except:
-				await self.client.say("Sorry, there was an error somewhere.. ensure you have properly provided me with information. If this problem persists contact the admin")
+				await self.client.send("Sorry, there was an error somewhere.. ensure you have properly provided me with information. If this problem persists contact the admin")
 				return
 
-		await self.client.say("Whew! All done! I have added the question **"+question.content+"**, with the answer: **"+answer.content.strip()+"** and a time limit of: **"+time_limit.content.strip()+"** seconds to the server **"+ctx.message.server.name+"**")
+		await self.client.send("Whew! All done! I have added the question **"+question.content+"**, with the answer: **"+answer.content.strip()+"** and a time limit of: **"+time_limit.content.strip()+"** seconds to the server **"+ctx.message.guild.name+"**")
 
 		connection.commit()
 

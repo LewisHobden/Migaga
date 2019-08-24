@@ -99,4 +99,4 @@ class Games(commands.Cog):
             line3 = board[2][0] + board[2][1] + board[2][2]
 
             printedMessage = line1 + "\n" + line2 + "\n" + line3 + "\n" + playerWinnings
-            await client.say(printedMessage)
+            await client.send(printedMessage)

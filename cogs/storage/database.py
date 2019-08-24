@@ -1,12 +1,14 @@
 import pymysql
 import configparser
 
+from environment import Environment
+
 class Database(object):
 	def __init__(self):
-		self.config = configparser.ConfigParser()
-		self.config.read("../../config.ini")
+		env = Environment()
+		self.config = env.get_config()
 
-	def connectToDatabase(this):
+	def connectToDatabase(self):
 		return pymysql.connect(host=self.config.get("Database","Host"),
 						   user=self.config.get("Database","User"),
 						   password=self.config.get("Database","Password"),
@@ -14,8 +16,8 @@ class Database(object):
 						   charset='utf8mb4',
 						   cursorclass=pymysql.cursors.DictCursor)
 
-	def query(this,query,args):
-		connection = this.connectToDatabase()
+	def query(self,query,args = None):
+		connection = self.connectToDatabase()
 
 		with connection.cursor() as cursor:
 			cursor.execute(query,args)

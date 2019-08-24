@@ -82,7 +82,7 @@ class People(commands.Cog):
     @commands.command(pass_context=True)
     async def warnings(self, ctx):
         """ See what warnings you've been given! """
-        user_warnings = await self.getWarningsForUser(ctx.message.author.id, ctx.message.server.id)
+        user_warnings = await self.getWarningsForUser(ctx.message.author.id, ctx.message.guild.id)
         member = ctx.message.author
 
         embed = discord.Embed(description="Warnings for "+member.display_name, colour=7576022)
@@ -105,7 +105,7 @@ class People(commands.Cog):
         try:
             await self.client.send_message(ctx.message.channel, embed=embed)
         except:
-            await self.client.say("There was an error, it's likely they have too many warnings to fit on one screen. I'm working on formatting this better - however I recommend you ban somebody with this many warnings :l")
+            await self.client.send("There was an error, it's likely they have too many warnings to fit on one screen. I'm working on formatting this better - however I recommend you ban somebody with this many warnings :l")
 
     async def getUserProfileInformation(self, user_id):
         connection = connectToDatabase()
@@ -138,7 +138,7 @@ class People(commands.Cog):
         embed = await self.makeProfileEmbedFromUser(member if member else ctx.message.author)
 
         if None == embed:
-            await self.client.say("This user does not have a profile!")
+            await self.client.send("This user does not have a profile!")
             return
 
         await self.client.send_message(ctx.message.channel, embed=embed)
@@ -167,16 +167,16 @@ class People(commands.Cog):
             sql = "INSERT INTO `discord_profiles`(`user_id`, `"+connection.escape(field)[1:-1]+"`) VALUES (%(user_id)s, %(response)s) ON DUPLICATE KEY UPDATE `discord_profiles`.`"+connection.escape(field)[1:-1]+"`=%(response)s"
             try:
                 csr.execute(sql, {"response" : response, "user_id" : ctx.message.author.id})
-                await self.client.say("Successfully set your `"+field+"` to `"+str(response)+"`!")
+                await self.client.send("Successfully set your `"+field+"` to `"+str(response)+"`!")
             except:
-                await self.client.say("Setting your `"+field+"` failed! Perhaps it doesn't exist yet?")
+                await self.client.send("Setting your `"+field+"` failed! Perhaps it doesn't exist yet?")
                 return
 
     @commands.command()
     async def avatar(self, member : discord.Member):
         """ Shows a bigger version of somebody's Avatar! """
         avatar = member.avatar_url if member.avatar else member.default_avatar_url
-        await self.client.say(avatar)
+        await self.client.send(avatar)
 
 
 def setup(client):

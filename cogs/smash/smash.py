@@ -57,8 +57,8 @@ class Smash(commands.Cog):
 		self.typing_channel = ctx.message.channel
 		response = await self.getCharacterDetailedMoves(character_name)
 
-		await self.client.say("What move would you like to look for?")
-		req_move = await self.client.wait_for_message(author=ctx.message.author)
+		await self.client.send("What move would you like to look for?")
+		req_move = await self.client.wait_for("message",check=lambda m : m.author == message.author)
 		req_move = req_move.content.strip()
 
 		possible_moves = []
@@ -67,7 +67,7 @@ class Smash(commands.Cog):
 				possible_moves.append(move)
 
 		if [] == possible_moves:
-			await self.client.say("That move couldn't be found!")
+			await self.client.send("That move couldn't be found!")
 			return
 
 		if len(possible_moves) > 1:
@@ -77,14 +77,14 @@ class Smash(commands.Cog):
 				i = i + 1
 				clari_msg += "**"+str(i)+"**. "+potential_move['moveName']+"\n"
 
-			await self.client.say(clari_msg)
-			choice = await self.client.wait_for_message(author=ctx.message.author)
+			await self.client.send(clari_msg)
+			choice = await self.client.wait_for("message",check=lambda m : m.author == message.author)
 
 			try:
 				chosen_index = int(choice.content)
 				attack = Attack(possible_moves[chosen_index-1])
 			except:
-				await self.client.say("Invalid number provided!")
+				await self.client.send("Invalid number provided!")
 				return
 		else:
 			attack = Attack(possible_moves[0])
@@ -114,7 +114,7 @@ class Smash(commands.Cog):
 			info = "Base Damage: {0}\nBase Knockback: {1}\nKnockback Growth: {2}\nAngle: {3}\nFrames Active: {4}\nNote: {5}".format(str(hitbox.getBaseDamage())+"%",hitbox.getBaseKnockback(),str(hitbox.getKnockbackGrowth()),hitbox.getAngle(),hitbox.getActiveFrames(),hitbox.getNote())
 			e.add_field(name="Hitbox {}".format(i),value=info)
 
-		await self.client.say(embed=e)
+		await self.client.send(embed=e)
 
 	async def getFooterMessage(self):
 		responses = [

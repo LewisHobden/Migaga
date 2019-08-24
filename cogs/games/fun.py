@@ -22,7 +22,7 @@ class Fun(commands.Cog):
 	async def choose(self, *, message : str):
 		""" Choose between things (separate with a comma) """
 		choices = message.split(", ")
-		await self.client.say("Alright. I choose.. \n:speech_balloon: **"+random.choice(choices)+"**")
+		await self.client.send("Alright. I choose.. \n:speech_balloon: **"+random.choice(choices)+"**")
 
 	@commands.command(pass_context=True)
 	async def define(self, ctx, *, query : str):
@@ -66,14 +66,14 @@ class Fun(commands.Cog):
 			pass
 
 		if(len(terms) == 0):
-			await self.client.say("Cannot detect any time phrases. Set time phrases using `days`, `hours`, `minutes` and `seconds`.")
+			await self.client.send("Cannot detect any time phrases. Set time phrases using `days`, `hours`, `minutes` and `seconds`.")
 			return
 
 		total = sum(terms)
 
-		await self.client.say("So, I'll remind you in "+str(total)+" seconds to "+str(thing))
+		await self.client.send("So, I'll remind you in "+str(total)+" seconds to "+str(thing))
 		await asyncio.sleep(total)
-		await self.client.say(person.mention+" this is your reminder to "+thing+"!")
+		await self.client.send(person.mention+" this is your reminder to "+thing+"!")
 
 	@commands.command()
 	async def cat(self):
@@ -83,7 +83,7 @@ class Fun(commands.Cog):
 
 		response = str(response)
 		response = response[11:].replace("\/", "/").replace('"}', '').replace("'", "").replace("\/", "/")
-		await self.client.say(response)
+		await self.client.send(response)
 
 	@commands.command(pass_context=True)
 	async def dog(self,ctx):

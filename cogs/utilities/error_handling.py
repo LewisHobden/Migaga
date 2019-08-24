@@ -13,7 +13,7 @@ class ErrorHandling:
 
         msg  = discord.Embed(title=error_title, timestamp=datetime.datetime.utcnow(), description=error_description, color=discord.Colour(15021879))
         msg.add_field(name="Command", value=ctx.command.qualified_name)
-        msg.add_field(name="Server", value=ctx.message.server.name)
+        msg.add_field(name="Server", value=ctx.message.guild.name)
         msg.add_field(name="Channel", value=ctx.message.channel.name)
         msg.set_footer(text=str(sys.stderr), icon_url="https://cdn0.iconfinder.com/data/icons/shift-free/32/Error-128.png")
 

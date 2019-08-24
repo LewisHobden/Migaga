@@ -35,7 +35,7 @@ class Games(commands.Cog):
         player = ctx.message.author
         playerID = player.id
 
-        server_emojis = ctx.message.server.emojis
+        server_emojis = ctx.message.guild.emojis
         if len(server_emojis) > 4:
             fruits = random.sample(server_emojis, 4)
         else:
@@ -83,33 +83,33 @@ class Games(commands.Cog):
         line3 = str(board[2][0])+str(board[2][1])+str(board[2][2])
 
         printedMessage = line1 + "\n" + line2 + "\n" + line3 + "\n" + playerWinnings
-        await self.client.say(printedMessage)
+        await self.client.send(printedMessage)
 
         # Save new progress
         # await Money.changeMoney(Money, playerID, int(winnings))
 
         # 10 second timeout.
-        await self.client.wait_for_message(author=player, timeout=10, content="-slots")
+        await self.client.wait_for("message",author=player, timeout=10, content="-slots")
 
     @commands.command(pass_context=True)
     async def rockpaperscissors(self, ctx):
         '''Challenge the bot to a game of rock, paper, scissors!'''
         choices = ["rock", "paper", "scissors"]
-        await self.client.say("Rock, paper or scissors?")
-        playerChoice = await self.client.wait_for_message(author=ctx.message.author)
+        await self.client.send("Rock, paper or scissors?")
+        playerChoice = await self.client.wait_for("message",check=lambda m : m.author == message.author)
         playerChoice = playerChoice.content.lower()
         botChoice = choices[random.randint(0,2)]
 
         matchups = {"paper": ["rock", "scissors"], "rock": ["scissors", "paper"], "scissors": ["paper", "rock"]}
 
         if botChoice == playerChoice:
-            await self.client.say("I choose.. " + botChoice + "! We both chose the same thing! Oops!")
+            await self.client.send("I choose.. " + botChoice + "! We both chose the same thing! Oops!")
             return
 
         if matchups[playerChoice][0] == botChoice:
-            await self.client.say("I choose.. " + botChoice + "! You won! Nice!")
+            await self.client.send("I choose.. " + botChoice + "! You won! Nice!")
         else:
-            await self.client.say("I choose.. " + botChoice + "! I won! Better luck next time!")
+            await self.client.send("I choose.. " + botChoice + "! I won! Better luck next time!")
             return
 
 
@@ -120,28 +120,28 @@ class Games(commands.Cog):
         values = [2, 3, 4, 5, 6, 7, 8, 9, 10, "King", "Queen", "Jack", "Ace"]
         total  = 0
 
-        await self.client.say("Welcome to blackjack! I am your host, I am going to draw my cards and see if you can beat me! But first of all, how much "+Money.CURRENCY_NAME+" would you like to bet?")
-        bet_amount = await self.client.wait_for_message(author=ctx.message.author, channel=ctx.message.channel)
+        await self.client.send("Welcome to blackjack! I am your host, I am going to draw my cards and see if you can beat me! But first of all, how much "+Money.CURRENCY_NAME+" would you like to bet?")
+        bet_amount = await self.client.wait_for("message",check=lambda m : m.author == message.author, channel=ctx.message.channel)
 
         try:
             bet_amount = int(bet_amount.content)
             if bet_amount > 1000:
-                await self.client.say("Whoa big spender, we can't let you bet more than 1000!")
+                await self.client.send("Whoa big spender, we can't let you bet more than 1000!")
                 return
             elif bet_amount < 0:
-                await self.client.say("GASP!**CHEATER!!**")
+                await self.client.send("GASP!**CHEATER!!**")
                 return
         except:
-            await self.client.say("A number, please.")
+            await self.client.send("A number, please.")
             return
 
-        await self.client.say("Done! Now let's draw your first card. Say anything to draw another card, say `stop` at any time to turn in your total!")
+        await self.client.send("Done! Now let's draw your first card. Say anything to draw another card, say `stop` at any time to turn in your total!")
 
         while True:
             suit  = random.choice(suits)
             value = random.choice(values)
 
-            await self.client.say("**"+ctx.message.author.name+"**, you drew the **"+str(value)+"** of "+suit+"!")
+            await self.client.send("**"+ctx.message.author.name+"**, you drew the **"+str(value)+"** of "+suit+"!")
 
             if value in ["King", "Queen", "Jack"]:
                 value = 10
@@ -149,8 +149,8 @@ class Games(commands.Cog):
                 okay    = False
                 counter = 0
                 while not okay and counter < 5:
-                    await self.client.say("Would you like that to be worth 11 or 1?")
-                    player_choice = await self.client.wait_for_message(author=ctx.message.author, channel=ctx.message.channel)
+                    await self.client.send("Would you like that to be worth 11 or 1?")
+                    player_choice = await self.client.wait_for("message",check=lambda m : m.author == message.author, channel=ctx.message.channel)
                     try:
                         if int(player_choice.content) == 11:
                             value = 11
@@ -159,36 +159,36 @@ class Games(commands.Cog):
                             value = 1
                             okay = True
                         else:
-                            await self.client.say("Either 1 or 11, please.")
+                            await self.client.send("Either 1 or 11, please.")
                             counter += 1
                     except ValueError:
-                        await self.client.say("Could I have that in the form of a number, please?")
+                        await self.client.send("Could I have that in the form of a number, please?")
                         counter += 1
 
             total = total + value
 
             if total <= 21:
-                await self.client.say("**"+ctx.message.author.name+"**, "+"You now have a total of " + str(total) + "!")
+                await self.client.send("**"+ctx.message.author.name+"**, "+"You now have a total of " + str(total) + "!")
             elif total > 21:
-                await self.client.say(await self.endBlackjack(2, ctx.message.author, bet_amount*-1, total))
+                await self.client.send(await self.endBlackjack(2, ctx.message.author, bet_amount*-1, total))
                 return
 
-            will_continue = await self.client.wait_for_message(author=ctx.message.author, channel=ctx.message.channel)
+            will_continue = await self.client.wait_for("message",check=lambda m : m.author == message.author, channel=ctx.message.channel)
 
             if will_continue.content.lower() == "stop":
                 botTotal = random.randint(16, 21)
-                await self.client.say("And that's the end of the game! Let's see how we compared.. \n \n I got **" + str(botTotal) + "** and you got **" + str(total) + "**!")
+                await self.client.send("And that's the end of the game! Let's see how we compared.. \n \n I got **" + str(botTotal) + "** and you got **" + str(total) + "**!")
                 await self.checkForBlackjackWins(ctx, total, botTotal, bet_amount)
                 return
 
 
     async def checkForBlackjackWins(self, player, total, botTotal, bet_amount):
         if total > botTotal:
-            await self.client.say(await self.endBlackjack(1, player, bet_amount*2, total))
+            await self.client.send(await self.endBlackjack(1, player, bet_amount*2, total))
         elif total < botTotal:
-            await self.client.say(await self.endBlackjack(1, player, bet_amount*-1, total))
+            await self.client.send(await self.endBlackjack(1, player, bet_amount*-1, total))
         else:
-            await self.client.say(await self.endBlackjack(1, player, 0, total))
+            await self.client.send(await self.endBlackjack(1, player, 0, total))
 
     async def endBlackjack(self, win_state, player, money, total):
         if win_state == 1:

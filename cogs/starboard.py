@@ -12,7 +12,7 @@ import json
 
 def load_starboard():
     def load(ctx):
-        ctx.guild_id = ctx.message.server.id
+        ctx.guild_id = ctx.message.guild.id
         ctx.db = ctx.cog.stars.get(ctx.guild_id, {})
         ctx.starboard = ctx.bot.get_channel(ctx.db.get('channel'))
         if ctx.starboard is None:
@@ -94,13 +94,13 @@ class Starboard(commands.Cog):
         You must have Administrator permissions to use this
         command.
         """
-        server = ctx.message.server
+        server = ctx.message.guild
         stars = self.stars.get(server.id, {})
 
         previous_starboard = self.client.get_channel(stars.get('channel'))
         if previous_starboard is not None:
             fmt = 'This server already has a starboard ({.mention})'
-            await self.client.say(fmt.format(previous_starboard))
+            await self.client.send(fmt.format(previous_starboard))
             return
 
         # Just make sure all old data is deleted.
@@ -119,15 +119,15 @@ class Starboard(commands.Cog):
         try:
             channel = await self.client.create_channel(*args)
         except discord.Forbidden:
-            await self.client.say('I do not have permissions to create a channel.')
+            await self.client.send('I do not have permissions to create a channel.')
         except discord.HTTPException:
-            await self.client.say('This channel name is bad or an unknown error happened.')
+            await self.client.send('This channel name is bad or an unknown error happened.')
         else:
             stars['channel']  = channel.id
             stars['locked']   = False
             stars['messages'] = {}
             await self.stars.put(server.id, stars)
-            await self.client.say('\N{GLOWING STAR} Starboard created at ' + channel.mention)
+            await self.client.send('\N{GLOWING STAR} Starboard created at ' + channel.mention)
 
     async def createEmbedForStarredMessage(self,message,db):
         e = discord.Embed()

@@ -1,6 +1,5 @@
 from discord.ext import commands
 from cogs.utilities import credential_checks
-from cogs.games.currency import connectToDatabase
 
 from cogs.storage.database import Database
 import discord
@@ -13,11 +12,12 @@ class Admin(commands.Cog):
 	"""Moderation related commands."""
 	def __init__(self, client):
 		self.client = client
+		self.database = Database()
 
 	@commands.command(is_disabled=True)
 	async def invite(self):
 		""" Get a URL to invite the bot to your own server! """
-		await self.client.say(discord.utils.oauth_url(self.client.client_id))
+		await self.client.send(discord.utils.oauth_url(self.client.client_id))
 
 	@commands.command(no_pm=True, pass_context=True)
 	@credential_checks.hasPermissions(ban_members=True)
@@ -28,11 +28,11 @@ class Admin(commands.Cog):
 		try:
 			await self.client.ban(member)
 		except discord.Forbidden:
-			await self.client.say("The bot does not have permissions to kick members.")
+			await self.client.send("The bot does not have permissions to kick members.")
 		except discord.HTTPException:
-			await self.client.say("Kicking failed.")
+			await self.client.send("Kicking failed.")
 		else:
-			await self.client.say("BOOM. Banned "+member.name)
+			await self.client.send("BOOM. Banned "+member.name)
 
 	@commands.command(no_pm=True, pass_context=True)
 	@credential_checks.hasPermissions(kick_members=True)
@@ -43,28 +43,28 @@ class Admin(commands.Cog):
 		try:
 			await self.client.kick(member)
 		except discord.Forbidden:
-			await self.client.say("The bot does not have permissions to kick members.")
+			await self.client.send("The bot does not have permissions to kick members.")
 		except discord.HTTPException:
-			await self.client.say("Kicking failed.")
+			await self.client.send("Kicking failed.")
 		else:
-			await self.client.say("BOOM. Kicked "+member.name)
+			await self.client.send("BOOM. Kicked "+member.name)
 
 	@commands.command(no_pm=True,pass_context=True)
 	@credential_checks.hasPermissions(manage_roles=True)
 	async def unflaired(self,ctx):
 		unflaired_users = []
-		for member in ctx.message.server.members:
+		for member in ctx.message.guild.members:
 			if len(member.roles) == 1:
 				unflaired_users.append(member)
 
 		try:
-			await self.client.say("There are "+str(len(unflaired_users))+" without a role in this server.\n")
+			await self.client.send("There are "+str(len(unflaired_users))+" without a role in this server.\n")
 			message = "Members:\n"
 			for member in unflaired_users:
 				message += member.mention+"\n"
-			await self.client.say(message)
+			await self.client.send(message)
 		except:
-			await self.client.say("Something went wrong! Perhaps there were too many people?")
+			await self.client.send("Something went wrong! Perhaps there were too many people?")
 
 	@commands.command(no_pm=True, pass_context=True)
 	@credential_checks.hasPermissions(ban_members=True)
@@ -79,11 +79,11 @@ class Admin(commands.Cog):
 			await self.client.ban(member)
 			await self.client.unban(member.guild, member)
 		except discord.Forbidden:
-			await self.client.say("The bot does not have permissions to kick members.")
+			await self.client.send("The bot does not have permissions to kick members.")
 		except discord.HTTPException:
-			await self.client.say("Kicking failed.")
+			await self.client.send("Kicking failed.")
 		else:
-			await self.client.say("Softbanned "+member.name+". Their messages should be gone now.")
+			await self.client.send("Softbanned "+member.name+". Their messages should be gone now.")
 
 	@commands.command(no_pm=True, pass_context=True)
 	@credential_checks.hasPermissions(manage_roles=True)
@@ -92,25 +92,21 @@ class Admin(commands.Cog):
 
 		If you have roles with the same name the last one will be chosen.
 		You must have the "Manage Roles" privilege in order to use this command."""
-		server = ctx.message.server
+		server = ctx.message.guild
 		assign_role = None
 		for role in server.roles:
 			if role.name.lower() == role_name.lower():
 				assign_role = role
 
 		if assign_role == None:
-			await self.client.say("This role could not be found and therefore could not be registered!")
+			await self.client.send("This role could not be found and therefore could not be registered!")
 			return
 
-		await self.client.say("Role found: "+assign_role.name+", its ID is "+assign_role.id)
-		await self.client.say("Okdok so, what command should be used to assign this role?")
+		await self.client.send("Role found: "+assign_role.name+", its ID is "+assign_role.id)
+		await self.client.send("Okdok so, what command should be used to assign this role?")
 
-		alias = await self.client.wait_for_message(author=ctx.message.author)
+		alias = await self.client.wait_for("message",check=lambda m : m.author == message.author)
 		alias = alias.content.lower().strip()
-
-		connection = connectToDatabase()
-
-		database = Database()
 
 		with connection.cursor() as cursor:
 			sql = "SELECT * FROM `discord_role_aliases` WHERE `role_id`=%s"
@@ -121,13 +117,13 @@ class Admin(commands.Cog):
 			if None == result:
 				pass
 			else:
-				await self.client.say("This role already has an alias, it is "+result['alias']+" this command will override it.")
+				await self.client.send("This role already has an alias, it is "+result['alias']+" this command will override it.")
 				database.query("DELETE FROM `discord_role_aliases` WHERE `role_id`=%s",assign_role.id)
 
 		database.query("INSERT INTO `discord_role_aliases` VALUES (0, %s, %s, %s, '0','0');",[alias,assign_role.id,server.id])
 
 		connection.commit()
-		await self.client.say("Whew! All done! I have added the role **"+assign_role.name+"**, to the alias: **"+alias+"** in this server: **"+server.name+"**")
+		await self.client.send("Whew! All done! I have added the role **"+assign_role.name+"**, to the alias: **"+alias+"** in this server: **"+server.name+"**")
 
 	@commands.command(no_pm=True, pass_context=True)
 	@credential_checks.hasPermissions(manage_server=True)
@@ -140,43 +136,36 @@ class Admin(commands.Cog):
 		"""
 		message_to_store = message.replace("<@>","{0}").replace("<>","{1}").replace("<s>","{2}")
 
-		connection = connectToDatabase()
-		await self.client.say("What channel should that message be posted in?")
-		channel    = await self.client.wait_for_message(author=ctx.message.author)
+		await self.client.send("What channel should that message be posted in?")
+		channel    = await self.client.wait_for("message",check=lambda m : m.author == message.author)
 		try:
 			channel = channel.channel_mentions[0]
 		except:
-			await self.client.say("You must mention a channel!")
+			await self.client.send("You must mention a channel!")
 			return
 
-		try:
-			with connection.cursor() as cursor:
-				sql = "INSERT INTO `discord_welcome_messages` VALUES (0,%s,%s,%s) ON DUPLICATE KEY UPDATE `message`=%s,`channel_id`=%s"
-				cursor.execute(sql, [message_to_store,ctx.message.server.id,channel.id,message_to_store,channel.id])
-				result = cursor.fetchone()
-		finally:
-			connection.commit()
+		sql = "INSERT INTO `discord_welcome_messages` VALUES (0,%s,%s,%s) ON DUPLICATE KEY UPDATE `message`=%s,`channel_id`=%s"
+		cursor = self.database.query(sql, [message_to_store,ctx.message.guild.id,channel.id,message_to_store,channel.id])
+		result = cursor.fetchone()
 
-		await self.client.say("Okay! I've added that welcome message to "+channel.mention+", here's an example: "+message_to_store.format(ctx.message.author.mention,ctx.message.author.display_name,ctx.message.server.name))
+		await self.client.send("Okay! I've added that welcome message to "+channel.mention+", here's an example: "+message_to_store.format(ctx.message.author.mention,ctx.message.author.display_name,ctx.message.guild.name))
 
 	async def checkAndAssignRole(self,role,message : discord.Message):
 		member = message.author
-		connection = connectToDatabase()
 
-		with connection.cursor() as cursor:
-			sql = "SELECT `role_id`,`is_admin_only` FROM `discord_role_aliases` WHERE `server_id`=%s AND `alias`=%s"
-			cursor.execute(sql, [message.server.id,role])
-			result = cursor.fetchone()
+		sql = "SELECT `role_id`,`is_admin_only` FROM `discord_role_aliases` WHERE `server_id`=%s AND `alias`=%s"
+		cursor = self.database.query(sql, [message.guild.id,role])
+		result = cursor.fetchone()
 
 		if not result:
 			return
 
-		role = discord.utils.get(message.server.roles, id=str(result['role_id']))
+		role = discord.utils.get(message.guild.roles, id=str(result['role_id']))
 		await self.client.add_roles(message.author,role)
 
 		with connection.cursor() as cursor:
 			sql = "UPDATE `discord_role_aliases` SET `uses`=`uses`+1 WHERE `server_id`=%s AND `role_id`=%s"
-			cursor.execute(sql, [message.server.id,role.id])
+			cursor.execute(sql, [message.guild.id,role.id])
 			result = cursor.fetchone()
 
 		try:
@@ -196,23 +185,21 @@ class Admin(commands.Cog):
 		""" See the history of name changes the bot has for a person.
 
 		You must have kick members permission to do this."""
-		connection = connectToDatabase()
-		with connection.cursor() as cursor:
-			sql = "SELECT `name` FROM `discord_username_changes` WHERE `user_id`=%s"
-			cursor.execute(sql, [member.id])
-			names = cursor.fetchall()
+		sql = "SELECT `name` FROM `discord_username_changes` WHERE `user_id`=%s"
+		cursor = self.database.query(sql, [member.id])
+		names = cursor.fetchall()
 
-			msg = ""
+		msg = ""
 
-			for name in names:
-				   msg += name['name']+"\n"
+		for name in names:
+			   msg += name['name']+"\n"
 
 		if("" == msg):
 			msg = "No name changes found."
 		else:
 			msg = "These are the name changes I have stored: \n"+msg;
 
-		await self.client.say(msg)
+		await self.client.send(msg)
 
 	async def findRoleByName(self,role_name,server):
 		for role in server.roles:
@@ -237,7 +224,7 @@ class Admin(commands.Cog):
 			emoji = emoji.replace(":","",1).replace("<","").replace(">","")
 
 		if limit > 100:
-			await self.client.say("Discord Bots are only allowed to get 100 messages at a time.")
+			await self.client.send("Discord Bots are only allowed to get 100 messages at a time.")
 			return
 
 		get_message = self.client.get_cog("GetMessages")
@@ -259,7 +246,7 @@ class Admin(commands.Cog):
 				emoji.replace(":","").replace("<","").replace(">","")
 
 		if limit > 100:
-			await self.client.say("Discord Bots are only allowed to get 100 messages at a time.")
+			await self.client.send("Discord Bots are only allowed to get 100 messages at a time.")
 			return
 
 		get_message = self.client.get_cog("GetMessages")
@@ -279,18 +266,18 @@ class Admin(commands.Cog):
 
 		If you have roles with the same name the last one will be chosen.
 		You must have the "Manage Roles" privilege in order to use this command."""
-		server = ctx.message.server
+		server = ctx.message.guild
 		assign_role = None
 		for role in server.roles:
 			if role.name.lower() == role_name.lower():
 				assign_role = role
 
 		if assign_role == None:
-			await self.client.say("This role could not be found.")
+			await self.client.send("This role could not be found.")
 			return
 
-		await self.client.say("Reply with the names of the roles you want to find here. If you want to overwrite more than one, seperate it with a comma.")
-		choices = await self.client.wait_for_message(author=ctx.message.author)
+		await self.client.send("Reply with the names of the roles you want to find here. If you want to overwrite more than one, seperate it with a comma.")
+		choices = await self.client.wait_for("message",check=lambda m : m.author == message.author)
 
 		choices = choices.content.split(",")
 		for role_name in choices:
@@ -299,14 +286,10 @@ class Admin(commands.Cog):
 			if None == chosen_role or chosen_role == assign_role:
 				continue
 
-			connection = connectToDatabase()
-			with connection.cursor() as cursor:
-				sql = "INSERT INTO `discord_role_overwrites` VALUES(0,%s,%s,%s)"
-				cursor.execute(sql,[assign_role.id,chosen_role.id,server.id])
-				connection.commit()
+			sql = "INSERT INTO `discord_role_overwrites` VALUES(0,%s,%s,%s)"
+			cursor = self.database.query(sql,[assign_role.id,chosen_role.id,server.id])
 
-		connection.close()
-		await self.client.say("Done! Roles will be overwritten when they use the command.")
+		await self.client.send("Done! Roles will be overwritten when they use the command.")
 
 	@commands.command(no_pm=True,hidden=True,pass_context=True)
 	@credential_checks.hasPermissions(manage_roles=True)
@@ -315,24 +298,19 @@ class Admin(commands.Cog):
 
 		If you have roles with the same name the last one will be chosen.
 		You must have the "Manage Roles" privilege in order to use this command."""
-		server = ctx.message.server
+		server = ctx.message.guild
 		assign_role = None
 		for role in server.roles:
 			if role.name.lower() == role_name.lower():
 				assign_role = role
 
 		if assign_role == None:
-			await self.client.say("This role could not be found.")
+			await self.client.send("This role could not be found.")
 			return
 
-		connection = connectToDatabase()
-		try:
-			with connection.cursor() as cursor:
-				sql = "SELECT * FROM `discord_role_aliases` WHERE `server_id`=%s AND `role_id`=%s"
-				cursor.execute(sql, [server.id,assign_role.id])
-				result = cursor.fetchone()
-		finally:
-			connection.close()
+		sql = "SELECT * FROM `discord_role_aliases` WHERE `server_id`=%s AND `role_id`=%s"
+		cursor = self.database.query(sql, [server.id,assign_role.id])
+		result = cursor.fetchone()
 
 		total_users = 0
 		for member in server.members:
@@ -357,58 +335,51 @@ class Admin(commands.Cog):
 
 		Migaga will ask for the message ID and then the reaction, if you have roles with the same name the last one will be chosen.
 		You must have the "Manage Roles" privilege in order to use this command."""
-		server = ctx.message.server
+		server = ctx.message.guild
 		assign_role = None
 		for role in server.roles:
 			if role.name.lower() == role_name.lower():
 				assign_role = role
 
 		if assign_role == None:
-			await self.client.say("This role could not be found and therefore could not be registered!")
+			await self.client.send("This role could not be found and therefore could not be registered!")
 			return
 
-		await self.client.say("Role found: "+assign_role.name+", its ID is "+assign_role.id)
-		await self.client.say("What is the ID of the message to be reacted to? If you don't know how to get a message ID just say \"help\"!")
+		await self.client.send("Role found: "+assign_role.name+", its ID is "+assign_role.id)
+		await self.client.send("What is the ID of the message to be reacted to? If you don't know how to get a message ID just say \"help\"!")
 
-		response = await self.client.wait_for_message(author=ctx.message.author)
+		response = await self.client.wait_for("message",check=lambda m : m.author == message.author)
 
 		while(response.content == "help"):
-			await self.client.say("Here's a helpful support post about it! https://support.discordapp.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-")
-			response = await self.client.wait_for_message(author=ctx.message.author)
+			await self.client.send("Here's a helpful support post about it! https://support.discordapp.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-")
+			response = await self.client.wait_for("message",check=lambda m : m.author == message.author)
 
 		message_id = response.content.strip()
 
 		try:
 			message = self.client.get_message(alias)
 		except NotFound as e:
-			await self.client.say("Sorry that message could not be found!")
+			await self.client.send("Sorry that message could not be found!")
 		except Forbidden as e:
-			await self.client.say("Sorry, I am forbidden to do that!")
+			await self.client.send("Sorry, I am forbidden to do that!")
 		except Exception as e:
-			await self.client.say("Sorry, something went wrong. Please try again?")
+			await self.client.send("Sorry, something went wrong. Please try again?")
 			raise e
 
-		print(message)
-		connection = connectToDatabase()
+		sql = "SELECT * FROM `discord_role_aliases` WHERE `role_id`=%s"
 
-		database = Database()
-
-		with connection.cursor() as cursor:
-			sql = "SELECT * FROM `discord_role_aliases` WHERE `role_id`=%s"
-
-			#try:
-			cursor.execute(sql, [assign_role.id])
-			result = cursor.fetchone()
-			if None == result:
-				pass
-			else:
-				await self.client.say("This role already has an alias, it is "+result['alias']+" this command will override it.")
-				database.query("DELETE FROM `discord_role_aliases` WHERE `role_id`=%s",assign_role.id)
+		cursor = self.database.query(sql, [assign_role.id])
+		result = cursor.fetchone()
+		if None == result:
+			pass
+		else:
+			await self.client.send("This role already has an alias, it is "+result['alias']+" this command will override it.")
+			database.query("DELETE FROM `discord_role_aliases` WHERE `role_id`=%s",assign_role.id)
 
 		database.query("INSERT INTO `discord_role_aliases` VALUES (0, %s, %s, %s, '0','0');",[alias,assign_role.id,server.id])
 
 		connection.commit()
-		await self.client.say("Whew! All done! I have added the role **"+assign_role.name+"**, to the alias: **"+alias+"** in this server: **"+server.name+"**")
+		await self.client.send("Whew! All done! I have added the role **"+assign_role.name+"**, to the alias: **"+alias+"** in this server: **"+server.name+"**")
 
 	@commands.command(no_pm=True,hidden=True,pass_context=True)
 	@credential_checks.hasPermissions(manage_messages=True)
@@ -417,20 +388,17 @@ class Admin(commands.Cog):
 		try:
 			await self.client.purge_from(ctx.message.channel,limit=number_of_messages+1)
 		except:
-			await self.client.say("There was an error deleting. Be aware that Discord does not allow bots to bulk delete messages that are under 14 days old.")
+			await self.client.send("There was an error deleting. Be aware that Discord does not allow bots to bulk delete messages that are under 14 days old.")
 
 	@commands.command(no_pm=True,hidden=True,pass_context=True)
 	@credential_checks.hasPermissions(administrator=True)
 	async def sql(self,ctx,*,sql):
 		if ctx.message.author.id != "133736489568829440":
-			return await self.client.say("Oh no, only Lewis can use this command. Far too dangerous.")
+			return await self.client.send("Oh no, only Lewis can use this command. Far too dangerous.")
 
-		connection = connectToDatabase()
+		cursor = self.database.query(sql)
 
-		with connection.cursor() as cursor:
-			cursor.execute(sql)
-
-		await self.client.say("SQL executed!")
+		await self.client.send("SQL executed!")
 
 def setup(client):
 		client.add_cog(Admin(client))

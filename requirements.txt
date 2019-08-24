@@ -1,3 +1,5 @@
 discord.py
 pymysql
+peewee
 pillow
+cryptography
