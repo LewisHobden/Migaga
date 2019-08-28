@@ -1,8 +1,6 @@
-from discord.ext import commands
+from model.discord_client import MigagaClient
 
-from cogs.utilities.error_handling import ErrorHandling
 from cogs.customcommands import *
-from cogs.admin import Admin
 from cogs.storage.database import Database
 from time import gmtime, strftime
 
@@ -11,8 +9,6 @@ import configparser
 import discord
 import datetime
 import logging
-import sys
-import traceback
 
 most_recent_name_change = None
 
@@ -31,7 +27,7 @@ logger.addHandler(handler)
 
 bot_description = """ Lewis' Discord Bot Version 4 """
 prefix = "!"
-client = commands.Bot(command_prefix=prefix, description=bot_description, pm_help=None)
+client = MigagaClient(command_prefix=prefix, description=bot_description, pm_help=None)
 
 debug = False
 

@@ -1,92 +1,74 @@
-from discord.ext import commands
-from .utilities import credential_checks, config
+from datetime import *
+from storage.database_factory import DatabaseFactory
 
 import discord
-import datetime
-import asyncio
-import logging
-import random
-import time
-import re
-import json
+from discord.ext import commands
 
-def load_starboard():
-    def load(ctx):
-        ctx.guild_id = ctx.message.guild.id
-        ctx.db = ctx.cog.stars.get(ctx.guild_id, {})
-        ctx.starboard = ctx.bot.get_channel(ctx.db.get('channel'))
-        if ctx.starboard is None:
-            raise StarError('\N{WARNING SIGN} Starboard channel not found.')
-        return True
+from model.discord_client import MigagaClient
+from model.message_starrer import MessageStarrerModel
+from model.starboard import StarboardModel
+from model.starred_message import StarredMessageModel
+from .utilities import credential_checks
 
-    return commands.check(load)
+
+async def _get_emoji_for_star(stars):
+    if 5 >= stars >= 0:
+        return '\N{WHITE MEDIUM STAR}'
+    elif 10 >= stars >= 6:
+        return '\N{GLOWING STAR}'
+    elif 25 >= stars >= 11:
+        return '\N{DIZZY SYMBOL}'
+    else:
+        return '\N{SPARKLES}'
+
+
+async def _get_starred_embed(starred_message: StarredMessageModel, discord_message: discord.Message):
+    e = discord.Embed(description=discord_message.content, timestamp=discord_message.created_at)
+
+    author = discord_message.author
+    e.set_author(name=author.display_name, icon_url=author.avatar_url)
+
+    if discord_message.attachments:
+        e.set_image(url=discord_message.attachments[0]['proxy_url'])
+
+    number_of_stars = 0
+    starrers = starred_message.starrers
+
+    for starrer in starrers:
+        # Check if they are blacklisted..
+        number_of_stars += 1
+
+    star_emoji = await _get_emoji_for_star(number_of_stars)
+    e.add_field(name="Stars", value=star_emoji + " **" + str(number_of_stars) + "**")
+
+    return e
+
 
 class Starboard(commands.Cog):
     """ Commands related to the Starboard. """
-    def __init__(self, client):
+
+    def __init__(self, client: MigagaClient):
+        client.register_event_listener("raw_reaction_add", self._on_reaction)
+        client.register_event_listener("raw_reaction_remove", self._on_reaction_removed)
         self.client = client
-
-        # config format:
-        # <guild_id> : as follows ->
-        # channel: <starboard channel id>
-        # locked: <boolean indicating locked status>
-        # messages : as follows ->
-        # message_id: as follows ->
-        # bot_message: <bot message>
-        # starred_user_ids : [<starred user ids>]
-        self.stars = config.Config(r'stars.json')
-
-        # cache message objects.
-        self._message_cache = {}
-
-
-    async def on_socket_raw_receive(self, data):
-        # no binary allowed please
-        if isinstance(data, bytes):
-            return
-
-        data       = json.loads(data)
-        event_name = data.get('t')
-        payload    = data.get('d')
-
-        if event_name == 'MESSAGE_REACTION_ADD' or event_name == 'MESSAGE_REACTION_REMOVE':
-            if payload['emoji']['name'] != "⭐":
-                return
-
-            channel = self.client.get_channel(payload.get('channel_id'))
-
-            if channel is None or channel.is_private:
-                return
-
-            # Check if this message has already been starred.
-            server = channel.guild
-            db     = self.stars.get(server.id)
-            message = await self.client.get_message(channel, payload['message_id'])
-            member  = message.author
-
-            if event_name == 'MESSAGE_REACTION_ADD':
-                data = await self.starMessage(message,db)
-            else:
-                data = await self.unstarMessage(message,db)
-
-            if None == data:
-                await self.stars.remove(message.id)
-            else:
-                await self.stars.put(message.id, data)
-
-            if member is None or member.bot:
-                return
-
-            if db is None:
-                return
 
     @commands.command(pass_context=True, no_pm=True)
     @credential_checks.hasPermissions(administrator=True)
-    async def starboard(self, ctx, *, name: str = 'starboard'):
+    async def rebuild(self, ctx):
+        db = DatabaseFactory()
+        db = db.get_database_connection()
+
+        db.drop_tables([MessageStarrerModel, StarboardModel, StarredMessageModel])
+        db.create_tables([MessageStarrerModel, StarboardModel, StarredMessageModel])
+
+        await ctx.send("Tables are gone.")
+
+    @commands.command(pass_context=True, no_pm=True)
+    @credential_checks.hasPermissions(administrator=True)
+    async def starboard(self, ctx, *, channel: discord.TextChannel = None):
         """Sets up the starboard for this server.
-        This creates a new channel with the specified name
-        and makes it into the server's "starboard". If no
-        name is passed in then it defaults to "starboard".
+        This creates a starboard in the specified channel
+        this makes it into the server's "starboard".
 
         If the channel is deleted then the starboard is
         deleted as well.
@@ -94,104 +76,116 @@ class Starboard(commands.Cog):
         You must have Administrator permissions to use this
         command.
         """
-        server = ctx.message.guild
-        stars = self.stars.get(server.id, {})
 
-        previous_starboard = self.client.get_channel(stars.get('channel'))
-        if previous_starboard is not None:
-            fmt = 'This server already has a starboard ({.mention})'
-            await self.client.send(fmt.format(previous_starboard))
+        if channel is None:
+            ctx.send("You need to provide an existing channel to turn it into a Starboard!")
             return
 
-        # Just make sure all old data is deleted.
-        stars = {}
+        # Check the database for a starboard.
+        previous_starboard = StarboardModel.get_for_guild(channel.guild.id)
 
-        bot_permissions = ctx.message.channel.permissions_for(server.me)
-        args = [server, name]
+        if previous_starboard is not None:
+            # Then check if the channel still exists.
+            previous_channel = self.client.get_channel(previous_starboard.channel_id)
+            if previous_channel is not None:
+                fail_message = 'This server already has a starboard ({.mention})'
+                await ctx.send(fail_message.format(previous_channel))
+                return
+            else:
+                clear_message = "This server already _had_ a starboard. I notice it no longer exists or I can't get " \
+                                "it. I will delete the old record."
+
+                await ctx.send(clear_message)
+                previous_starboard.delete_instance()
+
+        bot_permissions = ctx.message.channel.permissions_for(ctx.guild.me)
+        await ctx.send("Updating permissions for {.mention}".format(channel))
+
+        args = []
 
         # Make sure that people cannot send messages in the starboard.
         if bot_permissions.manage_roles:
             mine = discord.PermissionOverwrite(send_messages=True, manage_messages=True, embed_links=True)
-            everyone = discord.PermissionOverwrite(read_messages=True, send_messages=False, read_message_history=True,add_reactions=False)
-            args.append((server.me, mine))
-            args.append((server.default_role, everyone))
-
-        try:
-            channel = await self.client.create_channel(*args)
-        except discord.Forbidden:
-            await self.client.send('I do not have permissions to create a channel.')
-        except discord.HTTPException:
-            await self.client.send('This channel name is bad or an unknown error happened.')
+            everyone = discord.PermissionOverwrite(read_messages=True, send_messages=False, read_message_history=True,
+                                                   add_reactions=False)
+            args.append((ctx.guild.me, mine))
+            args.append((ctx.guild.default_role, everyone))
         else:
-            stars['channel']  = channel.id
-            stars['locked']   = False
-            stars['messages'] = {}
-            await self.stars.put(server.id, stars)
-            await self.client.send('\N{GLOWING STAR} Starboard created at ' + channel.mention)
+            await ctx.send("I can't update the channel permissions to stop people talking. Maybe check that?")
 
-    async def createEmbedForStarredMessage(self,message,db):
-        e = discord.Embed()
-        e.timestamp = message.timestamp
-        author = message.author
+        StarboardModel.create(guild_id=ctx.guild.id, channel_id=channel.id, is_locked=False)
+        await ctx.send('\N{GLOWING STAR} Starboard set up at {.mention}'.format(channel))
 
-        avatar = author.default_avatar_url if not author.avatar else author.avatar_url
-        avatar = avatar.replace('.gif', '.jpg')
-        e.set_author(name=author.display_name, icon_url=avatar)
+    async def _on_reaction_removed(self, **kwargs):
+        reaction = kwargs.get("reaction")
 
-        if message.attachments:
-            e.set_image(url=message.attachments[0]['proxy_url'])
+        # @todo Allow customisation of the emoji for starring.
+        if reaction.emoji.name != '⭐':
+            return
 
-        e.description = message.content
-        e.timestamp   = message.timestamp
+        starred_message = StarredMessageModel.get_or_none(reaction.message_id)
 
-        message_data = db['messages'][message.id]
-        number_of_stars = len(message_data['starred_user_ids'])
-        star_emoji      = await self.getEmojiForStar(number_of_stars)
+        if starred_message is None:
+            return
 
-        e.add_field(name="Stars",value=star_emoji+" **"+str(number_of_stars)+"**")
-        return e
+        MessageStarrerModel.delete().where((MessageStarrerModel.message_id == reaction.message_id) &
+                                           (MessageStarrerModel.user_id == reaction.user_id)).execute()
 
-    async def starMessage(self,message,db):
-        starboard = self.client.get_channel(db.get('channel'))
+        channel = self.client.get_channel(reaction.channel_id)
+        discord_message = await channel.fetch_message(reaction.message_id)
 
-        if message.id in db['messages']:
-            message_data = db['messages'][message.id]
-            bot_message = await self.client.get_message(starboard,message_data['bot_message_id'])
-            db['messages'][message.id]['starred_user_ids'].append(message.author.id)
+        embed = await _get_starred_embed(starred_message, discord_message)
+        channel = self.client.get_channel(starred_message.starboard.channel_id)
+
+        embed_message = await channel.fetch_message(starred_message.embed_message_id)
+        await embed_message.edit(embed=embed)
+
+    async def _on_reaction(self, **kwargs):
+        reaction = kwargs.get("reaction")
+
+        # @todo Allow customisation of the emoji for starring.
+        if reaction.emoji.name != '⭐':
+            return
+
+        starboard = StarboardModel.get_for_guild(reaction.guild_id)
+
+        if starboard is None:
+            return
+
+        channel = self.client.get_channel(reaction.channel_id)
+        starred_message = StarredMessageModel.get_or_none(reaction.message_id)
+        discord_message = await channel.fetch_message(reaction.message_id)
+
+        if starred_message is None:
+            starred_message = StarredMessageModel.create(message_id=discord_message.id, starboard_id=starboard.id,
+                                                         is_muted=False, datetime_added=datetime.utcnow(),
+                                                         user_id=discord_message.author.id)
+
+        # Don't interact with muted messages or let people star themselves.
+        if starred_message.is_muted or discord_message.author.id == reaction.user_id:
+            return
+
+        # Add the reactor.
+        insert = MessageStarrerModel.insert(message_id=starred_message.message_id, user_id=reaction.user_id,
+                                   datetime_starred=datetime.utcnow()) \
+            .on_conflict(
+            update={MessageStarrerModel.datetime_starred: datetime.utcnow()})\
+            .execute()
+
+        # Show it in the starboard.
+        embed = await _get_starred_embed(starred_message, discord_message)
+        starboard_channel = self.client.get_channel(starboard.channel_id)
+
+        # Either send it (if it hasn't already been submitted to the starboard) or update it.
+        if starred_message.embed_message_id is None:
+            embed_message = await starboard_channel.send("In {.mention}".format(channel), embed=embed)
+
+            starred_message.embed_message_id = embed_message.id
+            starred_message.save()
         else:
-            bot_message = await self.client.send_message(starboard, "In <#"+message.channel.id+">")
-            db['messages'][message.id] = {"bot_message_id" : bot_message.id, "starred_user_ids" : [message.author.id]}
-            message_data = db['messages'][message.id]
+            embed_message = await starboard_channel.fetch_message(starred_message.embed_message_id)
+            await embed_message.edit(embed=embed)
 
-        await self.client.edit_message(bot_message, embed=await self.createEmbedForStarredMessage(message,db))
-
-        return message_data
-
-    async def unstarMessage(self,message,db):
-        starboard = self.client.get_channel(db.get('channel'))
-
-        message_data = db['messages'][message.id]
-        bot_message = await self.client.get_message(starboard,message_data['bot_message_id'])
-        db['messages'][message.id]['starred_user_ids'].remove(message.author.id)
-
-        if len(db['messages'][message.id]['starred_user_ids']) == 0:
-            await self.client.delete_message(bot_message)
-            return None
-
-        await self.client.edit_message(bot_message, "In <#"+message.channel.id+">",embed=await self.createEmbedForStarredMessage(message,db))
-
-        return message_data
-
-
-    async def getEmojiForStar(self,stars):
-        if 5 >= stars >= 0:
-            return '\N{WHITE MEDIUM STAR}'
-        elif 10 >= stars >= 6:
-            return '\N{GLOWING STAR}'
-        elif 25 >= stars >= 11:
-            return '\N{DIZZY SYMBOL}'
-        else:
-            return '\N{SPARKLES}'
 
 def setup(client):
     client.add_cog(Starboard(client))
