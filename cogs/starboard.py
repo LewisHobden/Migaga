@@ -23,13 +23,14 @@ async def _get_emoji_for_star(stars):
 
 
 async def _get_starred_embed(starred_message: StarredMessageModel, discord_message: discord.Message):
-    e = discord.Embed(description=discord_message.content, timestamp=discord_message.created_at)
+    e = discord.Embed(description=discord_message.content, timestamp=discord_message.created_at,colour=discord.Colour.gold())
 
     author = discord_message.author
-    e.set_author(name=author.display_name, icon_url=author.avatar_url)
+    e.set_author(name=author.display_name)
+    e.set_thumbnail(url=author.avatar_url)
 
     if discord_message.attachments:
-        e.set_image(url=discord_message.attachments[0]['proxy_url'])
+        e.set_image(url=discord_message.attachments[0].proxy_url)
 
     number_of_stars = 0
     starrers = starred_message.starrers
@@ -39,7 +40,7 @@ async def _get_starred_embed(starred_message: StarredMessageModel, discord_messa
         number_of_stars += 1
 
     star_emoji = await _get_emoji_for_star(number_of_stars)
-    e.add_field(name="Stars", value=star_emoji + " **" + str(number_of_stars) + "**")
+    e.add_field(name="Stars", value=star_emoji + " **" + str(number_of_stars) + "**", inline=False)
 
     return e
 

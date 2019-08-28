@@ -7,3 +7,4 @@
 
 ### Starboard
 - Users can no longer star themselves.
+- Changed the look and feel of Starboard messages,
