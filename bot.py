@@ -56,103 +56,39 @@ async def on_ready():
     await client.change_presence(status=discord.Status.idle, activity=discord.Activity(name="With New Technology"))
 
 
-@client.event
-async def on_member_join(member):
-    channel = discord.utils.get(member.guild.channels, name='server-logs')
-    logs = client.get_cog('ServerLogs')
-    e = await logs.showMemberJoin(member)
-
-    if None != e and None != channel:
-        await client.send_message(channel, embed=e)
-
-    sql = "SELECT `message`,`channel_id` FROM `discord_welcome_messages` WHERE `server_id`=%s"
-    cursor = database.query(sql, member.guild.id)
-    result = cursor.fetchone()
-
-    if None == result:
-        return
-
-    channel = client.get_channel(str(result['channel_id']))
-
-    if None == channel:
-        raise Exception
-
-    await client.send_message(channel, result['message'].format(member.mention, member.display_name, member.guild.name))
+# @client.event
+# async def on_member_join(member):
+#
+#     sql = "SELECT `message`,`channel_id` FROM `discord_welcome_messages` WHERE `server_id`=%s"
+#     cursor = database.query(sql, member.guild.id)
+#     result = cursor.fetchone()
+#
+#     if None == result:
+#         return
+#
+#     channel = client.get_channel(str(result['channel_id']))
+#
+#     if None == channel:
+#         raise Exception
+#
+#     await client.send_message(channel, result['message'].format(member.mention, member.display_name, member.guild.name))
 
 
-@client.event
-async def on_member_remove(member):
-    channel = discord.utils.get(member.guild.channels, name='server-logs')
-    logs = client.get_cog('ServerLogs')
-    e = await logs.showMemberLeave(member)
-
-    if None != e and None != channel:
-        await client.send_message(channel, embed=e)
-
-
-@client.event
-async def on_member_update(member_before, member_after):
-    global most_recent_name_change
-
-    channel = discord.utils.get(member_after.guild.channels, name='server-logs')
-    logs = client.get_cog('ServerLogs')
-    e = await logs.determineUserChange(member_before, member_after)
-
-    database = Database()
-
-    if member_before.name != member_after.name and None != most_recent_name_change and member_after.id != most_recent_name_change.id and member_after.name != most_recent_name_change.name:
-        database.query("INSERT INTO `discord_username_changes` VALUES(0,%s,%s,%s)",
-                       [member_after.name, member_after.id, strftime("%Y-%m-%d %H:%M:%S", gmtime())])
-
-    most_recent_name_change = member_after
-
-    if None != e and None != channel:
-        await client.send_message(channel, embed=e)
-
-
-@client.event
-async def on_message_edit(message_before, message_after):
-    channel = discord.utils.get(message_after.guild.channels, name='server-logs')
-    logs = client.get_cog('ServerLogs')
-    e = await logs.showMessageEdit(message_before, message_after)
-
-    if None != e and None != channel:
-        await client.send_message(channel, embed=e)
-
-
-@client.event
-async def on_member_ban(member):
-    channel = discord.utils.get(member.guild.channels, name='server-logs')
-    logs = client.get_cog('ServerLogs')
-    e = await logs.showMemberBan(member)
-
-    if None != e and None != channel:
-        await client.send_message(channel, embed=e)
-
-
-@client.event
-async def on_member_unban(server, user):
-    channel = discord.utils.get(server.channels, name='server-logs')
-    logs = client.get_cog('ServerLogs')
-    e = await logs.showMemberUnban(user)
-
-    if None != e and None != channel:
-        await client.send_message(channel, embed=e)
-
+# @client.event
+# async def on_member_update(member_before, member_after):
+#     global most_recent_name_change
+#
+#     database = Database()
+#
+#     if member_before.name != member_after.name and None != most_recent_name_change and member_after.id != most_recent_name_change.id and member_after.name != most_recent_name_change.name:
+#         database.query("INSERT INTO `discord_username_changes` VALUES(0,%s,%s,%s)",
+#                        [member_after.name, member_after.id, strftime("%Y-%m-%d %H:%M:%S", gmtime())])
+#
+#     most_recent_name_change = member_after
 
 @client.event
 async def on_command(message):
     pass
-
-
-@client.event
-async def on_message_delete(message):
-    channel = discord.utils.get(message.guild.channels, name='server-logs')
-    logs = client.get_cog('ServerLogs')
-    e = await logs.showMessageDelete(message)
-
-    if None != e and None != channel:
-        await client.send_message(channel, embed=e)
 
 
 @client.event

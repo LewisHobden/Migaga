@@ -1,5 +1,9 @@
 
 ## [Unreleased]
+### Notes
+- Need to build a setup process for the bot to add all of the new tables.
+- Need to also write temp directories for images.
+
 ### Global
 - Cleaned up the code a lot - you should see some performance improvements.
 - Updated to use Discord.py API latest (v1.2.3)
@@ -8,3 +12,7 @@
 ### Starboard
 - Users can no longer star themselves.
 - Changed the look and feel of Starboard messages,
+
+### Server Logs
+- Redesigned the majority of server log messages.
+- Added logging for deleted images.
