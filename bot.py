@@ -1,4 +1,4 @@
-from model.discord_client import MigagaClient
+from discord.ext import commands
 
 from cogs.customcommands import *
 from cogs.storage.database import Database
@@ -27,12 +27,11 @@ logger.addHandler(handler)
 
 bot_description = """ Lewis' Discord Bot Version 4 """
 prefix = "!"
-client = MigagaClient(command_prefix=prefix, description=bot_description, pm_help=None)
+client = commands.Bot(command_prefix=prefix, description=bot_description, pm_help=None)
 
 debug = False
 
 extensions = [
-    "cogs.smash.smash",
     "cogs.admin",
     "cogs.games.currency",
     "cogs.games.games",
@@ -89,32 +88,6 @@ async def on_ready():
 @client.event
 async def on_command(message):
     pass
-
-
-@client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
-
-    if message.content.startswith(prefix):
-        admin = client.get_cog('Admin')
-
-        space_location = message.content.find(" ")
-        if space_location == -1:
-            command = message.content[1:]
-        else:
-            command = message.content[1:space_location]
-
-        if admin:
-            if await admin.checkAndAssignRole(command, message):
-                return
-
-        response = await check_if_command_triggered(message, command)
-
-        if response != None:
-            await message.channel.send(response)
-        else:
-            await client.process_commands(message)
 
 if __name__ == '__main__':
     token = config.get("Env", "Token")

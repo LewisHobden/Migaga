@@ -16,3 +16,6 @@
 ### Server Logs
 - Redesigned the majority of server log messages.
 - Added logging for deleted images.
+
+### Admin
+- Admin commands now resolve users through ID, name, etc rather than being rigid as they used to be.

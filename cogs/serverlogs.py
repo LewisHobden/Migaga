@@ -36,18 +36,16 @@ class ServerLogs(commands.Cog):
 
     def __init__(self, client):
         self.client = client
-        client.register_event_listener("message_delete", self._on_message_delete)
-        client.register_event_listener("message_edit", self._on_message_edit)
-        client.register_event_listener("member_join", self._on_member_join)
-        client.register_event_listener("member_leave", self._on_member_leave)
-        client.register_event_listener("member_banned", self._on_member_banned)
-        client.register_event_listener("member_unbanned", self._on_member_unbanned)
-        client.register_event_listener("member_update", self._on_member_updated)
-        client.register_event_listener("user_update", self._on_user_updated)
+        client.add_listener(self._on_message_delete, "on_message_delete")
+        client.add_listener(self._on_message_edit, "on_message_edit")
+        client.add_listener(self._on_member_join, "on_member_join")
+        client.add_listener(self._on_member_leave, "on_member_leave")
+        client.add_listener(self._on_member_banned, "on_member_ban")
+        client.add_listener(self._on_member_unbanned, "on_member_unban")
+        client.add_listener(self._on_member_updated, "on_member_update")
+        client.add_listener(self._on_user_updated, "on_user_update")
 
-    async def _on_member_leave(self, **kwargs):
-        member = kwargs.get("member")
-
+    async def _on_member_leave(self, member: discord.Member):
         e = await _generate_boilerplate_embed(member, 9319990)
         e.title = "\N{CROSS MARK} Member Left the Server!"
         e.description = member.display_name + " has left this server. Sad to see them go! I think? I might not be.."
@@ -56,9 +54,7 @@ class ServerLogs(commands.Cog):
 
         await self._notify(e, member.guild)
 
-    async def _on_member_join(self, **kwargs):
-        member = kwargs.get("member")
-
+    async def _on_member_join(self, member: discord.Member):
         e = await _generate_boilerplate_embed(member, 6278268)
         e.title = "\N{CHECK MARK} User Joined the Server!"
 
@@ -70,26 +66,21 @@ class ServerLogs(commands.Cog):
 
         await self._notify(e, member.guild)
 
-    async def _on_member_unbanned(self, **kwargs):
-        user = kwargs.get("user")
-
+    async def _on_member_unbanned(self, user: discord.User):
         e = await _generate_boilerplate_embed(user, 1219369)
         e.title = "\N{LOW BRIGHTNESS SYMBOL} Member Unbanned"
         e.description = user.display_name + " was unbanned from the server. I hope they learned their lesson!"
 
         await self._notify(e, kwargs.get("guild"))
 
-    async def _on_member_banned(self, **kwargs):
-        user = kwargs.get("user")
-
+    async def _on_member_banned(self, user: discord.User):
         e = await _generate_boilerplate_embed(user, 10162706)
         e.title = "\N{NAME BADGE} User Banned"
         e.description = user.name + " was banned from this server. Lay down the law!"
 
         await self._notify(e, kwargs.get("guild"))
 
-    async def _on_message_delete(self, **kwargs):
-        message = kwargs.get("message")
+    async def _on_message_delete(self, message: discord.Message):
         e = await _generate_boilerplate_embed(message.author, 11346466, message.channel)
 
         e.title = "\N{CROSS MARK} Message Deleted"
@@ -105,10 +96,7 @@ class ServerLogs(commands.Cog):
 
         await self._notify(e, message.channel.guild)
 
-    async def _on_message_edit(self, **kwargs):
-        message_before = kwargs.get("message_before")
-        message_after = kwargs.get("message_after")
-
+    async def _on_message_edit(self, message_before: discord.Message, message_after: discord.Message):
         if message_before.content == message_after.content:
             return
 
@@ -121,10 +109,7 @@ class ServerLogs(commands.Cog):
 
         await self._notify(e, message_after.channel.guild)
 
-    async def _on_user_updated(self, **kwargs):
-        before = kwargs.get("user_before")
-        after = kwargs.get("user_after")
-
+    async def _on_user_updated(self, before: discord.User, after: discord.User):
         e = await _generate_boilerplate_embed(after, 7748003)
         e.title = "\N{LOWER RIGHT PENCIL} User Changed"
 
@@ -152,10 +137,8 @@ class ServerLogs(commands.Cog):
             if member is not None:
                 await self._notify(e, guild)
 
-    async def _on_member_updated(self, **kwargs):
+    async def _on_member_updated(self, before: discord.Member, after: discord.Member):
         needs_posting = False
-        before = kwargs.get("member_before")
-        after = kwargs.get("member_after")
 
         e = await _generate_boilerplate_embed(after, 7748003)
         e.title = "\N{LOWER RIGHT PENCIL} Member Changed"

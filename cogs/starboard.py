@@ -1,10 +1,12 @@
 from datetime import *
+
+from discord import RawReactionActionEvent
+
 from storage.database_factory import DatabaseFactory
 
 import discord
 from discord.ext import commands
 
-from model.discord_client import MigagaClient
 from model.message_starrer import MessageStarrerModel
 from model.starboard import StarboardModel
 from model.starred_message import StarredMessageModel
@@ -48,9 +50,9 @@ async def _get_starred_embed(starred_message: StarredMessageModel, discord_messa
 class Starboard(commands.Cog):
     """ Commands related to the Starboard. """
 
-    def __init__(self, client: MigagaClient):
-        client.register_event_listener("raw_reaction_add", self._on_reaction)
-        client.register_event_listener("raw_reaction_remove", self._on_reaction_removed)
+    def __init__(self, client: commands.Bot):
+        client.add_listener(self._on_reaction, "on_raw_reaction_add")
+        client.add_listener(self._on_reaction_removed, "raw_reaction_remove")
         self.client = client
 
     @commands.command(pass_context=True, no_pm=True)
@@ -117,9 +119,7 @@ class Starboard(commands.Cog):
         StarboardModel.create(guild_id=ctx.guild.id, channel_id=channel.id, is_locked=False)
         await ctx.send('\N{GLOWING STAR} Starboard set up at {.mention}'.format(channel))
 
-    async def _on_reaction_removed(self, **kwargs):
-        reaction = kwargs.get("reaction")
-
+    async def _on_reaction_removed(self, reaction: RawReactionActionEvent):
         # @todo Allow customisation of the emoji for starring.
         if reaction.emoji.name != '⭐':
             return
@@ -141,9 +141,7 @@ class Starboard(commands.Cog):
         embed_message = await channel.fetch_message(starred_message.embed_message_id)
         await embed_message.edit(embed=embed)
 
-    async def _on_reaction(self, **kwargs):
-        reaction = kwargs.get("reaction")
-
+    async def _on_reaction(self, reaction: RawReactionActionEvent):
         # @todo Allow customisation of the emoji for starring.
         if reaction.emoji.name != '⭐':
             return

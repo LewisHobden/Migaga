@@ -15,7 +15,7 @@ def checkPermissions(ctx, **permissions):
     
     
 def isAdministrator(ctx):
-    return ctx.message.channel.permissions_for(message.author).administrator
+    return ctx.message.channel.permissions_for(ctx.message.author).administrator
 
 def hasPermissions(**permissions):
     def check(ctx):

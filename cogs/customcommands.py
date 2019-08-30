@@ -22,9 +22,11 @@ class CustomCommands(commands.Cog):
     """ Custom commands for your servers! """
     COMMANDS = {}
 
-    def __init__(self, client):
+    def __init__(self, client: commands.Bot):
         self.database = Database()
         self.client = client
+
+        self.client.add_listener(self._on_message, "on_message")
 
     @commands.command(no_pm=True, pass_context=True)
     @credential_checks.hasPermissions(manage_emojis=True)
@@ -121,6 +123,16 @@ class CustomCommands(commands.Cog):
 
         await ctx.send(result_str)
 
+    async def _on_message(self, message: discord.Message):
+        if message.content.startswith(self.client.command_prefix):
+
+            space_location = message.content.find(" ")
+            if space_location == -1:
+                command = message.content[1:]
+            else:
+                command = message.content[1:space_location]
+
+            response = await check_if_command_triggered(message, command)
 
 def setup(client):
     client.add_cog(CustomCommands(client))
