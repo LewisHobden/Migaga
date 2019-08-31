@@ -122,7 +122,7 @@ class ServerLogs(commands.Cog):
             e.add_field(name="Discriminator After", value=after.discriminator)
 
         if before.avatar != after.avatar:
-            e.description = "Avatar has changed."
+            e.description = "Avatar has changed. Old avatar is below."
             image_format = "gif" if before.is_avatar_animated() else "png"
 
             before_avatar_path = "tmp/downloaded-avatars/" + str(after.id) + "." + image_format
