@@ -38,7 +38,7 @@ async def _get_starred_embed(starred_message: StarredMessageModel, discord_messa
     starrers = starred_message.starrers
 
     for starrer in starrers:
-        # Check if they are blacklisted..
+        # @todo Check if they are blacklisted..
         number_of_stars += 1
 
     star_emoji = await _get_emoji_for_star(number_of_stars)

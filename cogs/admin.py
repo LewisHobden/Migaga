@@ -179,7 +179,7 @@ class Admin(commands.Cog):
         if ("" == msg):
             msg = "No name changes found."
         else:
-            msg = "These are the name changes I have stored: \n" + msg;
+            msg = "These are the name changes I have stored: \n" + msg
 
         await self.client.send(msg)
 
@@ -254,7 +254,8 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True, hidden=True, pass_context=True)
     @credential_checks.hasPermissions(manage_messages=True)
     async def purge(self, ctx, number_of_messages: int, channel: discord.TextChannel = None):
-        """Delete a number of messages from the channel you type it in! Messages cannot be purged if they are older than 14 days.
+        """Delete a number of messages from the channel you type it in!
+        Messages cannot be purged if they are older than 14 days.
 
         You must have manage messages permission to use this command."""
 

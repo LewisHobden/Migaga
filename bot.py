@@ -44,6 +44,23 @@ extensions = [
     "cogs.utilities.get_messages",
 ]
 
+@client.event
+async def on_command_error(ctx, exception):
+    if type(exception) is commands.MissingRequiredArgument:
+        await ctx.send(str(exception) +
+                       "\nUse `!help <command>` for more information on the command you were trying to call.")
+
+        return
+
+    if type(exception) is commands.BadArgument:
+        await ctx.send("You called this command incorrectly. Don't forget that more than one word for a command "
+                       "argument should be wrapped in quotes. Here's the error message I got back: \n"+str(exception))
+
+        return
+
+    print(type(exception))
+    await ctx.send(exception)
+
 
 @client.event
 async def on_ready():
