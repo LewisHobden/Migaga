@@ -8,6 +8,7 @@
 - Cleaned up the code a lot - you should see some performance improvements.
 - Updated to use Discord.py API latest (v1.2.3)
 - Updated to Python 3.7
+- Improved error reporting to the user.
 
 ### Starboard
 - Users can no longer star themselves.
@@ -19,3 +20,7 @@
 
 ### Admin
 - Admin commands now resolve users through ID, name, etc rather than being rigid as they used to be.
+
+### Profiles
+- The bot now supports configured profiles with custom fields.
+- Added more helpful documentation on command usage.
