@@ -36,11 +36,13 @@ extensions = [
     "cogs.games.currency",
     "cogs.games.games",
     "cogs.customcommands",
+    "cogs.profile",
     "cogs.games.fun",
     "cogs.people",
     "cogs.starboard",
     "cogs.serverlogs",
     "cogs.games.quiz",
+    "cogs.reminders",
     "cogs.utilities.get_messages",
 ]
 
@@ -60,7 +62,6 @@ async def on_command_error(ctx, exception):
 
     print(type(exception))
     await ctx.send(exception)
-
 
 @client.event
 async def on_ready():

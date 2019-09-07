@@ -2,7 +2,7 @@ from peewee import *
 from storage.database_factory import DatabaseFactory
 
 
-class Profile(Model):
+class ProfileModel(Model):
     discord_user_id = BigIntegerField(primary_key=True)
     colour = IntegerField()
     tag = CharField(max_length=256)

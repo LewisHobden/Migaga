@@ -1,10 +1,10 @@
 from peewee import *
 from storage.database_factory import DatabaseFactory
-from model.profile import Profile
+from model.profile import ProfileModel
 
 
-class ProfileField(Model):
-    discord_user_id = ForeignKeyField(Profile, primary_key=True, related_name="fields")
+class ProfileFieldModel(Model):
+    discord_user_id = ForeignKeyField(ProfileModel, primary_key=True, related_name="fields")
     key = CharField(max_length=255)
     value = CharField(max_length=1024)
 
