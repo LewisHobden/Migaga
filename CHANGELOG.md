@@ -24,3 +24,8 @@
 ### Profiles
 - The bot now supports configured profiles with custom fields.
 - Added more helpful documentation on command usage.
+
+### Reminders
+- Added a new command for making reminders in the future.
+- Added the ability to remind channels of things.
+- Reminders are now queued up and sent when the bot reconnects.
