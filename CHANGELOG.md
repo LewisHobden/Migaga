@@ -10,6 +10,10 @@
 - Updated to Python 3.7
 - Improved error reporting to the user.
 
+### Games
+- Removed money from games. This may be replaced in the future! Just not now.
+- Fixed crashes on some games that have been around for a long time.
+
 ### Starboard
 - Users can no longer star themselves.
 - Changed the look and feel of Starboard messages,
