@@ -10,9 +10,11 @@
 - Updated to Python 3.7
 - Improved error reporting to the user.
 
-### Games
+### Games & Fun
 - Removed money from games. This may be replaced in the future! Just not now.
 - Fixed crashes on some games that have been around for a long time.
+- Fixed a bug which would cause the choose command to fail when separating with spaces.
+- Fixed the cat command!
 
 ### Starboard
 - Users can no longer star themselves.
