@@ -56,7 +56,7 @@ class Starboard(commands.Cog):
         self.client = client
 
     @commands.command(no_pm=True)
-    @credential_checks.hasPermissions(administrator=True)
+    @credential_checks.has_permissions(administrator=True)
     async def starboard(self, ctx, *, channel: discord.TextChannel = None):
         """Sets up the starboard for this server.
         This creates a starboard in the specified channel

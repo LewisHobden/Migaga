@@ -1,13 +1,9 @@
 from discord.ext import commands
 import discord
-
 from cogs.utilities import credential_checks
-
 from model.role_alias import RoleAlias
 from model.role_overwrite import RoleOverwrite
 from model.welcome_message import WelcomeMessage
-
-from cogs.storage.database import Database
 import logging
 
 log = logging.getLogger(__name__)
@@ -18,7 +14,6 @@ class Admin(commands.Cog):
 
     def __init__(self, client):
         self.client = client
-        self.database = Database()
 
     @commands.command()
     async def invite(self, ctx):
@@ -26,7 +21,7 @@ class Admin(commands.Cog):
         await ctx.send(discord.utils.oauth_url(self.client.client_id))
 
     @commands.command(no_pm=True, )
-    @credential_checks.hasPermissions(ban_members=True)
+    @credential_checks.has_permissions(ban_members=True)
     async def ban(self, ctx, member: discord.User, delete_message_days: int = 0, reason: str = ""):
         """Bans a member from the server. You can provide a user either by their ID or mentioning them.
         In order to do this, the bot and you must have Ban Member permissions.
@@ -41,7 +36,7 @@ class Admin(commands.Cog):
             await ctx.send("BOOM! Banned " + member.name)
 
     @commands.command(no_pm=True, )
-    @credential_checks.hasPermissions(ban_members=True)
+    @credential_checks.has_permissions(ban_members=True)
     async def unban(self, ctx, member: discord.User, delete_message_days: int = 0, reason: str = ""):
         """Unbans a member from the server. You can provide a user either by their ID or mentioning them.
         In order to do this, the bot and you must have Ban Member permissions.
@@ -56,7 +51,7 @@ class Admin(commands.Cog):
             await ctx.send("Ok! Unbanned " + member.name)
 
     @commands.command(no_pm=True, )
-    @credential_checks.hasPermissions(kick_members=True)
+    @credential_checks.has_permissions(kick_members=True)
     async def kick(self, ctx, member: discord.Member):
         """Kicks a member from the server.
         In order to do this, the bot and you must have Kick Member permissions.
@@ -71,7 +66,7 @@ class Admin(commands.Cog):
             await ctx.send("BOOM. Kicked " + member.name)
 
     @commands.command(no_pm=True, )
-    @credential_checks.hasPermissions(manage_roles=True)
+    @credential_checks.has_permissions(manage_roles=True)
     async def unflaired(self, ctx):
         """ Counts the total number of people without flairs in the server.
 
@@ -85,7 +80,7 @@ class Admin(commands.Cog):
         await ctx.send("I found " + str(len(unflaired_users)) + " " + plural + " without a role in this server.\n")
 
     @commands.command(no_pm=True, )
-    @credential_checks.hasPermissions(ban_members=True)
+    @credential_checks.has_permissions(ban_members=True)
     async def softban(self, ctx, user: discord.User, delete_message_days: int = 0, reason: str = ""):
         """Bans and unbans a member from the server. You can provide a user either by their ID or mentioning them.
         In order to do this, the bot and you must have Ban Member permissions.
@@ -104,7 +99,7 @@ class Admin(commands.Cog):
             await ctx.send("Softbanned {.name}. Their messages should be gone now.".format(user))
 
     @commands.command(no_pm=True, )
-    @credential_checks.hasPermissions(manage_roles=True)
+    @credential_checks.has_permissions(manage_roles=True)
     async def addrole(self, ctx, role: discord.Role):
         """Adds a role to the bot so that it can either be self assigned by a user or given by an admin.
 
@@ -126,8 +121,8 @@ class Admin(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(no_pm=True, )
-    @credential_checks.hasPermissions(manage_guild=True)
+    @commands.command()
+    @credential_checks.has_permissions(manage_guild=True)
     async def welcomemessage(self, ctx, *, message):
         """
         Creates an automatic welcome message for the bot to say when a new user joins. Use <@> for user mention,
@@ -161,30 +156,8 @@ class Admin(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(no_pm=True, )
-    @credential_checks.hasPermissions(kick_members=True)
-    async def names(self, ctx, member: discord.Member):
-        """ See the history of name changes the bot has for a person.
-
-        You must have kick members permission to do this."""
-        sql = "SELECT `name` FROM `discord_username_changes` WHERE `user_id`=%s"
-        cursor = self.database.query(sql, [member.id])
-        names = cursor.fetchall()
-
-        msg = ""
-
-        for name in names:
-            msg += name['name'] + "\n"
-
-        if ("" == msg):
-            msg = "No name changes found."
-        else:
-            msg = "These are the name changes I have stored: \n" + msg
-
-        await self.client.send(msg)
-
-    @commands.command(no_pm=True, )
-    @credential_checks.hasPermissions(manage_roles=True)
+    @commands.command(no_pm=True)
+    @credential_checks.has_permissions(manage_roles=True)
     async def overwrite(self, ctx, *, role: discord.Role):
         """When a role has been assigned a command, any overwrite will remove that role when the command is used.
 
@@ -212,7 +185,7 @@ class Admin(commands.Cog):
         await ctx.send("Done! Roles will be overwritten when they use the command.")
 
     @commands.command(no_pm=True, hidden=True, )
-    @credential_checks.hasPermissions(manage_roles=True)
+    @credential_checks.has_permissions(manage_roles=True)
     async def roleinfo(self, ctx, *, role: discord.Role):
         """Get information on a role
 
@@ -252,7 +225,7 @@ class Admin(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(no_pm=True, hidden=True, )
-    @credential_checks.hasPermissions(manage_messages=True)
+    @credential_checks.has_permissions(manage_messages=True)
     async def purge(self, ctx, number_of_messages: int, channel: discord.TextChannel = None):
         """Delete a number of messages from the channel you type it in!
         Messages cannot be purged if they are older than 14 days.

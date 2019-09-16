@@ -1,14 +1,7 @@
-from discord.ext import commands
-
 from cogs.customcommands import *
-from cogs.storage.database import Database
-from time import gmtime, strftime
-
 import configparser
-
 import discord
 import datetime
-import logging
 
 most_recent_name_change = None
 
@@ -16,24 +9,16 @@ most_recent_name_change = None
 config = configparser.ConfigParser()
 config.read("config.ini")
 
-database = Database()
-
-# Begin logging
-logger = logging.getLogger('discord')
-logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(filename='migagalogs.logger', encoding='utf-8', mode='w')
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-logger.addHandler(handler)
-
+# Set up the bot.
 bot_description = """ Lewis' Discord Bot Version 4 """
 prefix = "!"
 client = commands.Bot(command_prefix=prefix, description=bot_description, pm_help=None)
 
 debug = False
 
+# Get our cogs.
 extensions = [
     "cogs.admin",
-    "cogs.games.currency",
     "cogs.games.games",
     "cogs.customcommands",
     "cogs.profile",
@@ -41,27 +26,10 @@ extensions = [
     "cogs.people",
     "cogs.starboard",
     "cogs.serverlogs",
-    "cogs.games.quiz",
     "cogs.reminders",
-    "cogs.utilities.get_messages",
+    "cogs.utilities.error_handling",
 ]
 
-@client.event
-async def on_command_error(ctx, exception):
-    if type(exception) is commands.MissingRequiredArgument:
-        await ctx.send(str(exception) +
-                       "\nUse `!help <command>` for more information on the command you were trying to call.")
-
-        return
-
-    if type(exception) is commands.BadArgument:
-        await ctx.send("You called this command incorrectly. Don't forget that more than one word for a command "
-                       "argument should be wrapped in quotes. Here's the error message I got back: \n"+str(exception))
-
-        return
-
-    print(type(exception))
-    await ctx.send(exception)
 
 @client.event
 async def on_ready():
@@ -90,22 +58,6 @@ async def on_ready():
 #
 #     await client.send_message(channel, result['message'].format(member.mention, member.display_name, member.guild.name))
 
-
-# @client.event
-# async def on_member_update(member_before, member_after):
-#     global most_recent_name_change
-#
-#     database = Database()
-#
-#     if member_before.name != member_after.name and None != most_recent_name_change and member_after.id != most_recent_name_change.id and member_after.name != most_recent_name_change.name:
-#         database.query("INSERT INTO `discord_username_changes` VALUES(0,%s,%s,%s)",
-#                        [member_after.name, member_after.id, strftime("%Y-%m-%d %H:%M:%S", gmtime())])
-#
-#     most_recent_name_change = member_after
-
-@client.event
-async def on_command(message):
-    pass
 
 if __name__ == '__main__':
     token = config.get("Env", "Token")

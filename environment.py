@@ -1,5 +1,6 @@
 import configparser
 
+
 class Environment:
     def __init__(self):
         self.config = configparser.ConfigParser()
