@@ -28,7 +28,7 @@ class CustomCommands(commands.Cog):
 
         self.client.add_listener(self._on_message, "on_message")
 
-    @commands.command(no_pm=True, pass_context=True)
+    @commands.command(no_pm=True, )
     @credential_checks.hasPermissions(manage_emojis=True)
     async def addcommand(self, ctx, command_name: str):
         """ Add a new command to the server!
@@ -55,7 +55,7 @@ class CustomCommands(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(no_pm=True, pass_context=True)
+    @commands.command(no_pm=True, )
     @credential_checks.hasPermissions(manage_emojis=True)
     async def deletecommand(self, ctx, command_name: str):
         """ Delete a command from the server """
@@ -107,7 +107,7 @@ class CustomCommands(commands.Cog):
 
             await ctx.send("Done! Deleted!")
 
-    @commands.command(no_pm=True, pass_context=True)
+    @commands.command(no_pm=True, )
     async def search(self, ctx, command_name):
         results = CustomCommand.get_possible_commands_by_name(ctx.channel.guild.id, command_name)
         result_str = "{} commands found!".format(len(results))

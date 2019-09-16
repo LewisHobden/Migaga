@@ -44,7 +44,7 @@ class Reminders(commands.Cog):
 
         self.reminder.start()
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def remind(self, ctx, destination: DestinationConverter, hours: int, minutes: int, *, reminder):
         """ Set up a reminder from the bot. The destination could either be a user by tag, yourself "me" or a channel.
         There are a few different ways to set up a reminder. This one uses hours, minutes and seconds specifically. """
@@ -57,7 +57,7 @@ class Reminders(commands.Cog):
         await ctx.send("Ok! {.mention} will get the reminder \"{}\" at {}".format(destination, reminder,
                                                                                   reminder_time.strftime(self.format)))
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def reminddate(self, ctx, destination: DestinationConverter, date: DateConverter, *, reminder):
         """ Set up a reminder from bot. The destination could either be a user by tag, yourself "me" or a channel.
         There are a few different ways to set up a reminder. This one uses a date. Don't forget that if you're . """

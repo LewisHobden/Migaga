@@ -37,7 +37,7 @@ class Games(commands.Cog):
         self.client = client
         self.money = client.get_cog("Currency")
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def slots(self, ctx):
         """Play the slot machine!"""
         # Slots
@@ -89,7 +89,7 @@ class Games(commands.Cog):
 
         await ctx.send(line1 + "\n" + line2 + "\n" + line3 + "\n" + message)
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def rps(self, ctx):
         """ Challenge the bot to a game of rock, paper, scissors! """
         choices = ["rock", "paper", "scissors"]
@@ -115,7 +115,7 @@ class Games(commands.Cog):
         except KeyError:
             await ctx.send("Not sure what a {} is...".format(player_choice))
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def blackjack(self, ctx):
         """ Play Blackjack vs the bot! """
         suits = [":spades:", ":hearts:", ":diamonds:", ":clubs:"]

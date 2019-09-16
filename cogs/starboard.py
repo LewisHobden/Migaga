@@ -55,18 +55,7 @@ class Starboard(commands.Cog):
         client.add_listener(self._on_reaction_removed, "raw_reaction_remove")
         self.client = client
 
-    @commands.command(pass_context=True, no_pm=True)
-    @credential_checks.hasPermissions(administrator=True)
-    async def rebuild(self, ctx):
-        db = DatabaseFactory()
-        db = db.get_database_connection()
-
-        db.drop_tables([MessageStarrerModel, StarboardModel, StarredMessageModel])
-        db.create_tables([MessageStarrerModel, StarboardModel, StarredMessageModel])
-
-        await ctx.send("Tables are gone.")
-
-    @commands.command(pass_context=True, no_pm=True)
+    @commands.command(no_pm=True)
     @credential_checks.hasPermissions(administrator=True)
     async def starboard(self, ctx, *, channel: discord.TextChannel = None):
         """Sets up the starboard for this server.

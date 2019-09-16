@@ -27,7 +27,7 @@ class Profile(commands.Cog):
     def __init__(self, client: commands.Bot):
         self.client = client
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def profile(self, ctx, member: discord.Member = None):
         """ View your own profile! """
         embed = await _profile_embed(member if member else ctx.message.author)
@@ -43,7 +43,7 @@ class Profile(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def myprofile(self, ctx, colour: discord.Colour, tag: str, *, bio: str):
         """ Set up or edit your main profile. Use the help command for required parts. """
         ProfileModel.insert(discord_user_id=ctx.author.id, colour=colour.value, tag=tag, bio=bio) \
@@ -54,7 +54,7 @@ class Profile(commands.Cog):
 
         await ctx.send("Profile set up! Thank you! Here it is!", embed=await _profile_embed(ctx.author))
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def set(self, ctx, field, *, value):
         """ Set a custom field of your profile!
 

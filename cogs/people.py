@@ -9,7 +9,7 @@ class People(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def info(self, ctx, member: discord.Member = None):
         """ Get information on yourself or another user! """
         member = member if member else ctx.author
@@ -28,7 +28,7 @@ class People(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def warnings(self, ctx):
         """ See what warnings you've been given! """
         user_warnings = await self.getWarningsForUser(ctx.message.author.id, ctx.message.guild.id)
@@ -57,7 +57,7 @@ class People(commands.Cog):
             await self.client.send(
                 "There was an error, it's likely they have too many warnings to fit on one screen. I'm working on formatting this better - however I recommend you ban somebody with this many warnings :l")
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def avatar(self, ctx, member: discord.Member = None):
         """ Shows a bigger version of somebody's Avatar! """
         member = member if member else ctx.message.author

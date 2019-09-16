@@ -18,7 +18,7 @@ class Fun(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def choose(self, ctx, *, message: str):
         """ Choose between things (separate with a comma) """
         choices = message.split(",")
@@ -34,7 +34,7 @@ class Fun(commands.Cog):
         file = discord.File(await _get_remote_file(image_url['file']), filename="cat.jpg")
         await ctx.send("Here you are!", file=file)
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def dog(self, ctx):
         """ Random dog pictures! So sweet. """
         url = "http://www.randomdoggiegenerator.com/randomdoggie.php"
@@ -42,7 +42,7 @@ class Fun(commands.Cog):
 
         await ctx.send("Here you are!", file=file)
 
-    @commands.command(pass_context=True)
+    @commands.command()
     async def kitten(self, ctx):
         """ Random kitten pictures! So sweet. """
         url = "http://www.randomkittengenerator.com/cats/rotator.php"

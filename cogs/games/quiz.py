@@ -17,7 +17,7 @@ class Quiz(commands.Cog):
 	def __init__(self, client):
 		self.client = client
 
-	@commands.command(pass_context=True)
+	@commands.command()
 	async def quiz(self,ctx):
 		'''Quiz yourself! How much do you know?'''
 		await self.client.send("Coming back soon, please hold tight!")
@@ -62,7 +62,7 @@ class Quiz(commands.Cog):
 
 		await Money.changeMoney(Money, ctx.message.author.id, int(awarded))
 
-	@commands.command(no_pm=True, pass_context=True)
+	@commands.command(no_pm=True)
 	@credential_checks.hasPermissions(manage_emojis=True)
 	async def addquestion(self, ctx):
 		""" Add a new quiz question to the server!
