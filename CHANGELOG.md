@@ -6,16 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [4.0.0] - 2019-09-21
-### Notes
-- You will need to write temp directories for images (tmp/downloaded-avatars and tmp/downloaded-images).
+## [4.0.1] - 2019-09-21
+### Features
+- Now actually assign and remove roles based on the `!addrole` and `!overwrite` commands on message.
+- Added the `!emoji` command to get a larger version of an emoji. 
+- Removed the need to save changed avatars and icons to local storage.
+- Changed the formatting on the Starboard.
 
+## [4.0.0] - 2019-09-21
 ### Global
 - Cleaned up the code a lot - you should see some performance improvements.
 - With cleaner code comes greater extendability so features can be released quicker.
 - Updated to use Discord.py API latest (v1.2.3).
 - Updated to Python 3.7.
-- Moved to a cloud database.
+- Moved to a GCP database.
 - Improved error reporting to the user.
 - Improved command error reporting to me. 
 - Removed the original logging implementation. 

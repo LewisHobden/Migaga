@@ -15,6 +15,7 @@ class Admin(commands.Cog):
     def __init__(self, client: commands.Bot):
         self.client = client
         client.add_listener(self._on_member_join, "on_member_join")
+        client.add_listener(self._on_message, "on_message")
 
     @commands.command()
     async def invite(self, ctx):
@@ -242,6 +243,30 @@ class Admin(commands.Cog):
             await ctx.send("I don't have permission to do this!")
         except discord.HTTPException:
             await ctx.send("I was unable to purge these messages. Are any of them older than 14 days?")
+
+    async def _on_message(self, message: discord.Message):
+        if not message.content.startswith(self.client.command_prefix):
+            return
+
+        space_location = message.content.find(" ")
+        if space_location == -1:
+            command = message.content[1:]
+        else:
+            command = message.content[1:space_location]
+
+        aliases = RoleAlias.select().where(RoleAlias.server_id == message.guild.id and RoleAlias.alias % command)
+        roles_to_provide = []
+        roles_to_remove = []
+
+        for alias in aliases:
+            roles_to_provide.append(message.guild.get_role(alias.role_id))
+            overwrites = RoleOverwrite.select().where(RoleOverwrite.role_id == alias.role_id)
+
+            for overwrite in overwrites:
+                roles_to_remove.append(message.guild.get_role(overwrite.overwrite_role_id))
+
+        await message.author.add_roles(*roles_to_provide, reason="Added using the \"{}\" command.".format(command))
+        await message.author.remove_roles(*roles_to_remove, reason="Removed using the \"{}\" command.".format(command))
 
     async def _on_member_join(self, member: discord.Member):
         welcome_messages = WelcomeMessage.select().where(WelcomeMessage.server_id == member.guild.id)

@@ -19,6 +19,17 @@ class Fun(commands.Cog):
         self.client = client
 
     @commands.command()
+    async def emoji(self, ctx, emoji: discord.Emoji):
+        """ Loads the full version of an emoji as long as you give one that is in this server! """
+        fp = io.BytesIO()
+        await emoji.url.save(fp=fp)
+
+        filename = "emoji." + ("gif" if emoji.animated else "png")
+
+        await ctx.send("Here's the full version of the emoji {}".format(emoji.name),
+                       file=discord.File(fp=fp, filename=filename))
+
+    @commands.command()
     async def choose(self, ctx, *, message: str):
         """ Choose between things (separate with a comma) """
         choices = message.split(",")

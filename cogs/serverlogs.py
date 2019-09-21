@@ -4,6 +4,7 @@ import discord
 import datetime
 
 import os
+import io
 
 
 async def _generate_boilerplate_embed(author: discord.Member, colour=None, channel: discord.TextChannel = None):
@@ -89,10 +90,10 @@ class ServerLogs(commands.Cog):
         if message.attachments:
             # Save and post each attachment.
             for attachment in message.attachments:
-                filename = "tmp/downloaded-images/" + attachment.filename
-                await attachment.save(filename, use_cached=True)
+                buffer = io.BytesIO()
+                await attachment.save(fp=buffer, use_cached=True)
 
-                e.set_image(url=await self._save_file_to_cdn(filename))
+                e.set_image(url=await self._save_file_to_cdn(buffer, attachment.filename))
 
         await self._notify(e, message.channel.guild)
 
@@ -125,10 +126,11 @@ class ServerLogs(commands.Cog):
             e.description = "Avatar has changed. Old avatar is below."
             image_format = "gif" if before.is_avatar_animated() else "png"
 
-            before_avatar_path = "tmp/downloaded-avatars/" + str(after.id) + "." + image_format
-            await before.avatar_url_as(format=image_format).save(before_avatar_path)
+            buffer = io.BytesIO()
+            before_avatar_path = str(after.id) + "." + image_format
+            await before.avatar_url_as(format=image_format).save(fp=buffer)
 
-            e.set_image(url=await self._save_file_to_cdn(before_avatar_path))
+            e.set_image(url=await self._save_file_to_cdn(buffer, filename=before_avatar_path))
             e.set_thumbnail(url=after.avatar_url)
 
         for guild in self.client.guilds:
@@ -157,14 +159,12 @@ class ServerLogs(commands.Cog):
             await self._notify(e, after.guild)
 
     # @todo Refactor this to not use hard-coded values. Possibly a different approach?
-    async def _save_file_to_cdn(self, filename: str) -> str:
+    async def _save_file_to_cdn(self, buffer: io.BufferedIOBase, filename: str) -> str:
         guild = discord.utils.find(lambda c: c.id == 197972184466063381, self.client.guilds)
         cdn = discord.utils.find(lambda c: c.name == "cdn", guild.channels)
 
-        message = await cdn.send(file=discord.File(open(filename, "rb")))
+        message = await cdn.send(file=discord.File(fp=buffer, filename=filename))
         url = message.attachments[0].url
-
-        os.remove(filename)
 
         return url
 
