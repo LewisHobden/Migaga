@@ -12,8 +12,9 @@ log = logging.getLogger(__name__)
 class Admin(commands.Cog):
     """Moderation related commands."""
 
-    def __init__(self, client):
+    def __init__(self, client: commands.Bot):
         self.client = client
+        client.add_listener(self._on_member_join, "on_member_join")
 
     @commands.command()
     async def invite(self, ctx):
@@ -241,6 +242,14 @@ class Admin(commands.Cog):
             await ctx.send("I don't have permission to do this!")
         except discord.HTTPException:
             await ctx.send("I was unable to purge these messages. Are any of them older than 14 days?")
+
+    async def _on_member_join(self, member: discord.Member):
+        welcome_messages = WelcomeMessage.select().where(WelcomeMessage.server_id == member.guild.id)
+
+        for message in welcome_messages:
+            channel = self.client.get_channel(message.channel_id)
+            await channel.send(message.message.format(member.mention, member.display_name, member.guild.name))
+
 
 def setup(client):
     client.add_cog(Admin(client))
