@@ -1,18 +1,9 @@
-# Old Temp
-/cogs/__pycache__/
-/cogs/games/__pycache__/
-/cogs/utilities/__pycache__/
-migagalogs.logger
-cogs/smash/__pycache__/
-awwh.jpg
-aww.jpg
-cogs/storage/__pycache__/
-*/__pycache__/*
-khcache.json
-
 # Config
 config.ini
 .idea/
+
+# Temp
+tmp/*
 
 # Created by https://www.gitignore.io/api/python
 # Edit at https://www.gitignore.io/?templates=python
