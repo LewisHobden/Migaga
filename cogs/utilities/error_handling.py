@@ -1,27 +1,46 @@
 from discord.ext import commands
 import discord
+import sys
 import datetime
 
-class ErrorHandling:
-    """Tools for handling errors."""
 
-    def __init__(self, client):
+class ErrorHandling(commands.Cog):
+    """The main error handler."""
+
+    def __init__(self, client: commands.Bot):
         self.client = client
+        client.add_listener(self._report_error, "on_command_error")
 
-    async def postErrorToChannel(ctx, error_description, error_title):
-        exceptions_channel = discord.utils.get(self.client.get_all_channels(), server__id='197972184466063381', id='254215930416988170')
+    async def _report_error(self, ctx, exception):
+        if type(exception) in [commands.CommandNotFound]:
+            return
 
-        msg  = discord.Embed(title=error_title, timestamp=datetime.datetime.utcnow(), description=error_description, color=discord.Colour(15021879))
+        if type(exception) is commands.MissingRequiredArgument:
+            await ctx.send(str(exception) +
+                           "\nUse `!help <command>` for more information on the command you were trying to call.")
+
+            return
+
+        if type(exception) is commands.BadArgument:
+            await ctx.send("You called this command incorrectly. Don't forget that more than one word for a command "
+                           "argument should be wrapped in quotes. Here's the error message I got back: \n" + str(
+                            exception))
+
+        # Otherwise report it to my tracebacks channel.
+        exceptions_channel = discord.utils.get(self.client.get_guild(197972184466063381).channels,
+                                               id=254215930416988170)
+
+        msg = discord.Embed(title=str(type(exception)), timestamp=datetime.datetime.utcnow(), description=str(exception),
+                            color=discord.Colour(15021879))
+
         msg.add_field(name="Command", value=ctx.command.qualified_name)
-        msg.add_field(name="Server", value=ctx.message.server.name)
-        msg.add_field(name="Channel", value=ctx.message.channel.name)
-        msg.set_footer(text=str(sys.stderr), icon_url="https://cdn0.iconfinder.com/data/icons/shift-free/32/Error-128.png")
+        msg.add_field(name="Server", value=ctx.guild.name)
+        msg.add_field(name="Channel", value=ctx.channel.name)
+        msg.set_footer(text=str(sys.stderr))
+        msg.set_author(name=str(ctx.author.name), icon_url=ctx.author.avatar_url)
 
-        member = ctx.message.author
-        avatar = member.avatar_url if member.avatar else member.default_avatar_url
-        msg.set_author(name=str(member), icon_url=avatar)
+        await exceptions_channel.send(embed=msg)
 
-        await self.client.send_message(exceptions_channel, embed=msg)
 
 def setup(client):
     client.add_cog(ErrorHandling(client))

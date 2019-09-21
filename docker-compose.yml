@@ -1,0 +1,22 @@
+version: '3.3'
+
+services:
+  webserver:
+    container_name: migaga
+    image: migaga
+    volumes:
+      - ./:/usr/src/app
+      - webrootuservolume:/root
+  database:
+    container_name: database
+    image: mysql/mysql-server
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_ROOT_HOST: '%'
+    volumes:
+      - datavolume:/var/lib/mysql
+    ports:
+      - '3306:3306'
+volumes:
+  datavolume:
+  webrootuservolume:

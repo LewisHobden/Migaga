@@ -1,188 +1,137 @@
-from discord.ext import commands
-from cogs.utilities import credential_checks
+import logging
 
 import discord
-import datetime
-import random
-import logging
-import pymysql
-import time    
+from discord.ext import commands
+
+from cogs.utilities import credential_checks
+from model.custom_command import CustomCommand
 
 log = logging.getLogger(__name__)
 
-def connectToDatabase():
-	return pymysql.connect(host='localhost',
-						   user='robot',
-						   password='6DcgvKYTXCA34eKQfuE8xhBo',
-						   db='discord',
-						   charset='utf8mb4',
-						   cursorclass=pymysql.cursors.DictCursor)
 
-class CustomCommands:
-	""" Custom commands for your servers! """
-	COMMANDS = {}
-	
-	def __init__(self, client):
-		self.client = client
-
-	async def checkIfCommandTriggered(self, message,command):
-		try:
-			a = CustomCommands.COMMANDS[message.server.id]
-		except KeyError:
-			return False
-
-		results = []
-		for check in CustomCommands.COMMANDS[str(message.server.id)]:
-			if check["name"].lower() == command.lower():
-				results.append(check["response"])
-
-		if results:
-			return random.choice(results)
-		else:
-			return False
-
-	async def checkIfServerCanAddMoreCommands(self, server_id):
-		whitelist = ['84142598456901632','139310504655978496']
-		connection = connectToDatabase()
-		with connection.cursor() as csr:
-			sql = "SELECT COUNT(*) AS `total` FROM `discord_commands` WHERE `server_id` = %s"
-			csr.execute(sql, server_id)
-
-			for result in csr:
-				if result["total"] >= 50 and not server_id in whitelist:
-					return False
-
-		return True
-
-	@commands.command(no_pm=True, pass_context=True)
-	@credential_checks.hasPermissions(manage_emojis=True)
-	async def addcommand(self, ctx, command_name):
-		""" Add a new command to the server!
-
-		You must have the Manage Emojis permission to do this. Servers have a limit of 50 commands each. If you think you deserve more, let me know."""
-		can_add_commands = await self.checkIfServerCanAddMoreCommands(ctx.message.server.id)
-		if not can_add_commands:
-			await self.client.say("Sorry! Your server has over 50 custom commands attached to it! Delete some with -deletecommand or wait to see if you can have more!")
-			return
-		
-		await self.client.say("Okay, can do. What should it respond with? Once you've finished the response, put a \"##\" and then write the command description.\n__Example__\n:eyes:##Make the bot give you the eyes.")
-		response = await self.client.wait_for_message(author=ctx.message.author)
-		response = response.content.split("##")
-
-		connection = connectToDatabase()
-
-		with connection.cursor() as cursor:
-			sql = "INSERT INTO `discord_commands` VALUES (0, %s, %s, %s, %s)"
-			description = response[1] if len(response) == 2 else ""
-			cursor.execute(sql, [command_name, response[0], description, ctx.message.server.id])
-
-			await self.client.say("Whew! All done! I have added the command \"**"+command_name+"**\", with a response: **\""+response[0]+"\"** and description: \"**"+description+"**\" to the server **"+ctx.message.server.name+"**")
-			await self.setCommand(command_name, description, response[0], ctx.message.server.id, cursor.lastrowid)
-
-		connection.commit()
-		
-	async def searchCommands(self,server_id,command_name):
-		results = []
-		for command in self.COMMANDS[server_id]:
-			if command["name"].find(command_name) != -1:
-				results.append(command)
-		
-		return results
+async def check_if_command_triggered(message: discord.Message, command: str) -> str:
+    return CustomCommand.get_random_response_by_name(message.channel.guild.id, command)
 
 
-	@commands.command(no_pm=True, pass_context=True)
-	@credential_checks.hasPermissions(manage_emojis=True)
-	async def deletecommand(self, ctx, command_name):
-		""" Delete a command from the server """
-		results = await self.searchCommands(ctx.message.server.id,command_name)
-		
-		if len(results) == 0:
-			await self.client.say("No commands were found using that search term!")
-			return
-		elif len(results) == 1:
-			await self.deleteCommandFromDatabase(results[0]['id'])
-			self.COMMANDS[ctx.message.server.id].remove(results[0])
-			await self.client.say("Nice! Deleted the command **-{0}**!".format(results[0]['name']))
-		else:
-			counter = 0
-			msg = "Multiple commands have been found.. Respond with the command number for it to be deleted. Separate them with commas for multiple to be deleted!\n"
-			for command in results:
-				msg += "{0!s}. **{1}** - responding with `{2}`\n".format(counter+1, command['name'], command['response'])
-				counter += 1
-				
+def truncate_command_response(response: str, length: int = 1900) -> str:
+    return (response[:length] + '...') if len(response) > length else response
 
-			await self.client.say(msg)
-			response = await self.client.wait_for_message(author=ctx.message.author)
-			response = response.content
 
-			
-			if response.find(",") != -1:
-				ids_to_delete = response.split(",")
-			else:
-				ids_to_delete = [response]
-				
-			for command_id in ids_to_delete:
-				try:
-					command_id = int(command_id.strip()) - 1
-					self.COMMANDS[ctx.message.server.id].remove(results[command_id])
-					await self.deleteCommandFromDatabase(results[command_id]['id'])
-				except ValueError:
-					print("User inputting a non-numeric figure.")
-					return
+class CustomCommands(commands.Cog):
+    """ Custom commands for your servers! """
+    COMMANDS = {}
 
-			await self.client.say("Done! Deleted!")
+    def __init__(self, client: commands.Bot):
+        self.client = client
 
-	async def deleteCommandFromDatabase(self, command_id):
-		sql = "DELETE FROM `discord_commands` WHERE `id`=%s"
-		connection = connectToDatabase()
-		with connection.cursor() as cursor:
-			cursor.execute(sql, command_id)
+        self.client.add_listener(self._on_message, "on_message")
 
-		connection.commit()
+    @commands.command(no_pm=True, )
+    @credential_checks.has_permissions(manage_emojis=True)
+    async def addcommand(self, ctx, command_name: str):
+        """ Add a new command to the server!
 
-	async def readCommands(self):
-		connection = connectToDatabase()
-		try:
-			with connection.cursor() as cursor:
-				sql = "SELECT * FROM `discord_commands`"
-				cursor.execute(sql)
-		except pymysql.MySQLError(error):
-			print(error)
-			return
-		finally:
-			connection.close()
+        You must have the Manage Emojis permission to do this."""
 
-		for row in cursor:
-			await self.setCommand(self, row["name"], row["description"], row["response"], str(row["server_id"]), row["id"])
-					
-					
-	async def setCommand(self, name, description, response, server_id, command_id):
-		command = {"name" : name, "response" : response, "description" : description, "id" : command_id}
+        await ctx.send(
+            "Okay, can do. What should it respond with? Once you've finished the response, put a \"##\" and then "
+            "write the command description.\n__Example__\n:eyes:##Make the bot give you the eyes.")
 
-		try:
-			self.COMMANDS[server_id].append(command)
-		except KeyError:
-			self.COMMANDS[server_id] = [command]
+        reply = await self.client.wait_for("message", check=lambda m: m.author == ctx.message.author)
 
-	@commands.command(no_pm=True, pass_context=True)
-	async def search(self, ctx, command_name):
-		results = await self.searchCommands(ctx.message.server.id,command_name)
-		result_str  = "{} commands found".format(len(results))
-		result_str += "```\n"
-		
-		commands = []
-		for result in results:
-			if "!{}\n".format(result['name']) in commands:
-				pass
-			else:
-				commands.append("!{}\n".format(result['name']))
-			
-		result_str += "".join(commands)
-		result_str += "```"
-		
-		await self.client.say(result_str)
-		
-		
+        response = reply.content.split("##")
+        description = response[1] if len(response) == 2 else ""
+
+        CustomCommand.create(name=command_name, description=description, response=response[0],
+                             server_id=ctx.message.guild.id).save()
+
+        embed = discord.Embed(title="Command Added", description="Here's your new command!",
+                              colour=discord.Colour.green())
+        embed.add_field(name="Command", value=command_name)
+        embed.add_field(name="Response", value=truncate_command_response(response, 1000))
+        embed.add_field(name="Description", value="_Not provided_" if "" == description else description)
+
+        await ctx.send(embed=embed)
+
+    @commands.command(no_pm=True, )
+    @credential_checks.has_permissions(manage_emojis=True)
+    async def deletecommand(self, ctx, command_name: str):
+        """ Delete a command from the server """
+        results = list(CustomCommand.get_responses_by_name(ctx.message.guild.id, command_name))
+
+        if len(results) == 0:
+            await ctx.send("No commands were found using that search term!")
+            return
+        elif len(results) == 1:
+            results[0].delete_instance()
+
+            await ctx.send("Nice! Deleted the command **{0}**!".format(results[0].name))
+        else:
+            counter = 0
+            msg = "Multiple commands have been found.. Respond with the command number for it to be deleted. Separate " \
+                  "them with commas for multiple to be deleted!\n "
+
+            for command in results:
+                command_text = "{0!s}. **{1}** - \"{2}\"\n"\
+                    .format(counter + 1, command.name,
+                            command.description if command.description else "responding with "+truncate_command_response
+                            (command.response))
+
+                if len(msg + command_text) > 2000:
+                    await ctx.send(msg)
+                    msg = command_text
+                else:
+                    msg += command_text
+
+                counter += 1
+
+            if len(msg) > 1:
+                await ctx.send(msg)
+
+            response = await self.client.wait_for(
+                "message", check=lambda m: m.author == ctx.message.author and m.channel == ctx.message.channel)
+
+            ids_to_delete = response.content.split(",")
+
+            for command_id in ids_to_delete:
+                try:
+                    index = int(command_id.strip()) - 1
+
+                    results[index].delete_instance()
+
+                except ValueError:
+                    await ctx.send("Sorry I got confused with one of the indexes you provided. Please try again.")
+                    return
+
+            await ctx.send("Done! Deleted!")
+
+    @commands.command(no_pm=True, )
+    async def search(self, ctx, command_name):
+        """ Searches for a custom command in the server. It returns possible commands with that name. """
+        results = CustomCommand.get_possible_commands_by_name(ctx.channel.guild.id, command_name)
+        result_str = "{} commands found!".format(len(results))
+
+        if 0 == len(results):
+            await ctx.send(result_str)
+            return
+
+        result_str += "\n"
+
+        for result in results:
+            result_str += " - {}\n".format(result.name)
+
+        await ctx.send(result_str)
+
+    async def _on_message(self, message: discord.Message):
+        if message.content.startswith(self.client.command_prefix):
+
+            space_location = message.content.find(" ")
+            if space_location == -1:
+                command = message.content[1:]
+            else:
+                command = message.content[1:space_location]
+
+            response = await check_if_command_triggered(message, command)
+
 def setup(client):
     client.add_cog(CustomCommands(client))
-
