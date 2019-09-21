@@ -259,11 +259,22 @@ class Admin(commands.Cog):
         roles_to_remove = []
 
         for alias in aliases:
-            roles_to_provide.append(message.guild.get_role(alias.role_id))
+            role = message.guild.get_role(alias.role_id)
+
+            if role is None:
+                continue
+
+            roles_to_provide.append(role)
+
             overwrites = RoleOverwrite.select().where(RoleOverwrite.role_id == alias.role_id)
 
             for overwrite in overwrites:
-                roles_to_remove.append(message.guild.get_role(overwrite.overwrite_role_id))
+                role = message.guild.get_role(overwrite.overwrite_role_id)
+
+                if role is None:
+                    continue
+
+                roles_to_remove.append(role)
 
         await message.author.add_roles(*roles_to_provide, reason="Added using the \"{}\" command.".format(command))
         await message.author.remove_roles(*roles_to_remove, reason="Removed using the \"{}\" command.".format(command))
