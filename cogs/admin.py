@@ -188,7 +188,7 @@ class Admin(commands.Cog):
     @commands.command(no_pm=True, hidden=True, )
     @credential_checks.has_permissions(manage_roles=True)
     async def roleinfo(self, ctx, *, role: discord.Role):
-        """Get information on a role
+        """Get information on a role.
 
         If you have roles with the same name the last one will be chosen.
         You must have the "Manage Roles" privilege in order to use this command."""

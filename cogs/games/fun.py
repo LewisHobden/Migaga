@@ -19,10 +19,6 @@ class Fun(commands.Cog):
         self.client = client
 
     @commands.command()
-    async def crash(self, ctx):
-        raise KeyError("balls")
-
-    @commands.command()
     async def choose(self, ctx, *, message: str):
         """ Choose between things (separate with a comma) """
         choices = message.split(",")

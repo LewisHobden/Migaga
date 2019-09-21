@@ -66,19 +66,19 @@ class ServerLogs(commands.Cog):
 
         await self._notify(e, member.guild)
 
-    async def _on_member_unbanned(self, user: discord.User):
+    async def _on_member_unbanned(self, guild: discord.Guild, user: discord.User):
         e = await _generate_boilerplate_embed(user, 1219369)
         e.title = "\N{LOW BRIGHTNESS SYMBOL} Member Unbanned"
         e.description = user.display_name + " was unbanned from the server. I hope they learned their lesson!"
 
-        await self._notify(e, kwargs.get("guild"))
+        await self._notify(e, guild)
 
-    async def _on_member_banned(self, user: discord.User):
+    async def _on_member_banned(self, guild: discord.Guild, user: discord.User):
         e = await _generate_boilerplate_embed(user, 10162706)
         e.title = "\N{NAME BADGE} User Banned"
         e.description = user.name + " was banned from this server. Lay down the law!"
 
-        await self._notify(e, kwargs.get("guild"))
+        await self._notify(e, guild)
 
     async def _on_message_delete(self, message: discord.Message):
         e = await _generate_boilerplate_embed(message.author, 11346466, message.channel)

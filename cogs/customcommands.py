@@ -107,6 +107,7 @@ class CustomCommands(commands.Cog):
 
     @commands.command(no_pm=True, )
     async def search(self, ctx, command_name):
+        """ Searches for a custom command in the server. It returns possible commands with that name. """
         results = CustomCommand.get_possible_commands_by_name(ctx.channel.guild.id, command_name)
         result_str = "{} commands found!".format(len(results))
 

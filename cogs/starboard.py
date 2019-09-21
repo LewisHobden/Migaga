@@ -25,7 +25,8 @@ async def _get_emoji_for_star(stars):
 
 
 async def _get_starred_embed(starred_message: StarredMessageModel, discord_message: discord.Message):
-    e = discord.Embed(description=discord_message.content, timestamp=discord_message.created_at,colour=discord.Colour.gold())
+    e = discord.Embed(description=discord_message.content, timestamp=discord_message.created_at,
+                      colour=discord.Colour.gold())
 
     author = discord_message.author
     e.set_author(name=author.display_name)
@@ -155,9 +156,9 @@ class Starboard(commands.Cog):
 
         # Add the reactor.
         insert = MessageStarrerModel.insert(message_id=starred_message.message_id, user_id=reaction.user_id,
-                                   datetime_starred=datetime.utcnow()) \
+                                            datetime_starred=datetime.utcnow()) \
             .on_conflict(
-            update={MessageStarrerModel.datetime_starred: datetime.utcnow()})\
+            update={MessageStarrerModel.datetime_starred: datetime.utcnow()}) \
             .execute()
 
         # Show it in the starboard.
