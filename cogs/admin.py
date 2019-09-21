@@ -268,6 +268,8 @@ class Admin(commands.Cog):
         await message.author.add_roles(*roles_to_provide, reason="Added using the \"{}\" command.".format(command))
         await message.author.remove_roles(*roles_to_remove, reason="Removed using the \"{}\" command.".format(command))
 
+        await message.delete(delay=2)
+
     async def _on_member_join(self, member: discord.Member):
         welcome_messages = WelcomeMessage.select().where(WelcomeMessage.server_id == member.guild.id)
 
