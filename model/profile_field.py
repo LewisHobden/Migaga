@@ -5,7 +5,7 @@ from model.profile import ProfileModel
 
 class ProfileFieldModel(Model):
     id = AutoField()
-    profile_id = ForeignKeyField(ProfileModel, related_name="fields")
+    discord_user_id = ForeignKeyField(ProfileModel, related_name="fields")
     key = CharField(max_length=255)
     value = CharField(max_length=1024)
 
