@@ -26,7 +26,7 @@ async def _get_emoji_for_star(stars):
 
 async def _get_starred_embed(starred_message: StarredMessageModel, discord_message: discord.Message):
     description = "[Click here](" + discord_message.jump_url + ") to jump to the message.\n\n"
-    description += discord_message.content
+    description += "\"" + discord_message.content + "\""
 
     e = discord.Embed(description=description, timestamp=discord_message.created_at,
                       colour=discord.Colour.gold())
