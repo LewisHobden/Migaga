@@ -19,9 +19,9 @@ It used to be running on an old Windows laptop in the corner of my bedroom that 
 Thanks for reading! 
 
 ## Todo
-[] Unit test each command
-[] Reaction Flairing
-[] A Text-to-speech interpreter feature for voice channels.
-[] Integration with the coming website I am building.
-[] Support feature suggestions. 
-[] Quiz
+ - [] Unit test each command
+ - [] Reaction Flairing
+ - [] A Text-to-speech interpreter feature for voice channels.
+ - [] Integration with the coming website I am building.
+ - [] Support feature suggestions. 
+ - [] Quiz
