@@ -6,7 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Commands
-- Added a new command for removing fields from your profile. 
+- Added a new command for removing fields from your profile.
+
+### Fixes
+- Fixed a bug which caused the removal of stars to be missed by the bot.
 
 ### Tweaks
 - Changed the way database connections are managed in the event that the connection is dropped.
