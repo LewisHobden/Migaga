@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Role Flairing
+- Provided admin commands for adding and removing role flairs from a message.
+- When a user reacts to a message configured with a role flair they will be given the roles recorded against that message.
+- If a role has overwrites set up against it then the other roles will be removed when reacting.
+- Added helper commands for finding information on reaction flairs.
+
 ### Commands
 - Added a new command for removing fields from your profile.
 

@@ -1,3 +1,4 @@
+from peewee import *
 from discord.ext import commands
 import discord
 from discord import RawReactionActionEvent
@@ -267,7 +268,7 @@ class Admin(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(no_pm=True, hidden=True, )
+    @commands.command(no_pm=True, hidden=True)
     @credential_checks.has_permissions(manage_messages=True)
     async def purge(self, ctx, number_of_messages: int, channel: discord.TextChannel = None):
         """Delete a number of messages from the channel you type it in!
@@ -318,7 +319,60 @@ class FlairMessage(commands.Cog):
         client.add_listener(self._on_reaction, "on_raw_reaction_add")
         client.add_listener(self._on_reaction_removed, "on_raw_reaction_remove")
 
+    @commands.command(aliases=["rfinfo"])
+    @commands.has_permissions(manage_roles=True)
+    async def reactionflairinfo(self, ctx, message: discord.Message):
+        """ Shows information on all reaction flairs against a given message."""
+        flairs = FlairMessageReactionModel.select().where(FlairMessageReactionModel.discord_message_id == message.id)
+        embeds = []
+
+        for flair in flairs:
+            desc = "[This message]({.jump_url}) is a flair message.\n"
+            role = message.guild.get_role(flair.role_id)
+            emoji = message.guild.get_role(flair.role_id)
+
+            embed = discord.Embed(
+                title="Role flair {}".format(flair.reference),
+                description=desc.format(message),
+                colour=role.colour
+            )
+
+            embed.add_field(name="Reference", value=flair.reference)
+            embed.add_field(name="Emoji", value=emoji.name)
+            embed.add_field(name="Message ID", value=message.id)
+            embed.add_field(name="Role", value=role.name)
+            embed.set_footer(
+                text="This may also remove roles when the flair is used. Check using the \"roleinfo\" command.")
+
+            embeds.append(embed)
+            await ctx.send(embed=embed)
+
+        if len(embeds) < 1:
+            await ctx.send("There are no reaction flairs for this message.")
+            return
+
+        # Todo send multiple embeds when this is supported.
+        # await ctx.send(embed=embed)
+
+    @commands.command(aliases=["rmrf"])
+    @commands.has_permissions(manage_roles=True)
+    async def removereactionflair(self, ctx, reference):
+        """ Deletes a reaction flair from the system.
+
+        You can only delete a reaction flair using its reference created when the reaction flair was set up.
+        If you've forgotten it use the rfinfo command. """
+        try:
+            model = FlairMessageReactionModel.get_by_id(reference)
+        except DoesNotExist:
+            await ctx.send("Could not find a reaction flair by the reference `{}`. Try the \"rfinfo\" command."
+                           .format(reference))
+            return
+
+        model.delete_instance()
+        await ctx.send("Done! Removed that reaction flair.")
+
     @commands.command(aliases=["rf"])
+    @commands.has_permissions(manage_roles=True)
     async def reactionflair(self, ctx, message: discord.Message, emoji: discord.Emoji, role: discord.Role):
         """ Adds a new flair reaction to a message.
 
@@ -395,6 +449,7 @@ class FlairMessage(commands.Cog):
 
         await _send_disappearing_notification(
             member, channel, roles_to_provide, "{.mention}, I have given you the role(s) ")
+
 
 def setup(client):
     client.add_cog(Admin(client))
