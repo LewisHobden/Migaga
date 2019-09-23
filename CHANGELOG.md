@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 - Fixed a bug which caused the removal of stars to be missed by the bot.
+- Fixed a bug in the !invite command.
 
 ### Tweaks
 - Changed the way database connections are managed in the event that the connection is dropped.

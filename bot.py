@@ -31,6 +31,8 @@ async def on_ready():
     print('Logged in as: ' + client.user.name)
     print('------')
 
+    setattr(client, "client_id", config.get("Env", "ClientId"))
+
     await client.change_presence(
         status=discord.Status.online, activity=discord.Game(
             name="I'm updated! Changelog: migaga.lewis.coffee/"))
