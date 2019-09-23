@@ -1,12 +1,54 @@
+from peewee import *
 from discord.ext import commands
 import discord
+from discord import RawReactionActionEvent
 from cogs.utilities import credential_checks
 from model.role_alias import RoleAlias
 from model.role_overwrite import RoleOverwrite
 from model.welcome_message import WelcomeMessage
 import logging
 
+from model.flair_message_reaction import FlairMessageReactionModel
+
 log = logging.getLogger(__name__)
+
+
+async def _get_roles_from_iterable(iterable, guild: discord.Guild):
+    roles_to_provide = []
+    roles_to_remove = []
+
+    for alias in iterable:
+        role = guild.get_role(alias.role_id)
+
+        if role is None:
+            continue
+
+        roles_to_provide.append(role)
+
+        overwrites = RoleOverwrite.select().where(RoleOverwrite.role_id == alias.role_id)
+
+        for overwrite in overwrites:
+            role = guild.get_role(overwrite.overwrite_role_id)
+
+            if role is None:
+                continue
+
+            roles_to_remove.append(role)
+
+    return roles_to_provide, roles_to_remove
+
+
+async def _send_disappearing_notification(member: discord.Member, channel: discord.TextChannel, roles, prefix: str):
+    # Since join doesn't want to play fair.
+    formatted_roles = []
+    for role in roles:
+        formatted_roles.append(str(role))
+
+    # Send a disappearing message letting them know we've given them the roles.
+    msg = prefix + "`{}` for that flair!"
+
+    alert = await channel.send(msg.format(member, ", ".join(formatted_roles)))
+    await alert.delete(delay=10)
 
 
 class Admin(commands.Cog):
@@ -179,7 +221,7 @@ class Admin(commands.Cog):
             try:
                 chosen_role = await commands.RoleConverter().convert(ctx, role_name.strip())
             except commands.BadArgument:
-                await ctx.send("The role "+role_name+" could not be found and was not added.")
+                await ctx.send("The role " + role_name + " could not be found and was not added.")
                 continue
 
             RoleOverwrite.create(role_id=role.id, overwrite_role_id=chosen_role.id, server_id=guild.id)
@@ -195,11 +237,11 @@ class Admin(commands.Cog):
         You must have the "Manage Roles" privilege in order to use this command."""
         guild = ctx.message.guild
 
-        aliases = RoleAlias.select(RoleAlias.alias, RoleAlias.uses)\
-            .where(RoleAlias.server_id == ctx.guild.id and RoleAlias.role_id == role.id)
+        aliases = RoleAlias.select(RoleAlias.alias, RoleAlias.uses) \
+            .where((RoleAlias.server_id == ctx.guild.id) & (RoleAlias.role_id == role.id))
 
         overwrites = RoleOverwrite.select(RoleOverwrite.overwrite_role_id) \
-            .where(RoleOverwrite.server_id == ctx.guild.id and RoleOverwrite.role_id == role.id)
+            .where((RoleOverwrite.server_id == ctx.guild.id) & (RoleOverwrite.role_id == role.id))
 
         total_users = 0
         for member in guild.members:
@@ -226,7 +268,7 @@ class Admin(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(no_pm=True, hidden=True, )
+    @commands.command(no_pm=True, hidden=True)
     @credential_checks.has_permissions(manage_messages=True)
     async def purge(self, ctx, number_of_messages: int, channel: discord.TextChannel = None):
         """Delete a number of messages from the channel you type it in!
@@ -255,26 +297,7 @@ class Admin(commands.Cog):
             command = message.content[1:space_location]
 
         aliases = RoleAlias.select().where(RoleAlias.server_id == message.guild.id and RoleAlias.alias % command)
-        roles_to_provide = []
-        roles_to_remove = []
-
-        for alias in aliases:
-            role = message.guild.get_role(alias.role_id)
-
-            if role is None:
-                continue
-
-            roles_to_provide.append(role)
-
-            overwrites = RoleOverwrite.select().where(RoleOverwrite.role_id == alias.role_id)
-
-            for overwrite in overwrites:
-                role = message.guild.get_role(overwrite.overwrite_role_id)
-
-                if role is None:
-                    continue
-
-                roles_to_remove.append(role)
+        roles_to_provide, roles_to_remove = await _get_roles_from_iterable(aliases, message.guild)
 
         await message.author.add_roles(*roles_to_provide, reason="Added using the \"{}\" command.".format(command))
         await message.author.remove_roles(*roles_to_remove, reason="Removed using the \"{}\" command.".format(command))
@@ -290,5 +313,144 @@ class Admin(commands.Cog):
             await channel.send(message.message.format(member.mention, member.display_name, member.guild.name))
 
 
+class FlairMessage(commands.Cog):
+    def __init__(self, client: commands.Bot):
+        self.client = client
+        client.add_listener(self._on_reaction, "on_raw_reaction_add")
+        client.add_listener(self._on_reaction_removed, "on_raw_reaction_remove")
+
+    @commands.command(aliases=["rfinfo"])
+    @commands.has_permissions(manage_roles=True)
+    async def reactionflairinfo(self, ctx, message: discord.Message):
+        """ Shows information on all reaction flairs against a given message."""
+        flairs = FlairMessageReactionModel.select().where(FlairMessageReactionModel.discord_message_id == message.id)
+        embeds = []
+
+        for flair in flairs:
+            desc = "[This message]({.jump_url}) is a flair message.\n"
+            role = message.guild.get_role(flair.role_id)
+            emoji = message.guild.get_role(flair.role_id)
+
+            embed = discord.Embed(
+                title="Role flair {}".format(flair.reference),
+                description=desc.format(message),
+                colour=role.colour
+            )
+
+            embed.add_field(name="Reference", value=flair.reference)
+            embed.add_field(name="Emoji", value=emoji.name)
+            embed.add_field(name="Message ID", value=message.id)
+            embed.add_field(name="Role", value=role.name)
+            embed.set_footer(
+                text="This may also remove roles when the flair is used. Check using the \"roleinfo\" command.")
+
+            embeds.append(embed)
+            await ctx.send(embed=embed)
+
+        if len(embeds) < 1:
+            await ctx.send("There are no reaction flairs for this message.")
+            return
+
+        # Todo send multiple embeds when this is supported.
+        # await ctx.send(embed=embed)
+
+    @commands.command(aliases=["rmrf"])
+    @commands.has_permissions(manage_roles=True)
+    async def removereactionflair(self, ctx, reference):
+        """ Deletes a reaction flair from the system.
+
+        You can only delete a reaction flair using its reference created when the reaction flair was set up.
+        If you've forgotten it use the rfinfo command. """
+        try:
+            model = FlairMessageReactionModel.get_by_id(reference)
+        except DoesNotExist:
+            await ctx.send("Could not find a reaction flair by the reference `{}`. Try the \"rfinfo\" command."
+                           .format(reference))
+            return
+
+        model.delete_instance()
+        await ctx.send("Done! Removed that reaction flair.")
+
+    @commands.command(aliases=["rf"])
+    @commands.has_permissions(manage_roles=True)
+    async def reactionflair(self, ctx, message: discord.Message, emoji: discord.Emoji, role: discord.Role):
+        """ Adds a new flair reaction to a message.
+
+         This will give a role to the person who reacts to the message with this emoji.
+         This also respects the "overwrite" command.
+         If a user is uses this reaction then it will remove any roles that have been configured with that command."""
+        await message.add_reaction(emoji)
+
+        desc = "[This message]({.jump_url}) has been set up as a flair message.\n"
+
+        model = FlairMessageReactionModel.create(reference=FlairMessageReactionModel.generate_unique_reference(),
+                                                 discord_message_id=message.id,
+                                                 emoji_id=emoji.id,
+                                                 role_id=role.id)
+
+        embed = discord.Embed(
+            title="Role flair added!",
+            description=desc.format(message),
+            colour=role.colour
+        )
+
+        embed.add_field(name="Reference", value=model.reference)
+        embed.add_field(name="Emoji", value=emoji.name)
+        embed.add_field(name="Message ID", value=message.id)
+        embed.add_field(name="Role", value=role.name)
+        embed.set_footer(
+            text="This may also remove roles when the flair is used. Check using the \"roleinfo\" command.")
+
+        await ctx.send(embed=embed)
+
+    async def _on_reaction_removed(self, reaction: RawReactionActionEvent):
+        reactions = FlairMessageReactionModel.select().where(
+            (FlairMessageReactionModel.discord_message_id == reaction.message_id) &
+            (FlairMessageReactionModel.emoji_id == reaction.emoji.id))
+
+        channel = self.client.get_channel(reaction.channel_id)
+        guild = channel.guild
+        member = channel.guild.get_member(reaction.user_id)
+        roles_to_remove = []
+
+        for to_remove in reactions:
+            role = guild.get_role(to_remove.role_id)
+
+            if role is None:
+                continue
+
+            roles_to_remove.append(role)
+
+        if 0 == len(roles_to_remove):
+            return
+
+        await member.remove_roles(*roles_to_remove,
+                                  reason="Removed using the \"{}\" reaction.".format(reaction.emoji.name))
+
+        await _send_disappearing_notification(
+            member, channel, roles_to_remove, "{.mention}, I have removed the role(s) ")
+
+    async def _on_reaction(self, reaction: RawReactionActionEvent):
+        reactions = FlairMessageReactionModel.select().where(
+            (FlairMessageReactionModel.discord_message_id == reaction.message_id) &
+            (FlairMessageReactionModel.emoji_id == reaction.emoji.id))
+
+        channel = self.client.get_channel(reaction.channel_id)
+
+        roles_to_provide, roles_to_remove = await _get_roles_from_iterable(reactions, channel.guild)
+        member = channel.guild.get_member(reaction.user_id)
+        emoji_name = reaction.emoji.name
+
+        if 0 == len(roles_to_provide):
+            return
+
+        await member.add_roles(*roles_to_provide, reason="Added using the \"{}\" reaction.".format(emoji_name))
+        await member.remove_roles(*roles_to_remove, reason="Removed using the \"{}\" reaction.".format(emoji_name))
+
+        await _send_disappearing_notification(
+            member, channel, roles_to_provide, "{.mention}, I have given you the role(s) ")
+
+
 def setup(client):
     client.add_cog(Admin(client))
+    client.add_cog(FlairMessage(client))

@@ -56,7 +56,7 @@ class Starboard(commands.Cog):
 
     def __init__(self, client: commands.Bot):
         client.add_listener(self._on_reaction, "on_raw_reaction_add")
-        client.add_listener(self._on_reaction_removed, "raw_reaction_remove")
+        client.add_listener(self._on_reaction_removed, "on_raw_reaction_remove")
         self.client = client
 
     @commands.command(no_pm=True)

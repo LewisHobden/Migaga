@@ -6,6 +6,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.0] - 2019-09-23
+### Role Flairing
+- Provided admin commands for adding and removing role flairs from a message.
+- When a user reacts to a message configured with a role flair they will be given the roles recorded against that message.
+- If a role has overwrites set up against it then the other roles will be removed when reacting.
+- Added helper commands for finding information on reaction flairs.
+
+### Commands
+- Added a new command for removing fields from your profile.
+
+### Fixes
+- Fixed a bug which caused the removal of stars to be missed by the bot.
+- Fixed a bug in the !invite command.
+
+### Tweaks
+- Changed the way database connections are managed in the event that the connection is dropped.
+
 ## [4.0.1] - 2019-09-21
 ### Features
 - Now actually assign and remove roles based on the `!addrole` and `!overwrite` commands on message.

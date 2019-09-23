@@ -55,6 +55,16 @@ class Profile(commands.Cog):
         await ctx.send("Profile set up! Thank you! Here it is!", embed=await _profile_embed(ctx.author))
 
     @commands.command()
+    async def unset(self, ctx, field):
+        """ Remove a custom field from your profile.
+
+        Just provide the name of the field you want removed from your profile!"""
+        ProfileFieldModel.delete().where(
+            ProfileFieldModel.discord_user_id == ctx.author.id and ProfileFieldModel.key == field).execute()
+
+        await ctx.send("There! I deleted the field named {}!".format(field))
+
+    @commands.command()
     async def set(self, ctx, field, *, value):
         """ Set a custom field of your profile!
 

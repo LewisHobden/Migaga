@@ -6,6 +6,7 @@ from model.role_alias import *
 from model.role_overwrite import *
 from model.starred_message import *
 from model.welcome_message import *
+from model.flair_message_reaction import *
 
 # Create tables. That's it for now.. Database versioning would be nice.
 # @todo Send messages to server owners to let them know of an update.
@@ -24,4 +25,5 @@ connection.create_tables([
     StarboardModel,
     StarredMessageModel,
     WelcomeMessage,
+    FlairMessageReactionModel
 ])

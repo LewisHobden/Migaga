@@ -17,4 +17,7 @@ class DatabaseFactory:
                                            password=self.config.get("Database", "Password")
                                            )
 
+        if self._database.is_closed():
+            self._database.connect()
+
         return self._database
