@@ -3,8 +3,8 @@ import discord
 from datetime import datetime
 from datetime import timedelta
 from dateutil.parser import parse
-from model.reminder import Reminder
-from model.reminder_destination import ReminderDestination
+from model.model import *
+from model.model import *
 
 
 class DateConverter(commands.Converter):

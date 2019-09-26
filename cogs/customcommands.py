@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 
 from cogs.utilities import credential_checks
-from model.custom_command import CustomCommand
+from model.model import *
 
 log = logging.getLogger(__name__)
 
