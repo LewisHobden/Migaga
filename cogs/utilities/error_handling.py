@@ -15,7 +15,7 @@ class ErrorHandling(commands.Cog):
         if type(exception) in [commands.CommandNotFound]:
             return
 
-        if type(exception) is commands.MissingRequiredArgument:
+        if type(exception) is commands.MissingRequiredArgument or type(exception) is commands.MissingPermissions:
             await ctx.send(str(exception) +
                            "\nUse `!help <command>` for more information on the command you were trying to call.")
 

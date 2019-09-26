@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixes
+- Added error reporting for when the user calls a command they don't have permissions for.
+
 ### Database
 - Refactored the database connection so that it pings to stay alive. 
 
