@@ -7,7 +7,7 @@ config = configparser.ConfigParser()
 config.read("config.ini")
 
 # Set up the bot.
-bot_description = """ Migaga (Version 4.1.0) """
+bot_description = """ Migaga (Version 4.1.1) """
 prefix = "!"
 client = commands.Bot(command_prefix=prefix, description=bot_description, pm_help=None)
 
