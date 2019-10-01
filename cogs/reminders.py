@@ -40,7 +40,7 @@ async def _queue_reminder(creator: discord.Member, destination, date_time: datet
 class Reminders(commands.Cog):
     def __init__(self, client: commands.Bot):
         self.client = client
-        self.format = "%H:%M on %m %B %Y"
+        self.format = "%H:%M on %d %B %Y UTC"
 
         self.reminder.start()
 

@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Fixes
 - Added error reporting for when the user calls a command they don't have permissions for.
+- Fixed a bug which caused the reminder date to be formatted incorrectly when confirming reminders.
 
 ### Database
 - Refactored the database connection so that it pings to stay alive. 
