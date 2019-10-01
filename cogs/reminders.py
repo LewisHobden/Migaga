@@ -3,8 +3,8 @@ import discord
 from datetime import datetime
 from datetime import timedelta
 from dateutil.parser import parse
-from model.reminder import Reminder
-from model.reminder_destination import ReminderDestination
+from model.model import *
+from model.model import *
 
 
 class DateConverter(commands.Converter):
@@ -40,7 +40,7 @@ async def _queue_reminder(creator: discord.Member, destination, date_time: datet
 class Reminders(commands.Cog):
     def __init__(self, client: commands.Bot):
         self.client = client
-        self.format = "%H:%M on %m %B %Y"
+        self.format = "%H:%M on %d %B %Y UTC"
 
         self.reminder.start()
 

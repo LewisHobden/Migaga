@@ -20,7 +20,7 @@ Thanks for reading!
 
 ## Todo
  - [] Unit test each command
- - [] Reaction Flairing
+ - [x] Reaction Flairing
  - [] A Text-to-speech interpreter feature for voice channels.
  - [] Integration with the coming website I am building.
  - [] Support feature suggestions. 

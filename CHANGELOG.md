@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.1] - 2019-10-01
+### Fixes
+- Added error reporting for when the user calls a command they don't have permissions for.
+- Fixed a bug which caused the reminder date to be formatted incorrectly when confirming reminders.
+
+### Database
+- Refactored the database connection so that it keeps itself alive. 
+
 ## [4.1.0] - 2019-09-23
 ### Role Flairing
 - Provided admin commands for adding and removing role flairs from a message.

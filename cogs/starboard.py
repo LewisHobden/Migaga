@@ -7,9 +7,9 @@ from storage.database_factory import DatabaseFactory
 import discord
 from discord.ext import commands
 
-from model.message_starrer import MessageStarrerModel
-from model.starboard import StarboardModel
-from model.starred_message import StarredMessageModel
+from model.model import *
+from model.model import *
+from model.model import *
 from .utilities import credential_checks
 
 

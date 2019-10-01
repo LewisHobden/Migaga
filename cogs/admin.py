@@ -3,12 +3,12 @@ from discord.ext import commands
 import discord
 from discord import RawReactionActionEvent
 from cogs.utilities import credential_checks
-from model.role_alias import RoleAlias
-from model.role_overwrite import RoleOverwrite
-from model.welcome_message import WelcomeMessage
+from model.model import *
+from model.model import *
+from model.model import *
 import logging
 
-from model.flair_message_reaction import FlairMessageReactionModel
+from model.model import *
 
 log = logging.getLogger(__name__)
 

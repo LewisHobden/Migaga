@@ -3,8 +3,8 @@ import discord
 
 from peewee import *
 
-from model.profile_field import ProfileFieldModel
-from model.profile import ProfileModel
+from model.model import *
+from model.model import *
 
 
 async def _profile_embed(member: discord.Member):
