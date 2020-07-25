@@ -1,12 +1,14 @@
-version: '3.3'
+version: '3.4'
 
 services:
-  webserver:
-    container_name: migaga
+  migaga:
     image: migaga
     volumes:
       - ./:/usr/src/app
       - webrootuservolume:/root
+    build:
+      context: .
+      dockerfile: Dockerfile
   database:
     container_name: database
     image: mysql/mysql-server
