@@ -7,7 +7,8 @@ config = configparser.ConfigParser()
 config.read("config.ini")
 
 # Set up the bot.
-bot_description = """ Migaga (Version 4.1.1) """
+version = "4.2.0"
+bot_description = "Migaga (Version {})".format(version)
 prefix = "!"
 client = commands.Bot(command_prefix=prefix, description=bot_description, pm_help=None)
 
@@ -34,8 +35,8 @@ async def on_ready():
     setattr(client, "client_id", config.get("Env", "ClientId"))
 
     await client.change_presence(
-        status=discord.Status.online, activity=discord.Game(
-            name="I'm updated! Changelog: migaga.lewis.coffee/"))
+        status=discord.Status.online,
+        activity=discord.CustomActivity(name="Version {}! Changelog: migaga.lewis.coffee/".format(version)))
 
 
 if __name__ == '__main__':

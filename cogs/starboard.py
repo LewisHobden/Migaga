@@ -125,7 +125,8 @@ class Starboard(commands.Cog):
         starboard.save()
 
         await ctx.send(
-            "Ok! Your starboard's threshold has been set to {}. Existing messages won't be updated.".format(threshold))
+            "Ok! Your starboard's threshold has been set to {}. Messages within the past week will be updated soon.".format(
+                threshold))
 
     async def _get_starred_embed(self, starred_message: StarredMessageModel, discord_message: discord.Message,
                                  remove_after_threshold: bool = False):
