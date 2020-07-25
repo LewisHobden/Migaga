@@ -365,7 +365,7 @@ class Admin(commands.Cog):
             await channel.send(_format_welcome_message(message.message, member))
 
 
-class FlairMessage(commands.Cog):
+class FlairMessage(commands.Cog, name="Reaction Flairs"):
     def __init__(self, client: commands.Bot):
         self.client = client
         client.add_listener(self._on_reaction, "on_raw_reaction_add")

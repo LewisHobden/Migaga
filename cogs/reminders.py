@@ -1,9 +1,11 @@
-from discord.ext import commands, tasks
-import discord
 from datetime import datetime
 from datetime import timedelta
+import re
+
+import discord
 from dateutil.parser import parse
-from model.model import *
+from discord.ext import commands, tasks
+
 from model.model import *
 
 
@@ -37,6 +39,13 @@ async def _queue_reminder(creator: discord.Member, destination, date_time: datet
                                              destination_id=destination.id)
 
 
+def _parse_time_phrase_result(phrase) -> int:
+    if phrase is None:
+        return 0
+
+    return int(phrase.group(0))
+
+
 class Reminders(commands.Cog):
     def __init__(self, client: commands.Bot):
         self.client = client
@@ -64,10 +73,42 @@ class Reminders(commands.Cog):
         await ctx.send("Ok! {.mention} will get the reminder \"{}\" at {}".format(destination, reminder,
                                                                                   date.strftime(self.format)))
 
+    @commands.command()
+    async def remindme(self, ctx, *, instruction):
+        """
+        A recreation of an old command. Ask the bot to remind you of something using this format:
+
+        remindme X units to [insert message here]
+
+        For example:
+        remindme in 3 hours and 2 minutes to submit a reminder again.
+
+        The "to" is very important!
+        Your options for units are days, hours and minutes.
+        """
+        to_position = instruction.lower().find("to")
+        reminder = instruction[to_position:]
+        time_phrases = instruction[:to_position]
+
+        if len(reminder) == 0 or len(time_phrases) == 0:
+            return await ctx.send("I couldn't find a reminder or maybe some time phrases. Check the help command!")
+
+        # Match any digits that are followed by an optional space and "hour" or "minute"
+        days = _parse_time_phrase_result(re.search(r'\d+(?= *day)', time_phrases))
+        hours = _parse_time_phrase_result(re.search(r'\d+(?= *hour)', time_phrases))
+        minutes = _parse_time_phrase_result(re.search(r'\d+(?= *minute)', time_phrases))
+
+        hours += days * 24
+
+        if hours == 0 or minutes == 0:
+            return await ctx.send("I couldn't find a reminder or maybe some time phrases. Check the help command!")
+
+        return await self.remind(ctx=ctx, destination=ctx.author, hours=hours, minutes=minutes, reminder=reminder)
+
     @tasks.loop(minutes=1.0)
     async def reminder(self):
-        queued_reminders = Reminder.select()\
-            .where((Reminder.datetime <= datetime.utcnow()) & (Reminder.has_reminded == False))
+        queued_reminders = Reminder.select() \
+            .where((Reminder.datetime <= datetime.utcnow()) & (Reminder.has_reminded is False))
 
         for reminder in queued_reminders:
             for destination in reminder.destinations:
@@ -78,7 +119,7 @@ class Reminders(commands.Cog):
                 else:
                     raise LookupError("Bad data type in the database.")
 
-                await destination.send("Reminder: "+reminder.reminder)
+                await destination.send("Reminder: " + reminder.reminder)
 
             reminder.has_reminded = True
             reminder.save()

@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.3.0] - 2020-07-26
+### Features
+- Changed the display of the help command.
+- Re-introduced the "remindme" command.
+
+### Fixes
+- Fixed a bug that would stop starboard processing for older messages.
+
 ## [4.2.0] - 2020-07-25
 ### Features
 - Welcome messages can now be deleted from servers.
