@@ -9,5 +9,5 @@ database = factory.get_database_connection()
 migrator = MySQLMigrator(database)
 
 migrate(
-    migrator.add_column('discord_starboard', 'star_threshold', IntegerField()),
+    migrator.add_column('discord_starboard', 'star_threshold', IntegerField(default=1)),
 )

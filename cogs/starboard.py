@@ -1,14 +1,9 @@
 from datetime import *
 
-from discord import RawReactionActionEvent
-
-from storage.database_factory import DatabaseFactory
-
 import discord
+from discord import RawReactionActionEvent
 from discord.ext import commands
 
-from model.model import *
-from model.model import *
 from model.model import *
 from .utilities import credential_checks
 
