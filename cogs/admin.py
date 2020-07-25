@@ -1,13 +1,10 @@
-from peewee import *
-from discord.ext import commands
-import discord
-from discord import RawReactionActionEvent
-from cogs.utilities import credential_checks
-from model.model import *
-from model.model import *
-from model.model import *
 import logging
 
+import discord
+from discord import RawReactionActionEvent
+from discord.ext import commands
+
+from cogs.utilities import credential_checks
 from model.model import *
 
 log = logging.getLogger(__name__)
