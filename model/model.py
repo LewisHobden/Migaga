@@ -74,6 +74,7 @@ class StarboardModel(BaseModel):
     guild_id = BigIntegerField(unique=True)
     channel_id = BigIntegerField(unique=True)
     is_locked = BooleanField()
+    star_threshold = IntegerField()
 
     @classmethod
     def get_for_guild(cls, guild_id: int):
