@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Features
+- Welcome messages can now be deleted from servers.
+- Changed the look and feel of starboard messages. 
+- Servers can now set thresholds for starred messages that will have them swept from the channel.
 
 ## [4.1.1] - 2019-10-01
 ### Fixes
