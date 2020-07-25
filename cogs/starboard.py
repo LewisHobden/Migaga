@@ -40,6 +40,9 @@ async def _get_starred_embed(starred_message: StarredMessageModel, discord_messa
         # @todo Check if they are blacklisted..
         number_of_stars += 1
 
+    if number_of_stars < starred_message.starboard.star_threshold:
+        return None
+
     star_emoji = await _get_emoji_for_star(number_of_stars)
     e.add_field(name="Stars", value=star_emoji + " **" + str(number_of_stars) + "**", inline=False)
 
@@ -107,6 +110,29 @@ class Starboard(commands.Cog):
         StarboardModel.create(guild_id=ctx.guild.id, channel_id=channel.id, is_locked=False)
         await ctx.send('\N{GLOWING STAR} Starboard set up at {.mention}'.format(channel))
 
+    @commands.command(no_pm=True, aliases=['threshold'])
+    @credential_checks.has_permissions(administrator=True)
+    async def starboardthreshold(self, ctx, threshold: int):
+        """
+        A command which allows you to set the amount of stars a single message can receive before it makes it into the starboard.
+
+        You must have administrator permissions to perform this.
+        """
+        starboard = StarboardModel.get_for_guild(ctx.guild.id)
+
+        if starboard is None:
+            return await ctx.send(
+                "Couldn't find a starboard for this server. Use the `!starboard` command to set one up.")
+
+        if threshold < 0:
+            return await ctx.send("You can't have negative stars!")
+
+        starboard.star_threshold = threshold
+        starboard.save()
+
+        await ctx.send(
+            "Ok! Your starboard's threshold has been set to {}. Existing messages won't be updated.".format(threshold))
+
     async def _on_reaction_removed(self, reaction: RawReactionActionEvent):
         # @todo Allow customisation of the emoji for starring.
         if reaction.emoji.name != '⭐':
@@ -120,14 +146,12 @@ class Starboard(commands.Cog):
         MessageStarrerModel.delete().where((MessageStarrerModel.message_id == reaction.message_id) &
                                            (MessageStarrerModel.user_id == reaction.user_id)).execute()
 
-        channel = self.client.get_channel(reaction.channel_id)
+        channel = self.client.get_channel(starred_message.starboard.channel_id)
         discord_message = await channel.fetch_message(reaction.message_id)
 
         embed = await _get_starred_embed(starred_message, discord_message)
-        channel = self.client.get_channel(starred_message.starboard.channel_id)
 
-        embed_message = await channel.fetch_message(starred_message.embed_message_id)
-        await embed_message.edit(embed=embed)
+        await self._update_starred_message(starred_message, embed)
 
     async def _on_reaction(self, reaction: RawReactionActionEvent):
         # @todo Allow customisation of the emoji for starring.
@@ -161,16 +185,33 @@ class Starboard(commands.Cog):
 
         # Show it in the starboard.
         embed = await _get_starred_embed(starred_message, discord_message)
-        starboard_channel = self.client.get_channel(starboard.channel_id)
+        await self._update_starred_message(starred_message, embed)
+
+    async def _update_starred_message(self, starred_message: StarredMessageModel,
+                                      embed: discord.Embed):
+
+        starboard_channel = self.client.get_channel(starred_message.starboard.channel_id)
 
         # Either send it (if it hasn't already been submitted to the starboard) or update it.
         if starred_message.embed_message_id is None:
-            embed_message = await starboard_channel.send("In {.mention}".format(channel), embed=embed)
+            if embed is None:
+                return
+
+            embed_message = await starboard_channel.send(embed=embed)
 
             starred_message.embed_message_id = embed_message.id
             starred_message.save()
         else:
             embed_message = await starboard_channel.fetch_message(starred_message.embed_message_id)
+
+            # If the embed can no longer be generated but a message has been posted for it:
+            # Remove the embed ID and delete the message.
+            if embed is None:
+                starred_message.embed_message_id = None
+                starred_message.save()
+
+                return await embed_message.delete()
+
             await embed_message.edit(embed=embed)
 
 
