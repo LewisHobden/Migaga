@@ -1,3 +1,5 @@
+from discord.ext.commands import MinimalHelpCommand
+
 from cogs.customcommands import *
 import configparser
 import discord
@@ -47,4 +49,5 @@ if __name__ == '__main__':
         except Exception as e:
             print('Failed to load extension {}\n{}: {}'.format(extension, type(e).__name__, e))
 
+    client.help_command = MinimalHelpCommand()
     client.run(token)

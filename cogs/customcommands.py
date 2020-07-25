@@ -17,7 +17,7 @@ def truncate_command_response(response: str, length: int = 1900) -> str:
     return (response[:length] + '...') if len(response) > length else response
 
 
-class CustomCommands(commands.Cog):
+class CustomCommands(commands.Cog, name="Custom Commands"):
     """ Custom commands for your servers! """
     COMMANDS = {}
 

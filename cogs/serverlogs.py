@@ -32,7 +32,7 @@ async def _get_roles_as_text(roles):
     return ', '.join(formatted_roles)
 
 
-class ServerLogs(commands.Cog):
+class ServerLogs(commands.Cog, name="Server Logs"):
     """ Logging server activity. """
 
     def __init__(self, client):
