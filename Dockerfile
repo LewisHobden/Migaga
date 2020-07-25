@@ -1,14 +1,22 @@
-from python:3
+# For more information, please refer to https://aka.ms/vscode-docker-python
+FROM python:3.8-slim-buster
 
-MAINTAINER Lewis Hobden <lewis@hobden.xyz>
+# Keeps Python from generating .pyc files in the container
+ENV PYTHONDONTWRITEBYTECODE 1
 
-WORKDIR /usr/src/app
+# Turns off buffering for easier container logging
+ENV PYTHONUNBUFFERED 1
 
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+# Install pip requirements
+ADD requirements.txt .
+RUN python -m pip install -r requirements.txt
 
-COPY . .
+WORKDIR /app
+ADD . /app
 
-CMD [ "tail", "-f", "/dev/null" ]
+# Switching to a non-root user, please refer to https://aka.ms/vscode-docker-python-user-rights
+RUN useradd appuser && chown -R appuser /app
+USER appuser
 
-# CMD [ "python", "./bot.py" ]
+# During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
+CMD ["python", "bot.py"]

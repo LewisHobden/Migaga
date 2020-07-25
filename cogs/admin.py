@@ -38,6 +38,10 @@ async def _get_roles_from_iterable(iterable, guild: discord.Guild):
     return roles_to_provide, roles_to_remove
 
 
+def _format_welcome_message(message: str, member: discord.Member):
+    return message.format(member.mention, member.display_name, member.guild.name)
+
+
 async def _send_disappearing_notification(member: discord.Member, channel: discord.TextChannel, roles, prefix: str):
     # Since join doesn't want to play fair.
     formatted_roles = []
@@ -165,7 +169,7 @@ class Admin(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.command(aliases=["wm"])
     @credential_checks.has_permissions(manage_guild=True)
     async def welcomemessage(self, ctx, *, message):
         """
@@ -199,6 +203,57 @@ class Admin(commands.Cog):
         embed.add_field(name="Channel", value=channel.mention)
 
         await ctx.send(embed=embed)
+
+    @commands.command(aliases=["rmwm", "deletewelcome"])
+    @credential_checks.has_permissions(manage_guild=True)
+    async def removewelcomemessage(self, ctx):
+        """
+        Allows the user to delete a welcome message from the guild.
+        You must have "Manage Guild" permissions to do this.
+        """
+        messages = WelcomeMessage.get_for_guild(ctx.guild.id)
+
+        if len(messages) == 1:
+            messages[0].delete_instance()
+            await ctx.send("Your welcome message has been removed!")
+            return
+        elif len(messages) == 0:
+            await ctx.send("Your guild has no welcome messages!")
+            return
+
+        embed = discord.Embed(title="Pick welcome message to delete",
+                              description="Reply with the number of the message you are trying to delete.",
+                              colour=discord.Colour.dark_green())
+        index = 1
+        indexed_messages = {}
+
+        for message in messages:
+            preview = "In <#{.channel_id}>: {.message}".format(message, message)
+            preview = _format_welcome_message(preview, ctx.author)
+
+            embed.add_field(name="Message #{}".format(index),
+                            value=preview)
+
+            indexed_messages[index] = message
+            index += 1
+
+        await ctx.send(embed=embed)
+        reply = await self.client.wait_for(
+            "message", check=lambda m: m.author == ctx.message.author and m.channel == ctx.channel)
+
+        chosen_index = reply.content.strip().replace("#", "")
+
+        if not chosen_index.isnumeric():
+            await ctx.send("I'm not sure what you just tried to delete.. Run the command again?")
+            return
+        else:
+            chosen_index = int(chosen_index)
+
+        if chosen_index in indexed_messages:
+            indexed_messages[chosen_index].delete_instance()
+            await ctx.send("Message has been removed!")
+        else:
+            await ctx.send("I'm not sure what you just tried to delete.. Run the command again?")
 
     @commands.command(no_pm=True)
     @credential_checks.has_permissions(manage_roles=True)
@@ -306,11 +361,11 @@ class Admin(commands.Cog):
             await message.delete(delay=2)
 
     async def _on_member_join(self, member: discord.Member):
-        welcome_messages = WelcomeMessage.select().where(WelcomeMessage.server_id == member.guild.id)
+        welcome_messages = WelcomeMessage.get_for_guild(member.guild.id)
 
         for message in welcome_messages:
             channel = self.client.get_channel(message.channel_id)
-            await channel.send(message.message.format(member.mention, member.display_name, member.guild.name))
+            await channel.send(_format_welcome_message(message.message, member))
 
 
 class FlairMessage(commands.Cog):

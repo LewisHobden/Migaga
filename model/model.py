@@ -185,5 +185,9 @@ class WelcomeMessage(BaseModel):
     server_id = BigIntegerField()
     channel_id = BigIntegerField()
 
+    @classmethod
+    def get_for_guild(cls, guild_id: int):
+        return cls.select().where(cls.server_id == guild_id)
+
     class Meta:
         table_name = "discord_welcome_messages"
