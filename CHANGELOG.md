@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Features
 - Changed the display of the help command.
+- Re-introduced the "remindme" command.
 
 ### Fixes
 - Fixed a bug that would stop starboard processing for older messages.
