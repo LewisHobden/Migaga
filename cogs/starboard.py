@@ -2,13 +2,13 @@ from datetime import *
 
 import discord
 from discord import RawReactionActionEvent
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 from model.model import *
 from .utilities import credential_checks
 
 
-async def _get_emoji_for_star(stars):
+def _get_emoji_for_star(stars):
     if 5 >= stars >= 0:
         return '\N{WHITE MEDIUM STAR}'
     elif 10 >= stars >= 6:
@@ -19,43 +19,37 @@ async def _get_emoji_for_star(stars):
         return '\N{SPARKLES}'
 
 
-async def _get_starred_embed(starred_message: StarredMessageModel, discord_message: discord.Message):
-    description = "[Click here](" + discord_message.jump_url + ") to jump to the message.\n\n"
-    description += "\"" + discord_message.content + "\""
-
-    e = discord.Embed(description=description, timestamp=discord_message.created_at,
-                      colour=discord.Colour.gold())
-
-    author = discord_message.author
-    e.set_author(name=author.display_name)
-    e.set_thumbnail(url=author.avatar_url)
-
-    if discord_message.attachments:
-        e.set_image(url=discord_message.attachments[0].proxy_url)
-
-    number_of_stars = 0
-    starrers = starred_message.starrers
-
-    for starrer in starrers:
-        # @todo Check if they are blacklisted..
-        number_of_stars += 1
-
-    if number_of_stars < starred_message.starboard.star_threshold:
-        return None
-
-    star_emoji = await _get_emoji_for_star(number_of_stars)
-    e.add_field(name="Stars", value=star_emoji + " **" + str(number_of_stars) + "**", inline=False)
-
-    return e
-
-
 class Starboard(commands.Cog):
     """ Commands related to the Starboard. """
 
     def __init__(self, client: commands.Bot):
         client.add_listener(self._on_reaction, "on_raw_reaction_add")
         client.add_listener(self._on_reaction_removed, "on_raw_reaction_remove")
+
+        self.cleaner.start()
         self.client = client
+
+    def cog_unload(self):
+        self.cleaner.cancel()
+
+    @tasks.loop(minutes=5)
+    async def cleaner(self):
+        # The cleaner checks all starboard messages in the past week.
+        threshold = datetime.today() - timedelta(days=7)
+        messages_to_check = StarredMessageModel.select().where(StarredMessageModel.datetime_added > threshold)
+
+        # For each message, it updates the embed.
+        for message_to_check in messages_to_check:
+            channel = self.client.get_channel(message_to_check.starboard.channel_id)
+            discord_message = await channel.fetch_message(message_to_check.message_id)
+
+            # Only check if the message meets the threshold when cleaning up.
+            embed = await self._get_starred_embed(message_to_check, discord_message, True)
+            await self._update_starred_message(message_to_check, embed)
+
+    @cleaner.before_loop
+    async def before_cleaner(self):
+        await self.client.wait_until_ready()
 
     @commands.command(no_pm=True)
     @credential_checks.has_permissions(administrator=True)
@@ -133,6 +127,42 @@ class Starboard(commands.Cog):
         await ctx.send(
             "Ok! Your starboard's threshold has been set to {}. Existing messages won't be updated.".format(threshold))
 
+    async def _get_starred_embed(self, starred_message: StarredMessageModel, discord_message: discord.Message,
+                                 remove_after_threshold: bool = False):
+        description = "\"{.content}\"".format(discord_message) if discord_message.content else ""
+        footer_template = "{} This message doesn't have enough stars to stay in the starboard and will be deleted in {} minutes!"
+
+        e = discord.Embed(description=description, colour=discord.Colour.gold())
+
+        author = discord_message.author
+        e.set_author(name=author.display_name)
+        e.set_thumbnail(url=author.avatar_url)
+
+        if discord_message.attachments:
+            e.set_image(url=discord_message.attachments[0].proxy_url)
+
+        number_of_stars = len(starred_message.starrers)
+        star_emoji = _get_emoji_for_star(number_of_stars)
+
+        if number_of_stars == 0:
+            return
+
+        if number_of_stars < starred_message.starboard.star_threshold:
+            if remove_after_threshold:
+                return None
+
+            star_emoji = '\N{GHOST}'
+            timer = self.cleaner.next_iteration - datetime.now(timezone.utc)
+
+            e.set_footer(text=footer_template.format(star_emoji, round(timer.total_seconds() / 60)))
+
+        e.add_field(name="Stars", value=star_emoji + " **{}**".format(number_of_stars), inline=True)
+        e.add_field(name="Message",
+                    value="[Jump to the message]({.jump_url})".format(discord_message),
+                    inline=True)
+
+        return e
+
     async def _on_reaction_removed(self, reaction: RawReactionActionEvent):
         # @todo Allow customisation of the emoji for starring.
         if reaction.emoji.name != '⭐':
@@ -149,7 +179,7 @@ class Starboard(commands.Cog):
         channel = self.client.get_channel(starred_message.starboard.channel_id)
         discord_message = await channel.fetch_message(reaction.message_id)
 
-        embed = await _get_starred_embed(starred_message, discord_message)
+        embed = await self._get_starred_embed(starred_message, discord_message)
 
         await self._update_starred_message(starred_message, embed)
 
@@ -184,7 +214,7 @@ class Starboard(commands.Cog):
             .execute()
 
         # Show it in the starboard.
-        embed = await _get_starred_embed(starred_message, discord_message)
+        embed = await self._get_starred_embed(starred_message, discord_message)
         await self._update_starred_message(starred_message, embed)
 
     async def _update_starred_message(self, starred_message: StarredMessageModel,
@@ -194,6 +224,7 @@ class Starboard(commands.Cog):
 
         # Either send it (if it hasn't already been submitted to the starboard) or update it.
         if starred_message.embed_message_id is None:
+            # If we don't have a message or an embed, continue the logic. We can sort it later.
             if embed is None:
                 return
 
@@ -204,15 +235,16 @@ class Starboard(commands.Cog):
         else:
             embed_message = await starboard_channel.fetch_message(starred_message.embed_message_id)
 
+            if embed is not None:
+                await embed_message.edit(embed=embed)
+                return
+
             # If the embed can no longer be generated but a message has been posted for it:
             # Remove the embed ID and delete the message.
-            if embed is None:
-                starred_message.embed_message_id = None
-                starred_message.save()
+            starred_message.embed_message_id = None
+            starred_message.save()
 
-                return await embed_message.delete()
-
-            await embed_message.edit(embed=embed)
+            return await embed_message.delete()
 
 
 def setup(client):
