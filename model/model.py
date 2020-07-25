@@ -89,6 +89,7 @@ class StarboardModel(BaseModel):
 
 class StarredMessageModel(BaseModel):
     message_id = BigIntegerField(unique=True, primary_key=True)
+    message_channel_id = BigIntegerField()
     starboard = ForeignKeyField(StarboardModel, related_name="messages")
     embed_message_id = BigIntegerField(unique=True, null=True)
     datetime_added = DateTimeField()
