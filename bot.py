@@ -4,6 +4,8 @@ from cogs.customcommands import *
 import configparser
 import discord
 
+import logging
+
 # Load the config
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -13,6 +15,7 @@ version = "4.3.0"
 bot_description = "Migaga (Version {})".format(version)
 prefix = "!"
 client = commands.Bot(command_prefix=prefix, description=bot_description, pm_help=None)
+logging.basicConfig(level=logging.INFO)
 
 # Get our cogs.
 extensions = [

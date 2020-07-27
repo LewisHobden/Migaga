@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.3.1] - 2020-07-27
+### Maintenance
+- Added logging configuration to source control. 
+- Added deployment ecosystem for pm2.
+
 ## [4.3.0] - 2020-07-26
 ### Features
 - Changed the display of the help command.
