@@ -1,5 +1,6 @@
-from datetime import *
+import logging
 import sys
+from datetime import *
 
 import discord
 from discord import RawReactionActionEvent
@@ -7,6 +8,8 @@ from discord.ext import commands, tasks
 
 from model.model import *
 from .utilities import credential_checks
+
+logger = logging.getLogger('discord')
 
 
 def _get_emoji_for_star(stars):
@@ -35,26 +38,14 @@ class Starboard(commands.Cog):
 
     @tasks.loop(minutes=5)
     async def cleaner(self):
-        # The cleaner checks all starboard messages in the past week.
-        threshold = datetime.today() - timedelta(days=7)
+        # The cleaner checks all starboard messages in the past day.
+        threshold = datetime.today() - timedelta(days=1)
         messages_to_check = StarredMessageModel.select().where(StarredMessageModel.datetime_added > threshold)
 
         try:
-            # For each message, it updates the embed.
             for message_to_check in messages_to_check:
-                channel = self.client.get_channel(message_to_check.starboard.channel_id)
-
-                # Indexing: this will be removed soon but this if the database is missing channel ID values.
                 if message_to_check.message_channel_id is None:
-                    guild = channel.guild
-
-                    for channel in guild.channels:
-                        try:
-                            discord_message = await channel.fetch_message(message_to_check.message_id)
-                            message_to_check.message_channel_id = discord_message.channel.id
-                            message_to_check.save()
-                        except:
-                            pass
+                    logger.error("Message {.message_id} does not have a channel ID.".format(message_to_check))
 
                 channel = self.client.get_channel(message_to_check.message_channel_id)
 
@@ -66,17 +57,15 @@ class Starboard(commands.Cog):
                 embed = await self._get_starred_embed(message_to_check, discord_message, True)
 
                 await self._update_starred_message(message_to_check, embed)
-                print("Checked {.message_id}".format(message_to_check))
+                logger.debug("Processed starboard message {.message_id}".format(message_to_check))
 
                 # Only check if the message meets the threshold when cleaning up.
                 embed = await self._get_starred_embed(message_to_check, discord_message, True)
                 await self._update_starred_message(message_to_check, embed)
         except:
-            # Temporary error handling until discord.py releases 1.4.
+            # Temporary error handling until discord.py 1.4.
             e = sys.exc_info()[0]
-            print("Error processing starboard messages: " + e)
-
-            pass
+            logger.error(e)
 
     @cleaner.before_loop
     async def before_cleaner(self):

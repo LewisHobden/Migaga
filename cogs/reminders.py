@@ -1,12 +1,15 @@
+import logging
+import re
 from datetime import datetime
 from datetime import timedelta
-import re
 
 import discord
 from dateutil.parser import parse
 from discord.ext import commands, tasks
 
 from model.model import *
+
+logger = logging.getLogger('discord')
 
 
 class DateConverter(commands.Converter):
@@ -87,11 +90,16 @@ class Reminders(commands.Cog):
         Your options for units are days, hours and minutes.
         """
         to_position = instruction.lower().find("to")
+        error = "I don't understand! Example usage: \"!remindme in 3 hours and 2 minutes **to** submit a reminder\""
+
+        if to_position == -1:
+            return await ctx.send(error)
+
         reminder = instruction[to_position:]
         time_phrases = instruction[:to_position]
 
         if len(reminder) == 0 or len(time_phrases) == 0:
-            return await ctx.send("I couldn't find a reminder or maybe some time phrases. Check the help command!")
+            return await ctx.send(error)
 
         # Match any digits that are followed by an optional space and "hour" or "minute"
         days = _parse_time_phrase_result(re.search(r'\d+(?= *day)', time_phrases))
@@ -101,14 +109,16 @@ class Reminders(commands.Cog):
         hours += days * 24
 
         if hours == 0 or minutes == 0:
-            return await ctx.send("I couldn't find a reminder or maybe some time phrases. Check the help command!")
+            return await ctx.send(error)
 
         return await self.remind(ctx=ctx, destination=ctx.author, hours=hours, minutes=minutes, reminder=reminder)
 
     @tasks.loop(minutes=1.0)
     async def reminder(self):
         queued_reminders = Reminder.select() \
-            .where((Reminder.datetime <= datetime.utcnow()) & (Reminder.has_reminded is False))
+            .where((Reminder.datetime <= datetime.utcnow()) & (Reminder.has_reminded == 0))
+
+        logger.debug("Starting reminder process: {} reminders to send.".format(len(queued_reminders)))
 
         for reminder in queued_reminders:
             for destination in reminder.destinations:
@@ -123,6 +133,8 @@ class Reminders(commands.Cog):
 
             reminder.has_reminded = True
             reminder.save()
+
+        logger.debug("Finishing reminder process.")
 
     @reminder.before_loop
     async def before_reminders(self):
