@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.4.0] - 2020-08-08
+### Points
+- Added a configurable way for guild owners to add or remove points from members of their guild.
+- Users can see their own or others points. 
+- Points can be given a configurable name and emoji.
+
+### Maintenance
+- Improved logging for reminders and the starboard.
+- Reduced the amount of time a starboard message is "cleaned up" for.
+
 ## [4.3.1] - 2020-07-27
 ### Maintenance
 - Added logging configuration to source control. 
