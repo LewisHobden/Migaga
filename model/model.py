@@ -1,3 +1,6 @@
+from datetime import datetime
+
+from discord import Member
 from peewee import *
 from storage.database_factory import DatabaseFactory
 import uuid
@@ -167,6 +170,42 @@ class RoleOverwrite(BaseModel):
 
     class Meta:
         table_name = "discord_role_overwrites"
+
+
+class GuildConfig(BaseModel):
+    id = AutoField()
+    guild_id = BigIntegerField()
+    server_logs_channel_id = BigIntegerField(null=True)
+    points_name = TextField(null=True)
+    points_emoji = TextField(null=True)
+
+    @classmethod
+    async def get_for_guild(cls, guild_id: int):
+        try:
+            config = cls.select().where(cls.guild_id == guild_id).get()
+        except DoesNotExist:
+            return cls.create(guild_id=guild_id).save()
+
+        return config
+
+    class Meta:
+        table_name = "discord_guild_configs"
+
+
+class PointTransaction(BaseModel):
+    id = AutoField()
+    guild_id = BigIntegerField()
+    recipient_user_id = BigIntegerField(null=True)
+    sender_user_id = BigIntegerField(null=True)
+    amount = DecimalField(null=True)
+    timestamp = DateTimeField(default=datetime.now)
+
+    @classmethod
+    async def get_total_for_member(cls, member: Member) -> float:
+        return cls.select(fn.SUM(cls.amount)).where(cls.recipient_user_id == member.id & cls.guild_id == member.guild.id)
+
+    class Meta:
+        table_name = "discord_guild_configs"
 
 
 class RoleAlias(BaseModel):
