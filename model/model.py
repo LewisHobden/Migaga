@@ -202,10 +202,18 @@ class PointTransaction(BaseModel):
 
     @classmethod
     async def get_total_for_member(cls, member: Member) -> float:
-        return cls.select(fn.SUM(cls.amount)).where(cls.recipient_user_id == member.id & cls.guild_id == member.guild.id)
+        query = cls.select(fn.SUM(cls.amount)).where(
+            (cls.recipient_user_id == member.id) & (cls.guild_id == member.guild.id))
+
+        return query.scalar()
+
+    @classmethod
+    async def grant_member(cls, amount: float, member: Member, sender: Member) -> float:
+        return cls.create(guild_id=member.guild.id, recipient_user_id=member.id, sender_user_id=sender.id,
+                          amount=amount).save()
 
     class Meta:
-        table_name = "discord_guild_configs"
+        table_name = "discord_point_transactions"
 
 
 class RoleAlias(BaseModel):

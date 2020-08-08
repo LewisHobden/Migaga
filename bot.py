@@ -25,6 +25,7 @@ extensions = [
     "cogs.profile",
     "cogs.games.fun",
     "cogs.people",
+    "cogs.points",
     "cogs.starboard",
     "cogs.serverlogs",
     "cogs.reminders",
