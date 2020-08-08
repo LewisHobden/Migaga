@@ -13,9 +13,9 @@ class DatabaseFactory:
     def get_database_connection(self):
         if self._database is None:
             self._database = MySQLDatabase(self.config.get("Database", "Database"),
+                                           port=int(self.config.get("Database", "Port")),
                                            host=self.config.get("Database", "Host"),
                                            user=self.config.get("Database", "User"),
-                                           port=self.config.get("Database", "Port"),
                                            password=self.config.get("Database", "Password")
                                            )
 

@@ -19,6 +19,7 @@ class Points(commands.Cog):
 
     @commands.command()
     async def inventory(self, ctx, member: discord.Member = None):
+        """ Gets the number of points you have in yours or someone else's inventory. """
         if member is None:
             member = ctx.author
 
@@ -62,8 +63,8 @@ class Points(commands.Cog):
     @commands.command()
     @commands.has_permissions(manage_roles=True)
     async def points(self, ctx, action: str, member: discord.Member, amount: float):
-        """ Gives a user some points, however much you define.
-        Your action is "give" or "remove".. example, !points remove @Migaga 10
+        """ Give or takes away points from a user based on the action and how much you define.
+        Your action is "give" or "take".. example, !points remove @Migaga 10
 
         You will need "Manage Roles" permissions to do this. """
         # Update the DB.
@@ -73,7 +74,7 @@ class Points(commands.Cog):
             await ctx.send("You have not set up points in this server yet. Use `!pointsetup` to get started!")
             return
 
-        if "remove" == action:
+        if "take" == action:
             amount = amount * -1
             emoji = "\U0001f4c9"
             action = "Lost"
@@ -81,7 +82,7 @@ class Points(commands.Cog):
             emoji = "\U0001f4c8"
             action = "Got"
         else:
-            return await ctx.send("You can either \"give\" or \"remove\" points. See the help command for help.")
+            return await ctx.send("You can either \"give\" or \"take\" points. See the help command for help.")
 
         await PointTransaction.grant_member(amount, member, ctx.author)
         user_total = await PointTransaction.get_total_for_member(member)

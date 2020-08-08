@@ -41,7 +41,7 @@ async def on_ready():
     setattr(client, "client_id", config.get("Env", "ClientId"))
 
     activity = "Version {}! Changelog: migaga.lewis.coffee/".format(version)
-    res = await client.change_presence(status=discord.Status.online, activity=discord.Game(name=activity))
+    await client.change_presence(status=discord.Status.online, activity=discord.Game(name=activity))
 
 
 if __name__ == '__main__':
