@@ -15,11 +15,12 @@ class DatabaseFactory:
             self._database = MySQLDatabase(self.config.get("Database", "Database"),
                                            host=self.config.get("Database", "Host"),
                                            user=self.config.get("Database", "User"),
+                                           port=self.config.get("Database", "Port"),
                                            password=self.config.get("Database", "Password")
                                            )
 
         return self._database
 
-    # @tasks.loop(seconds=30)
-    # async def stay_alive(self):
-    #     self.get_database_connection().connection().ping(True)
+    @tasks.loop(seconds=30)
+    async def stay_alive(self):
+        self.get_database_connection().connection().ping(True)
