@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.4.1] - 2020-08-22
+### Features
+- Added some aliases to the `search` command and expanded its use to allow showing all custom commands. 
+- Added a `!massban` command for admins which will also search for users based on the ID.
+- Added some requested aliases to common admin commands.
+
+### Maintenance
+- The bot is now running on Docker in production.
+
 ## [4.4.0] - 2020-08-08
 ### Points
 - Added a configurable way for guild owners to add or remove points from members of their guild.

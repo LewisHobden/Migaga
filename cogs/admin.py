@@ -82,7 +82,33 @@ class Admin(commands.Cog):
 
     @commands.command(no_pm=True, )
     @credential_checks.has_permissions(ban_members=True)
-    async def unban(self, ctx, member: discord.User, delete_message_days: int = 0, reason: str = ""):
+    async def massban(self, ctx, *, users: str):
+        """
+        Finds and bans people based on a list of user IDs.
+        In order to do this, the bot and you must have Ban Member permissions.
+
+        Separate identifiers with a space..
+        """
+        ids = users.split(" ")
+
+        for id in ids:
+            # Do the least expensive check..
+            user = self.client.get_user(id)
+
+            if user:
+                await self.ban(ctx, user)
+                continue
+
+            # If we must, do the expensive API check.
+            try:
+                user = await self.client.fetch_user(id)
+                await self.ban(ctx, user)
+            except discord.NotFound:
+                await ctx.send("Could not find user by ID {}".format(id))
+
+    @commands.command(no_pm=True, )
+    @credential_checks.has_permissions(ban_members=True)
+    async def unban(self, ctx, member: discord.User):
         """Unbans a member from the server. You can provide a user either by their ID or mentioning them.
         In order to do this, the bot and you must have Ban Member permissions.
         """
@@ -143,7 +169,7 @@ class Admin(commands.Cog):
         else:
             await ctx.send("Softbanned {.name}. Their messages should be gone now.".format(user))
 
-    @commands.command(no_pm=True, )
+    @commands.command(no_pm=True, aliases=['rolecommand'])
     @credential_checks.has_permissions(manage_roles=True)
     async def addrole(self, ctx, role: discord.Role):
         """Adds a role to the bot so that it can either be self assigned by a user or given by an admin.
@@ -165,6 +191,8 @@ class Admin(commands.Cog):
         embed.add_field(name="Command", value=alias)
 
         await ctx.send(embed=embed)
+
+        await self.client.process_commands(ctx.message)
 
     @commands.command(aliases=["wm"])
     @credential_checks.has_permissions(manage_guild=True)
@@ -201,7 +229,7 @@ class Admin(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(aliases=["rmwm", "deletewelcome"])
+    @commands.command(aliases=["rmwm", "deletewelcome","removewm"])
     @credential_checks.has_permissions(manage_guild=True)
     async def removewelcomemessage(self, ctx):
         """
@@ -252,7 +280,7 @@ class Admin(commands.Cog):
         else:
             await ctx.send("I'm not sure what you just tried to delete.. Run the command again?")
 
-    @commands.command(no_pm=True)
+    @commands.command(no_pm=True, aliases=["roleoverwrite", "rolerule"])
     @credential_checks.has_permissions(manage_roles=True)
     async def overwrite(self, ctx, *, role: discord.Role):
         """When a role has been assigned a command, any overwrite will remove that role when the command is used.

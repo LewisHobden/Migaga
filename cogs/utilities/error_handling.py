@@ -1,3 +1,5 @@
+import logging
+
 from discord.ext import commands
 import discord
 import sys
@@ -25,6 +27,9 @@ class ErrorHandling(commands.Cog):
             await ctx.send("You called this command incorrectly. Don't forget that more than one word for a command "
                            "argument should be wrapped in quotes. Here's the error message I got back: \n" + str(
                             exception))
+
+        logger = logging.getLogger('discord')
+        logger.error(exception)
 
         # Otherwise report it to my tracebacks channel.
         exceptions_channel = discord.utils.get(self.client.get_guild(197972184466063381).channels,

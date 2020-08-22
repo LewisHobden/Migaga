@@ -122,7 +122,7 @@ class Reminders(commands.Cog):
 
         for reminder in queued_reminders:
             for destination in reminder.destinations:
-                if destination.destination_type == "<class 'discord.member.Member'>":
+                if destination.destination_type == "<class 'discord.member.Member'>" or destination.destination_type == "<class 'discord.member.User'>":
                     destination = self.client.get_user(destination.destination_id)
                 elif destination.destination_type == "<class 'discord.channel.TextChannel'>":
                     destination = self.client.get_channel(destination.destination_id)
