@@ -18,7 +18,7 @@ class Points(commands.Cog):
         self.client = client
 
     @commands.command()
-    async def inventory(self, ctx, member: discord.Member = None):
+    async def inventory(self, ctx, *, member: discord.Member = None):
         """ Gets the number of points you have in yours or someone else's inventory. """
         if member is None:
             member = ctx.author

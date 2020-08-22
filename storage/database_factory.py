@@ -16,7 +16,8 @@ class DatabaseFactory:
                                            port=int(self.config.get("Database", "Port")),
                                            host=self.config.get("Database", "Host"),
                                            user=self.config.get("Database", "User"),
-                                           password=self.config.get("Database", "Password")
+                                           password=self.config.get("Database", "Password"),
+                                           charset='utf8mb4'
                                            )
 
         return self._database
