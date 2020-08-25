@@ -1,5 +1,6 @@
-from datetime import datetime
+from __future__ import annotations
 
+from datetime import datetime
 from discord import Member
 from peewee import *
 from storage.database_factory import DatabaseFactory
@@ -180,11 +181,13 @@ class GuildConfig(BaseModel):
     points_emoji = TextField(null=True)
 
     @classmethod
-    async def get_for_guild(cls, guild_id: int):
+    async def get_for_guild(cls, guild_id: int) -> GuildConfig:
         try:
             config = cls.select().where(cls.guild_id == guild_id).get()
         except DoesNotExist:
-            return cls.create(guild_id=guild_id).save()
+            cls.create(guild_id=guild_id).save()
+
+            return await cls.get_for_guild(guild_id=guild_id)
 
         return config
 
