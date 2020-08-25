@@ -6,6 +6,8 @@ import datetime
 import os
 import io
 
+from model.model import GuildConfig
+
 
 async def _generate_boilerplate_embed(author: discord.Member, colour=None, channel: discord.TextChannel = None):
     e = discord.Embed()
@@ -169,7 +171,13 @@ class ServerLogs(commands.Cog, name="Server Logs"):
         return url
 
     async def _notify(self, embed: discord.Embed, guild: discord.Guild):
-        server_logs = discord.utils.get(guild.channels, name='server-logs')
+        guild_config = await GuildConfig.get_for_guild(guild.id)
+        logs_channel_id = guild_config.server_logs_channel_id
+
+        if logs_channel_id is None:
+            return
+
+        server_logs = discord.utils.get(guild.channels, id=logs_channel_id)
 
         await server_logs.send(embed=embed)
 
