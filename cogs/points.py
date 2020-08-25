@@ -38,29 +38,6 @@ class Points(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    @commands.has_permissions(manage_guild=True)
-    async def pointsetup(self, ctx, name: str, emoji: discord.Emoji = None):
-        """ Sets up points in your server. Points need a name and optionally they need an emoji.
-
-        You will need "Manage Server" permissions to do this. """
-        config = await GuildConfig.get_for_guild(ctx.guild.id)
-
-        config.points_name = name.strip()
-        config.points_emoji = emoji
-
-        config.save()
-
-        embed = discord.Embed(title="Points Configured", description="Your points are set up!",
-                              color=discord.Color.green())
-
-        embed.add_field(name="Name", value=name)
-
-        if emoji is not None:
-            embed.add_field(name="Emoji", value=str(emoji))
-
-        await ctx.send(embed=embed)
-
-    @commands.command()
     @commands.has_permissions(manage_roles=True)
     async def points(self, ctx, action: str, member: discord.Member, amount: float):
         """ Give or takes away points from a user based on the action and how much you define.
@@ -71,7 +48,7 @@ class Points(commands.Cog):
         config = await GuildConfig.get_for_guild(ctx.guild.id)
 
         if config.points_name is None:
-            await ctx.send("You have not set up points in this server yet. Use `!pointsetup` to get started!")
+            await ctx.send("You have not set up points in this server yet. Use `!config` to get started!")
             return
 
         if "take" == action:

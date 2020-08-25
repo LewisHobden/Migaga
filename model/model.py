@@ -177,6 +177,7 @@ class GuildConfig(BaseModel):
     id = AutoField()
     guild_id = BigIntegerField()
     server_logs_channel_id = BigIntegerField(null=True)
+    starboard_emoji_id = BigIntegerField(null=True)
     points_name = TextField(null=True)
     points_emoji = TextField(null=True)
 

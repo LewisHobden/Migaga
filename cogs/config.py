@@ -1,7 +1,7 @@
 from discord.ext import commands
 
 import discord
-from discord.ext.commands import TextChannelConverter
+from discord.ext.commands import TextChannelConverter, PartialEmojiConverter, EmojiConverter
 
 from model.model import GuildConfig
 
@@ -15,6 +15,7 @@ class Config(commands.Cog):
     async def _alter_config(self, ctx: commands.Context, config: GuildConfig, action, value=None):
         # Route the user based on their input.
         channel_converter = TextChannelConverter()
+        emoji_converter = EmojiConverter()
 
         if action == "logs":
             if value is None:
@@ -30,12 +31,52 @@ class Config(commands.Cog):
 
             return
 
+        if action == "points":
+            if value is None:
+                name = None
+            else:
+                name = value.strip()
+
+            config.points_name = name
+            config.save()
+            await ctx.send("Your server logs have been updated!")
+            await self._display_config(ctx, config)
+
+            return
+
+        if action == "points-emoji":
+            if value is None:
+                emoji = None
+            else:
+                emoji = await emoji_converter.convert(ctx=ctx, argument=value)
+
+            config.points_emoji = emoji
+            config.save()
+            await ctx.send("Your server logs have been updated!")
+            await self._display_config(ctx, config)
+
+            return
+
+        if action == "starboard-emoji":
+            if value is None:
+                emoji_id = None
+            else:
+                emoji = await emoji_converter.convert(ctx=ctx, argument=value)
+                emoji_id = emoji.id
+
+            config.starboard_emoji_id = emoji_id
+            config.save()
+            await ctx.send("Your server logs have been updated!")
+            await self._display_config(ctx, config)
+
+            return
+
         # If someone tries to "Remove" a config option, re-run the command but with an empty val.
         if action == "remove":
             return self._alter_config(ctx=ctx, config=config, action=value, value=None)
 
-        return ctx.send("I'm not sure what config option you want me to update! Your options are: "
-                        "logs, remove")
+        return await ctx.send("I'm not sure what config option you want me to update! Your options are: "
+                              "logs, points, points-emoji, starboard-emoji, remove")
 
     async def _display_config(self, ctx: commands.Context, guild_config: GuildConfig):
         embed = discord.Embed(color=discord.Color.blue(), title="Your Config",
@@ -46,8 +87,19 @@ class Config(commands.Cog):
         if guild_config.server_logs_channel_id is not None:
             logs_channel = self.client.get_channel(guild_config.server_logs_channel_id).mention
 
+        starboard_emoji = "⭐"
+
+        if guild_config.starboard_emoji_id is not None:
+            starboard_emoji = self.client.get_emoji(guild_config.starboard_emoji_id)
+
+        points_emoji = "*Not Setup*"
+        if guild_config.points_emoji is not None:
+            points_emoji = guild_config.points_emoji
+
         embed.add_field(name="Server Logs", value=logs_channel)
-        embed.add_field(name="Points", value=guild_config.points_name if not None else "Not Enabled")
+        embed.add_field(name="Points", value=guild_config.points_name if not None else "*Not Setup*")
+        embed.add_field(name="Points Emoji", value=points_emoji)
+        embed.add_field(name="Starboard Emoji", value=starboard_emoji)
 
         return await ctx.send(embed=embed)
 
