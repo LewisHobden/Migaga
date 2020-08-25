@@ -20,6 +20,7 @@ logging.basicConfig(level=logging.INFO)
 # Get our cogs.
 extensions = [
     "cogs.admin",
+    "cogs.config",
     "cogs.games.games",
     "cogs.customcommands",
     "cogs.profile",

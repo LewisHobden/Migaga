@@ -12,16 +12,30 @@ class Config(commands.Cog):
     def __init__(self, client: commands.Bot):
         self.client = client
 
-    async def _alter_config(self, ctx: commands.Context, config: GuildConfig, action, value):
+    async def _alter_config(self, ctx: commands.Context, config: GuildConfig, action, value=None):
         # Route the user based on their input.
         channel_converter = TextChannelConverter()
 
         if action == "logs":
-            channel = await channel_converter.convert(ctx=ctx, argument=value)
-            config.server_logs_channel_id = channel.id
+            if value is None:
+                channel_id = None
+            else:
+                channel = await channel_converter.convert(ctx=ctx, argument=value)
+                channel_id = channel.id
+
+            config.server_logs_channel_id = channel_id
             config.save()
             await ctx.send("Your server logs have been updated!")
             await self._display_config(ctx, config)
+
+            return
+
+        # If someone tries to "Remove" a config option, re-run the command but with an empty val.
+        if action == "remove":
+            return self._alter_config(ctx=ctx, config=config, action=value, value=None)
+
+        return ctx.send("I'm not sure what config option you want me to update! Your options are: "
+                        "logs, remove")
 
     async def _display_config(self, ctx: commands.Context, guild_config: GuildConfig):
         embed = discord.Embed(color=discord.Color.blue(), title="Your Config",
