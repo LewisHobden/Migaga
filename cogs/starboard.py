@@ -184,8 +184,13 @@ class Starboard(commands.Cog):
         return e
 
     async def _on_reaction_removed(self, reaction: RawReactionActionEvent):
-        # @todo Allow customisation of the emoji for starring.
-        if reaction.emoji.name != '⭐':
+        guild_config = await GuildConfig.get_for_guild(reaction.guild_id)
+        has_emoji = "⭐" == reaction.emoji.name
+
+        if guild_config.starboard_emoji_id is not None:
+            has_emoji = reaction.emoji.id == guild_config.starboard_emoji_id
+
+        if not has_emoji:
             return
 
         starred_message = StarredMessageModel.get_or_none(reaction.message_id)
@@ -204,8 +209,13 @@ class Starboard(commands.Cog):
         await self._update_starred_message(starred_message, embed)
 
     async def _on_reaction(self, reaction: RawReactionActionEvent):
-        # @todo Allow customisation of the emoji for starring.
-        if reaction.emoji.name != '⭐':
+        guild_config = await GuildConfig.get_for_guild(reaction.guild_id)
+        has_emoji = "⭐" == reaction.emoji.name
+
+        if guild_config.starboard_emoji_id is not None:
+            has_emoji = reaction.emoji.id == guild_config.starboard_emoji_id
+
+        if not has_emoji:
             return
 
         starboard = StarboardModel.get_for_guild(reaction.guild_id)
@@ -238,6 +248,9 @@ class Starboard(commands.Cog):
         # Show it in the starboard.
         embed = await self._get_starred_embed(starred_message, discord_message)
         await self._update_starred_message(starred_message, embed)
+
+    async def _get_guild_star(self, guild_id: int):
+        pass
 
     async def _update_starred_message(self, starred_message: StarredMessageModel,
                                       embed: discord.Embed):
