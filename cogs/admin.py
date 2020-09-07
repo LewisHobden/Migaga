@@ -192,8 +192,6 @@ class Admin(commands.Cog):
 
         await ctx.send(embed=embed)
 
-        await self.client.process_commands(ctx.message)
-
     @commands.command(aliases=["wm"])
     @credential_checks.has_permissions(manage_guild=True)
     async def welcomemessage(self, ctx, *, message):
