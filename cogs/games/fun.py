@@ -17,6 +17,7 @@ class Fun(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+        self.botDair = None
 
     @commands.command()
     async def emoji(self, ctx, emoji: discord.Emoji):
@@ -60,6 +61,21 @@ class Fun(commands.Cog):
         file = discord.File(await _get_remote_file(url), filename="kitten.jpg")
 
         await ctx.send("Here you are!", file=file)
+
+    @commands.Cog.listener('on_message')
+    async def dair(self, msg):
+        """ Updates bottom message of a specific channel """
+        if msg.channel.id != 740191241349890168:
+            return
+
+        if msg.author == self.client.user:
+            return
+
+        if self.botDair is not None:
+            await self.botDair.delete()
+
+        emoji = self.client.get_emoji(741072168632451092)
+        self.botDair = await msg.channel.send(str(emoji))
 
 
 def setup(client):
