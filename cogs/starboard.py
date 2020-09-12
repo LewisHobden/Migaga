@@ -23,6 +23,7 @@ def _get_emoji_for_star(stars):
         return '\N{SPARKLES}'
 
 
+
 class Starboard(commands.Cog):
     """ Commands related to the Starboard. """
 
@@ -147,10 +148,18 @@ class Starboard(commands.Cog):
             "Ok! Your starboard's threshold has been set to {}. Messages within the past week will be updated soon.".format(
                 threshold))
 
+    async def _get_emoji(self, guild_id):
+        guild_config = await GuildConfig.get_for_guild(guild_id)
+
+        if guild_config.starboard_emoji_id is None:
+            return "⭐"
+
+        return self.client.get_emoji(guild_config.starboard_emoji_id)
+
     async def _get_starred_embed(self, starred_message: StarredMessageModel, discord_message: discord.Message,
                                  remove_after_threshold: bool = False):
         description = "\"{.content}\"".format(discord_message) if discord_message.content else ""
-        footer_template = "{} This message doesn't have enough stars to stay in the starboard and will be deleted in {} minutes!"
+        footer_template = "{} This message doesn't have enough stars to stay in the starboard and will be deleted {}!"
 
         e = discord.Embed(description=description, colour=discord.Colour.gold())
 
@@ -162,7 +171,7 @@ class Starboard(commands.Cog):
             e.set_image(url=discord_message.attachments[0].proxy_url)
 
         number_of_stars = len(starred_message.starrers)
-        star_emoji = _get_emoji_for_star(number_of_stars)
+        star_emoji = await self._get_emoji(discord_message.guild.id)
 
         if number_of_stars == 0:
             return
@@ -172,11 +181,16 @@ class Starboard(commands.Cog):
                 return None
 
             star_emoji = '\N{GHOST}'
-            timer = self.cleaner.next_iteration - datetime.now(timezone.utc)
 
-            e.set_footer(text=footer_template.format(star_emoji, round(timer.total_seconds() / 60)))
+            if self.cleaner.next_iteration:
+                timer = self.cleaner.next_iteration - datetime.now(timezone.utc)
+                countdown = "in {} minutes".format(round(timer.total_seconds() / 60))
+            else:
+                countdown = "soon"
 
-        e.add_field(name="Stars", value=star_emoji + " **{}**".format(number_of_stars), inline=True)
+            e.set_footer(text=footer_template.format(star_emoji, countdown))
+
+        e.add_field(name="Awards", value="{} **{}**".format(star_emoji, number_of_stars), inline=True)
         e.add_field(name="Message",
                     value="[Jump to the message]({.jump_url})".format(discord_message),
                     inline=True)
@@ -184,9 +198,15 @@ class Starboard(commands.Cog):
         return e
 
     async def _on_reaction_removed(self, reaction: RawReactionActionEvent):
-        # @todo Allow customisation of the emoji for starring.
-        if reaction.emoji.name != '⭐':
-            return
+        guild_emoji = await self._get_emoji(reaction.guild_id)
+
+        if isinstance(guild_emoji, str):
+            if reaction.emoji.name != guild_emoji:
+                return
+
+        else:
+            if reaction.emoji.id != guild_emoji.id:
+                return
 
         starred_message = StarredMessageModel.get_or_none(reaction.message_id)
 
@@ -204,9 +224,15 @@ class Starboard(commands.Cog):
         await self._update_starred_message(starred_message, embed)
 
     async def _on_reaction(self, reaction: RawReactionActionEvent):
-        # @todo Allow customisation of the emoji for starring.
-        if reaction.emoji.name != '⭐':
-            return
+        guild_emoji = await self._get_emoji(reaction.guild_id)
+
+        if isinstance(guild_emoji, str):
+            if reaction.emoji.name != guild_emoji:
+                return
+
+        else:
+            if reaction.emoji.id != guild_emoji.id:
+                return
 
         starboard = StarboardModel.get_for_guild(reaction.guild_id)
 
@@ -238,6 +264,9 @@ class Starboard(commands.Cog):
         # Show it in the starboard.
         embed = await self._get_starred_embed(starred_message, discord_message)
         await self._update_starred_message(starred_message, embed)
+
+    async def _get_guild_star(self, guild_id: int):
+        pass
 
     async def _update_starred_message(self, starred_message: StarredMessageModel,
                                       embed: discord.Embed):

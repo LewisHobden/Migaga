@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.5.0] - 2020-09-12
+### Features
+- The !ban command will now check users globally by ID.
+
+### Server Config
+Introducing configuration options so that a server can have more control over how the bot works. 
+Use !help config to get started.
+- Server logs no longer write logs to whatever channel it finds named #server-logs. The channel must now be configured.
+- Starboard emoji can now be configured using the server configuration. 
+- Points name and points emoji have been moved to the server config.
+
 ## [4.4.1] - 2020-08-22
 ### Features
 - Added some aliases to the `search` command and expanded its use to allow showing all custom commands. 
