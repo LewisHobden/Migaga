@@ -73,7 +73,7 @@ class Config(commands.Cog):
 
         # If someone tries to "Remove" a config option, re-run the command but with an empty val.
         if action == "remove":
-            return self._alter_config(ctx=ctx, config=config, action=value, value=None)
+            return await self._alter_config(ctx=ctx, config=config, action=value, value=None)
 
         return await ctx.send("I'm not sure what config option you want me to update! Your options are: "
                               "logs, points, points-emoji, starboard-emoji, remove")
