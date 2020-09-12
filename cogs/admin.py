@@ -5,6 +5,7 @@ from discord import RawReactionActionEvent
 from discord.ext import commands
 
 from cogs.utilities import credential_checks
+from converters.converters import GlobalUserConverter
 from model.model import *
 
 log = logging.getLogger(__name__)
@@ -67,18 +68,18 @@ class Admin(commands.Cog):
 
     @commands.command(no_pm=True, )
     @credential_checks.has_permissions(ban_members=True)
-    async def ban(self, ctx, member: discord.User, delete_message_days: int = 0, reason: str = ""):
+    async def ban(self, ctx, user: GlobalUserConverter, delete_message_days: int = 0, reason: str = ""):
         """Bans a member from the server. You can provide a user either by their ID or mentioning them.
         In order to do this, the bot and you must have Ban Member permissions.
         """
         try:
-            await ctx.guild.ban(member, delete_message_days=delete_message_days, reason=reason)
+            await ctx.guild.ban(user, delete_message_days=delete_message_days, reason=reason)
         except discord.Forbidden:
             await ctx.send("The bot does not have permissions to kick members.")
         except discord.HTTPException:
             await ctx.send("Kicking failed. I think it was my fault.. try again?")
         else:
-            await ctx.send("BOOM! Banned " + member.name)
+            await ctx.send("BOOM! Banned " + user.name)
 
     @commands.command(no_pm=True, )
     @credential_checks.has_permissions(ban_members=True)
@@ -89,22 +90,16 @@ class Admin(commands.Cog):
 
         Separate identifiers with a space..
         """
+        user_converter = GlobalUserConverter()
         ids = users.split(" ")
 
         for id in ids:
-            # Do the least expensive check..
-            user = self.client.get_user(id)
+            user = await user_converter.convert(ctx, id)
 
-            if user:
-                await self.ban(ctx, user)
-                continue
-
-            # If we must, do the expensive API check.
             try:
-                user = await self.client.fetch_user(id)
                 await self.ban(ctx, user)
             except discord.NotFound:
-                await ctx.send("Could not find user by ID {}".format(id))
+                await ctx.send("I could not find the user \"{}\"".format(id))
 
     @commands.command(no_pm=True, )
     @credential_checks.has_permissions(ban_members=True)
