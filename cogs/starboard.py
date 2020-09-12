@@ -150,7 +150,7 @@ class Starboard(commands.Cog):
     async def _get_starred_embed(self, starred_message: StarredMessageModel, discord_message: discord.Message,
                                  remove_after_threshold: bool = False):
         description = "\"{.content}\"".format(discord_message) if discord_message.content else ""
-        footer_template = "{} This message doesn't have enough stars to stay in the starboard and will be deleted in {} minutes!"
+        footer_template = "{} This message doesn't have enough stars to stay in the starboard and will be deleted {}!"
 
         e = discord.Embed(description=description, colour=discord.Colour.gold())
 
@@ -172,9 +172,14 @@ class Starboard(commands.Cog):
                 return None
 
             star_emoji = '\N{GHOST}'
-            timer = self.cleaner.next_iteration - datetime.now(timezone.utc)
 
-            e.set_footer(text=footer_template.format(star_emoji, round(timer.total_seconds() / 60)))
+            if self.cleaner.next_iteration:
+                timer = self.cleaner.next_iteration - datetime.now(timezone.utc)
+                countdown = "in {} minutes".format(round(timer.total_seconds() / 60))
+            else:
+                countdown = "soon"
+
+            e.set_footer(text=footer_template.format(star_emoji, countdown))
 
         e.add_field(name="Stars", value=star_emoji + " **{}**".format(number_of_stars), inline=True)
         e.add_field(name="Message",
