@@ -11,7 +11,7 @@ config = configparser.ConfigParser()
 config.read("config.ini")
 
 # Set up the bot.
-version = "4.4.0"
+version = "4.5.1"
 bot_description = "Migaga (Version {})".format(version)
 prefix = "!"
 client = commands.Bot(command_prefix=prefix, description=bot_description, pm_help=None)
@@ -41,7 +41,7 @@ async def on_ready():
 
     setattr(client, "client_id", config.get("Env", "ClientId"))
 
-    activity = "Version {}! Changelog: migaga.lewis.coffee/".format(version)
+    activity = "Version {}!".format(version)
     await client.change_presence(status=discord.Status.online, activity=discord.Game(name=activity))
 
 

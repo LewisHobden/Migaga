@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.5.1] - 2020-09-12
+### Fixes
+- Tweaked GitHub actions.
+- Changed the emoji sent into the #long-dair channel.
+
 ## [4.5.0] - 2020-09-12
 ### Features
 - The !ban command will now check users globally by ID.

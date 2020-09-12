@@ -74,7 +74,7 @@ class Fun(commands.Cog):
         if self.botDair is not None:
             await self.botDair.delete()
 
-        emoji = self.client.get_emoji(741072168632451092)
+        emoji = self.client.get_emoji(741072210713903206)
         self.botDair = await msg.channel.send(str(emoji))
 
 
