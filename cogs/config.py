@@ -92,6 +92,8 @@ class Config(commands.Cog):
     async def config(self, ctx, action=None, *, value=None):
         """
         Allows you to tweak configuration settings or view what your server currently does.
+        Your options are: logs, points, points-emoji, starboard-emoji, remove
+        Example: `!config logs #server-logs`
 
         You need "Manage Guild" permissions in order to use this command.
         My attempt at a different style command. It routes the user based on the number of arguments they provide.
