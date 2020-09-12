@@ -77,5 +77,6 @@ class Fun(commands.Cog):
         emoji = self.client.get_emoji(741072168632451092)
         self.botDair = await msg.channel.send(str(emoji))
 
+
 def setup(client):
     client.add_cog(Fun(client))
