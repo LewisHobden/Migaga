@@ -21,7 +21,7 @@ services:
       MYSQL_ROOT_PASSWORD: mg-password
       MYSQL_ROOT_HOST: '%'
     volumes:
-      - datavolume:/var/lib/docker/mysql
+      - databasevolume:/var/lib/mysql
     ports:
       - '3307:3307'
 
@@ -33,7 +33,7 @@ services:
       - '8080:8080'
 
 volumes:
-  datavolume:
+  databasevolume:
 
 networks:
   dbnetwork:

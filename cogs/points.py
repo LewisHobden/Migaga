@@ -1,16 +1,8 @@
-import typing
-
 import discord
 from discord.ext import commands
 
+from cogs.utilities.formatting import format_points
 from model.model import *
-
-
-def _format_total(total: typing.Optional[float]) -> str:
-    if total is None:
-        return "0"
-
-    return '{0:.3f}'.format(total)
 
 
 class Points(commands.Cog):
@@ -32,10 +24,47 @@ class Points(commands.Cog):
 
         emoji = "" if config.points_emoji is None else " " + config.points_emoji
         embed = discord.Embed(title="In {.name}".format(member.guild), color=discord.Color.green())
-        embed.description = "{.display_name} has {} {.points_name}{}".format(member, _format_total(user_total), config,
+        embed.description = "{.display_name} has {} {.points_name}{}".format(member, format_points(user_total), config,
                                                                              emoji)
 
         await ctx.send(embed=embed)
+
+    @commands.command()
+    async def leaderboard(self, ctx):
+        """ Shows the leaderboard for the server.
+
+         If you mention a person then you can get your placement on the leaderboard. """
+        config = await GuildConfig.get_for_guild(ctx.guild.id)
+
+        if config.points_name is None:
+            return
+
+        transactions = (PointTransaction
+                        .select(PointTransaction.recipient_user_id,
+                                fn.SUM(PointTransaction.amount).alias('total_points'))
+                        .where(PointTransaction.guild_id == ctx.guild.id)
+                        .group_by(PointTransaction.recipient_user_id)
+                        .order_by(SQL('total_points DESC')))
+
+        body = ""
+
+        index = 1
+        for transaction in transactions:
+            member = ctx.guild.get_member(transaction.recipient_user_id)
+            points = config.points_name[0].upper()
+            points += config.points_name[1:]
+
+            body += ("{}. **{}** - {}\n".format(index, member.display_name, format_points(transaction.total_points)))
+            index += 1
+
+        if not len(body):
+            return
+
+        e = discord.Embed(colour=discord.Colour.gold(),
+                          title="{} Leaderboard for {}".format(points, ctx.guild.name),
+                          description=body)
+
+        await ctx.send(embed=e)
 
     @commands.command()
     @commands.has_permissions(manage_roles=True)
@@ -71,7 +100,7 @@ class Points(commands.Cog):
                               color=discord.Color.green())
 
         embed.add_field(name="Total {}".format(action), value=str(abs(amount)))
-        embed.add_field(name="New Total", value=_format_total(user_total))
+        embed.add_field(name="New Total", value=format_points(user_total))
 
         await ctx.send(embed=embed)
 
