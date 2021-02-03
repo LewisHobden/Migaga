@@ -3,7 +3,7 @@ import sys
 from datetime import *
 
 import discord
-from discord import RawReactionActionEvent
+from discord import RawReactionActionEvent, errors
 from discord.ext import commands, tasks
 
 from model.model import *
@@ -284,7 +284,10 @@ class Starboard(commands.Cog):
             starred_message.embed_message_id = embed_message.id
             starred_message.save()
         else:
-            embed_message = await starboard_channel.fetch_message(starred_message.embed_message_id)
+            try:
+                embed_message = await starboard_channel.fetch_message(starred_message.embed_message_id)
+            except errors.NotFound:
+                return
 
             if embed is not None:
                 await embed_message.edit(embed=embed)

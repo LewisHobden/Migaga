@@ -3,22 +3,37 @@ version: '3.4'
 services:
   migaga:
     image: migaga
+    container_name: migaga
+    networks:
+      - dbnetwork
     volumes:
-      - ./:/usr/src/app
-      - webrootuservolume:/root
+      - ./:/app
     build:
       context: .
       dockerfile: Dockerfile
-  database:
-    container_name: database
+
+  migaga_database:
+    container_name: migaga-database
     image: mysql/mysql-server
+    networks:
+      - dbnetwork
     environment:
-      MYSQL_ROOT_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: mg-password
       MYSQL_ROOT_HOST: '%'
     volumes:
-      - datavolume:/var/lib/mysql
+      - databasevolume:/var/lib/mysql
     ports:
-      - '3306:3306'
+      - '3307:3307'
+
+  adminer:
+    image: adminer
+    networks:
+      - dbnetwork
+    ports:
+      - '8080:8080'
+
 volumes:
-  datavolume:
-  webrootuservolume:
+  databasevolume:
+
+networks:
+  dbnetwork:

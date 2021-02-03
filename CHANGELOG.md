@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.6.0] - 2021-02-03
+### Features
+- Added a !leaderboard command to show users with the most points in a guild. 
+  
+### Tweaks
+- Updated discord.py version.
+- Tweaked points formatting.
+
+### Fixes
+- Fixed requests to Discord intents.
+- Fixed a crash when cleaning the Starboard and finding deleted messages.
+
 ## [4.5.1] - 2020-09-12
 ### Fixes
 - Tweaked GitHub actions.
