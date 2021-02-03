@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.6.1] - 2021-02-03
+### Fixes
+- The leaderboard now only shows the top 5 users by points.
+- Fixed dev configuration being put on live.
+
 ## [4.6.0] - 2021-02-03
 ### Features
 - Added a !leaderboard command to show users with the most points in a guild. 

@@ -44,9 +44,10 @@ class Points(commands.Cog):
                                 fn.SUM(PointTransaction.amount).alias('total_points'))
                         .where(PointTransaction.guild_id == ctx.guild.id)
                         .group_by(PointTransaction.recipient_user_id)
-                        .order_by(SQL('total_points DESC')))
+                        .order_by(SQL('total_points DESC'))
+                        .limit(5))
 
-        body = ""
+        body = "Showing the Top 5..\n"
 
         index = 1
         for transaction in transactions:
@@ -56,9 +57,6 @@ class Points(commands.Cog):
 
             body += ("{}. **{}** - {}\n".format(index, member.display_name, format_points(transaction.total_points)))
             index += 1
-
-        if not len(body):
-            return
 
         e = discord.Embed(colour=discord.Colour.gold(),
                           title="{} Leaderboard for {}".format(points, ctx.guild.name),
