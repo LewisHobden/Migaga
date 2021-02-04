@@ -45,9 +45,9 @@ class Points(commands.Cog):
                         .where(PointTransaction.guild_id == ctx.guild.id)
                         .group_by(PointTransaction.recipient_user_id)
                         .order_by(SQL('total_points DESC'))
-                        .limit(5))
+                        .limit(10))
 
-        body = "Showing the Top 5..\n"
+        body = "Showing the Top 10..\n"
 
         index = 1
         for transaction in transactions:
