@@ -1,8 +1,13 @@
+import io
+import sys
+
 import discord
 from discord.ext import commands
 
 from cogs.utilities.formatting import format_points
 from model.model import *
+
+from PIL import Image, ImageDraw, ImageFont
 
 
 class Points(commands.Cog):
@@ -21,13 +26,28 @@ class Points(commands.Cog):
             return
 
         user_total = await PointTransaction.get_total_for_member(member)
+        font = ImageFont.truetype("/app/assets/fonts/OpenSans-Regular.ttf", 24)
 
-        emoji = "" if config.points_emoji is None else " " + config.points_emoji
-        embed = discord.Embed(title="In {.name}".format(member.guild), color=discord.Color.green())
-        embed.description = "{.display_name} has {} {.points_name}{}".format(member, format_points(user_total), config,
-                                                                             emoji)
+        profile_image = ctx.author.avatar_url_as(format='png')
+        profile_image_bytes = io.BytesIO(initial_bytes=await profile_image.read())
+        profile_image = Image.open(profile_image_bytes).convert("RGBA").resize((150, 150))
 
-        await ctx.send(embed=embed)
+        # get an image
+        base = Image.open("/app/assets/inventory-backdrop.jpeg").convert("RGBA")
+
+        # get a drawing context
+        d = ImageDraw.Draw(base)
+
+        d.text((10, 10), "In {.name}".format(member.guild), font=font, fill=(255, 255, 255, 255))
+        d.text((200, 30), "{.display_name}#{.discriminator}".format(member, member), font=font, fill=(255, 255, 255, 255))
+        d.text((40, 200), "{} {.points_name}".format(format_points(user_total), config), font=font, fill=(255, 255, 255, 255))
+        base.paste(profile_image, box=(30, 30))
+
+        with io.BytesIO() as output:
+            base.save(output, format="PNG")
+            output.seek(0)
+
+            await ctx.send(file=discord.File(output, filename="inventory.png"))
 
     @commands.command()
     async def leaderboard(self, ctx):
