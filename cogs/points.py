@@ -25,29 +25,32 @@ class Points(commands.Cog):
         if config.points_name is None:
             return
 
-        user_total = await PointTransaction.get_total_for_member(member)
-        font = ImageFont.truetype("/app/assets/fonts/OpenSans-Regular.ttf", 24)
+        async with ctx.channel.typing():
+            position = await PointTransaction.get_position_in_guild_leaderboard(ctx.guild.id, ctx.author.id)
 
-        profile_image = ctx.author.avatar_url_as(format='png')
-        profile_image_bytes = io.BytesIO(initial_bytes=await profile_image.read())
-        profile_image = Image.open(profile_image_bytes).convert("RGBA").resize((150, 150))
+            user_total = await PointTransaction.get_total_for_member(member)
+            font = ImageFont.truetype("/app/assets/fonts/OpenSans-Regular.ttf", 32)
 
-        # get an image
-        base = Image.open("/app/assets/inventory-backdrop.jpeg").convert("RGBA")
+            profile_image = ctx.author.avatar_url_as(format='png')
+            profile_image_bytes = io.BytesIO(initial_bytes=await profile_image.read())
+            profile_image = Image.open(profile_image_bytes).convert("RGBA").resize((150, 150))
 
-        # get a drawing context
-        d = ImageDraw.Draw(base)
+            # get an image
+            base = Image.open("/app/assets/inventory-backdrop.png").convert("RGBA").resize((768, 432))
 
-        d.text((10, 10), "In {.name}".format(member.guild), font=font, fill=(255, 255, 255, 255))
-        d.text((200, 30), "{.display_name}#{.discriminator}".format(member, member), font=font, fill=(255, 255, 255, 255))
-        d.text((40, 200), "{} {.points_name}".format(format_points(user_total), config), font=font, fill=(255, 255, 255, 255))
-        base.paste(profile_image, box=(30, 30))
+            # get a drawing context
+            d = ImageDraw.Draw(base)
 
-        with io.BytesIO() as output:
-            base.save(output, format="PNG")
-            output.seek(0)
+            d.text((200, 30), "{.display_name}#{.discriminator}".format(member, member), font=font, fill=(255, 255, 255, 255))
+            d.text((200, 150), "#{} in {.name}".format(position[0], member.guild), font=font, fill=(255, 255, 255, 255))
+            d.text((40, 350), "{} {.points_name}".format(format_points(user_total), config), font=font, fill=(1, 1, 1, 255))
+            base.paste(profile_image, box=(30, 30))
 
-            await ctx.send(file=discord.File(output, filename="inventory.png"))
+            with io.BytesIO() as output:
+                base.save(output, format="PNG")
+                output.seek(0)
+
+                await ctx.send(file=discord.File(output, filename="inventory.png"))
 
     @commands.command()
     async def leaderboard(self, ctx):
@@ -58,7 +61,6 @@ class Points(commands.Cog):
 
         if config.points_name is None:
             return
-
         transactions = (PointTransaction
                         .select(PointTransaction.recipient_user_id,
                                 fn.SUM(PointTransaction.amount).alias('total_points'))

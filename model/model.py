@@ -216,6 +216,14 @@ class PointTransaction(BaseModel):
         return cls.create(guild_id=member.guild.id, recipient_user_id=member.id, sender_user_id=sender.id,
                           amount=amount).save()
 
+    @classmethod
+    async def get_position_in_guild_leaderboard(cls, guild_id: int, user_id: int) -> int:
+        with open("/app/storage/leaderboard_query.sql", 'r+') as file:
+            query = file.read()
+
+        for row in database.execute_sql(query.format(guild_id, user_id)):
+            return row
+
     class Meta:
         table_name = "discord_point_transactions"
 
