@@ -7,7 +7,7 @@ from discord.ext import commands
 from cogs.utilities.formatting import format_points
 from model.model import *
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageOps
 
 
 class Points(commands.Cog):
@@ -29,22 +29,41 @@ class Points(commands.Cog):
             position = await PointTransaction.get_position_in_guild_leaderboard(ctx.guild.id, ctx.author.id)
 
             user_total = await PointTransaction.get_total_for_member(member)
-            font = ImageFont.truetype("/app/assets/fonts/OpenSans-Regular.ttf", 32)
 
-            profile_image = ctx.author.avatar_url_as(format='png')
+            if not user_total:
+                return await ctx.send("I couldn't find any "+config.points_name+"!")
+
+            font = ImageFont.truetype("/app/assets/fonts/Pixelar-Regular.ttf", 72)
+            username_font = ImageFont.truetype("/app/assets/fonts/Pixelar-Regular.ttf", 72 - len(member.display_name))
+
+            profile_image = member.avatar_url_as(format='png')
             profile_image_bytes = io.BytesIO(initial_bytes=await profile_image.read())
             profile_image = Image.open(profile_image_bytes).convert("RGBA").resize((150, 150))
 
             # get an image
-            base = Image.open("/app/assets/inventory-backdrop.png").convert("RGBA").resize((768, 432))
+            base = Image.open("/app/assets/inventory-backdrop.png").convert("RGBA").resize((640, 360))
 
             # get a drawing context
             d = ImageDraw.Draw(base)
 
-            d.text((200, 30), "{.display_name}#{.discriminator}".format(member, member), font=font, fill=(255, 255, 255, 255))
-            d.text((200, 150), "#{} in {.name}".format(position[0], member.guild), font=font, fill=(255, 255, 255, 255))
-            d.text((40, 350), "{} {.points_name}".format(format_points(user_total), config), font=font, fill=(1, 1, 1, 255))
-            base.paste(profile_image, box=(30, 30))
+            # crop image
+            width, height = profile_image.size
+            x = (width - height) // 2
+            img_cropped = profile_image.crop((x, 0, x + height, height))
+
+            # create grayscale image with white circle (255) on black background (0)
+            mask = Image.new('L', img_cropped.size)
+            mask_draw = ImageDraw.Draw(mask)
+            width, height = img_cropped.size
+            mask_draw.ellipse((0, 0, width, height), fill=255)
+
+            # add mask as alpha channel
+            img_cropped.putalpha(mask)
+
+            d.text((200, 30), "{.display_name}#{.discriminator}".format(member, member), font=username_font, fill=(255, 255, 255, 255))
+            d.text((200, 100), "{} {.points_name}".format(format_points(user_total), config), font=font, fill=(255, 255, 255, 255))
+            d.text((40, 250), "#{} in {.name}".format(position[0], member.guild), font=font, fill=(1, 1, 1, 255))
+            base.paste(img_cropped, (30, 30), img_cropped)
 
             with io.BytesIO() as output:
                 base.save(output, format="PNG")

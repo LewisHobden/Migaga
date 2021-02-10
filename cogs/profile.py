@@ -1,9 +1,6 @@
-from discord.ext import commands
 import discord
+from discord.ext import commands
 
-from peewee import *
-
-from model.model import *
 from model.model import *
 
 
