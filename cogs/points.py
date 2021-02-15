@@ -60,7 +60,7 @@ class Points(commands.Cog):
             # add mask as alpha channel
             img_cropped.putalpha(mask)
 
-            d.text((200, 30), "{.display_name}#{.discriminator}".format(member, member), font=username_font, fill=(255, 255, 255, 255))
+            d.text((200, 30), "{.display_name}#{.discriminator}".format(member, member), font=username_font, fill=member.colour.to_rgb())
             d.text((275, 100), "{} {.points_name}".format(format_points(user_total), config), font=font, fill=(255, 255, 255, 255))
             d.text((40, 250), "#{} in {.name}".format(position[0], member.guild), font=font, fill=(255, 255, 255, 255))
             base.paste(img_cropped, (30, 30), img_cropped)
