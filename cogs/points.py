@@ -1,13 +1,11 @@
 import io
-import sys
 
 import discord
+from PIL import Image, ImageDraw, ImageFont
 from discord.ext import commands
 
 from cogs.utilities.formatting import format_points
 from model.model import *
-
-from PIL import Image, ImageDraw, ImageFont
 
 
 class Points(commands.Cog):
