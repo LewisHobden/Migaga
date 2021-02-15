@@ -61,9 +61,23 @@ class Points(commands.Cog):
             img_cropped.putalpha(mask)
 
             d.text((200, 30), "{.display_name}#{.discriminator}".format(member, member), font=username_font, fill=(255, 255, 255, 255))
-            d.text((200, 100), "{} {.points_name}".format(format_points(user_total), config), font=font, fill=(255, 255, 255, 255))
-            d.text((40, 250), "#{} in {.name}".format(position[0], member.guild), font=font, fill=(1, 1, 1, 255))
+            d.text((275, 100), "{} {.points_name}".format(format_points(user_total), config), font=font, fill=(255, 255, 255, 255))
+            d.text((40, 250), "#{} in {.name}".format(position[0], member.guild), font=font, fill=(255, 255, 255, 255))
             base.paste(img_cropped, (30, 30), img_cropped)
+
+            # Load the points emoji from the config, add that to the image.
+            emoji_id = config.points_emoji.split(":")[2][:-1]
+            points_emoji = discord.utils.get(ctx.guild.emojis, id=int(emoji_id))
+            emoji_image = points_emoji.url_as(format='png')
+            emoji_image_bytes = io.BytesIO(initial_bytes=await emoji_image.read())
+            emoji_image = Image.open(emoji_image_bytes).convert("RGBA")
+
+            new_width = 50
+            new_height = new_width * emoji_image.height / emoji_image.width
+
+            emoji_image.thumbnail((new_width, new_height))
+
+            base.paste(emoji_image, (200, 100), emoji_image)
 
             with io.BytesIO() as output:
                 base.save(output, format="PNG")
