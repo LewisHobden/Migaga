@@ -133,11 +133,11 @@ class Points(commands.Cog):
             await ctx.send("You have not set up points in this server yet. Use `!config` to get started!")
             return
 
-        if "take" == action:
+        if action in {"take", "remove"}:
             amount = amount * -1
             emoji = "\U0001f4c9"
             action = "Lost"
-        elif "give" == action:
+        elif action in {"give", "add"}:
             emoji = "\U0001f4c8"
             action = "Got"
         else:
