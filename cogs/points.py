@@ -1,13 +1,11 @@
 import io
-import sys
 
 import discord
 from discord.ext import commands
 
 from cogs.utilities.formatting import format_points
 from model.model import *
-
-from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageOps
+from util.image import InventoryImage
 
 
 class Points(commands.Cog):
@@ -27,60 +25,21 @@ class Points(commands.Cog):
 
         async with ctx.channel.typing():
             position = await PointTransaction.get_position_in_guild_leaderboard(ctx.guild.id, ctx.author.id)
-
             user_total = await PointTransaction.get_total_for_member(member)
 
             if not user_total:
                 return await ctx.send("I couldn't find any "+config.points_name+"!")
 
-            font = ImageFont.truetype("/app/assets/fonts/Pixelar-Regular.ttf", 72)
-            username_font = ImageFont.truetype("/app/assets/fonts/Pixelar-Regular.ttf", 72 - len(member.display_name))
-
-            profile_image = member.avatar_url_as(format='png')
-            profile_image_bytes = io.BytesIO(initial_bytes=await profile_image.read())
-            profile_image = Image.open(profile_image_bytes).convert("RGBA").resize((150, 150))
-
-            # get an image
-            base = Image.open("/app/assets/inventory-backdrop.png").convert("RGBA").resize((640, 360))
-
-            # get a drawing context
-            d = ImageDraw.Draw(base)
-
-            # crop image
-            width, height = profile_image.size
-            x = (width - height) // 2
-            img_cropped = profile_image.crop((x, 0, x + height, height))
-
-            # create grayscale image with white circle (255) on black background (0)
-            mask = Image.new('L', img_cropped.size)
-            mask_draw = ImageDraw.Draw(mask)
-            width, height = img_cropped.size
-            mask_draw.ellipse((0, 0, width, height), fill=255)
-
-            # add mask as alpha channel
-            img_cropped.putalpha(mask)
-
-            d.text((200, 30), "{.display_name}#{.discriminator}".format(member, member), font=username_font, fill=member.colour.to_rgb())
-            d.text((275, 100), "{} {.points_name}".format(format_points(user_total), config), font=font, fill=(255, 255, 255, 255))
-            d.text((40, 250), "#{} in {.name}".format(position[0], member.guild), font=font, fill=(255, 255, 255, 255))
-            base.paste(img_cropped, (30, 30), img_cropped)
-
-            # Load the points emoji from the config, add that to the image.
             emoji_id = config.points_emoji.split(":")[2][:-1]
             points_emoji = discord.utils.get(ctx.guild.emojis, id=int(emoji_id))
-            emoji_image = points_emoji.url_as(format='png')
-            emoji_image_bytes = io.BytesIO(initial_bytes=await emoji_image.read())
-            emoji_image = Image.open(emoji_image_bytes).convert("RGBA")
 
-            new_width = 50
-            new_height = new_width * emoji_image.height / emoji_image.width
-
-            emoji_image.thumbnail((new_width, new_height))
-
-            base.paste(emoji_image, (200, 100), emoji_image)
+            img = InventoryImage(member=member, points_emoji=points_emoji, points_total=user_total,
+                                 points_name=config.points_name, leaderboard_position=position[0])
 
             with io.BytesIO() as output:
-                base.save(output, format="PNG")
+                file = await img.generate()
+
+                file.save(output, format="PNG")
                 output.seek(0)
 
                 await ctx.send(file=discord.File(output, filename="inventory.png"))
