@@ -1,11 +1,8 @@
-import io
-
 import discord
 from discord.ext import commands
 
 from cogs.utilities.formatting import format_points
 from model.model import *
-from util.image import InventoryImage
 
 
 class Points(commands.Cog):
@@ -23,26 +20,23 @@ class Points(commands.Cog):
         if config.points_name is None:
             return
 
-        async with ctx.channel.typing():
-            position = await PointTransaction.get_position_in_guild_leaderboard(ctx.guild.id, ctx.author.id)
-            user_total = await PointTransaction.get_total_for_member(member)
+        user_total = await PointTransaction.get_total_for_member(member)
+        position = await PointTransaction.get_position_in_guild_leaderboard(ctx.guild.id, ctx.author.id)
 
-            if not user_total:
-                return await ctx.send("I couldn't find any "+config.points_name+"!")
+        embed = discord.Embed(title="", color=member.colour)
+        embed.set_author(name=member.display_name, icon_url=member.avatar_url)
 
+        if config.points_emoji:
             emoji_id = config.points_emoji.split(":")[2][:-1]
             points_emoji = discord.utils.get(ctx.guild.emojis, id=int(emoji_id))
 
-            img = InventoryImage(member=member, points_emoji=points_emoji, points_total=user_total,
-                                 points_name=config.points_name, leaderboard_position=position[0])
+            if points_emoji:
+                embed.set_thumbnail(url=points_emoji.url)
 
-            with io.BytesIO() as output:
-                file = await img.generate()
+        embed.add_field(name="Total", value="{} {.points_name}".format(format_points(user_total), config), inline=False)
+        embed.add_field(name="Leaderboard Position", value="#{} in {.name}".format(position[0], ctx.guild), inline=False)
 
-                file.save(output, format="PNG")
-                output.seek(0)
-
-                await ctx.send(file=discord.File(output, filename="inventory.png"))
+        await ctx.send(embed=embed)
 
     @commands.command()
     async def leaderboard(self, ctx):
