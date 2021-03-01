@@ -118,13 +118,15 @@ class Points(commands.Cog):
 
         if action in {"take", "remove"}:
             amount = amount * -1
+        elif action not in {"give", "add"}:
+            return await ctx.send("You can either \"give\" or \"take\" points. See the help command for help.")
+
+        if amount < 0:
             emoji = "\U0001f4c9"
             action = "Lost"
-        elif action in {"give", "add"}:
+        else:
             emoji = "\U0001f4c8"
             action = "Got"
-        else:
-            return await ctx.send("You can either \"give\" or \"take\" points. See the help command for help.")
 
         await PointTransaction.grant_member(amount, member, ctx.author)
         user_total = await PointTransaction.get_total_for_member(member)
