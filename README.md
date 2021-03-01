@@ -17,4 +17,4 @@ Thanks for reading!
 - Running on Python 3.9 on Docker.
 - Stores data on a MySQL 8.0 database.
 
-To get started contributing, copy `example_config.ini` to `config.ini` and update the ClientId or 
+To get started contributing, copy `example_config.ini` to `config.ini` and update the ClientId and token to your test bot and you're good to go! Schema can be imported from the `storage` directory. I'm working on making that easier. 
