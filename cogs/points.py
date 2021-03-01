@@ -10,6 +10,35 @@ class Points(commands.Cog):
         self.client = client
 
     @commands.command()
+    async def gift(self, ctx, member: discord.Member, amount: float):
+        """ Gifts points to another member of your Guild, you need to have the right amount! """
+        config = await GuildConfig.get_for_guild(member.guild.id)
+        user_total = await PointTransaction.get_total_for_member(ctx.author)
+
+        if amount <= 0:
+            await ctx.send("Nice try, you can't give negative points!")
+            return
+
+        if amount > user_total:
+            await ctx.send("You can't give that many points!")
+            return
+
+        await PointTransaction.grant_member(amount, member, ctx.author)
+        await PointTransaction.grant_member(-amount, ctx.author, ctx.author)
+
+        emoji = "\U0001F381"
+        embed = discord.Embed(title="{0} Points Gifted! {0}".format(emoji),
+                              description="{.mention} just gifted {.mention} {} {.points_name}{}".format(
+                                  ctx.author,
+                                  member,
+                                  amount,
+                                  config,
+                                  "" if config.points_emoji is None else " " + config.points_emoji),
+                              color=discord.Color.green())
+
+        await ctx.send(embed=embed)
+
+    @commands.command()
     async def inventory(self, ctx, *, member: discord.Member = None):
         """ Gets the number of points you have in yours or someone else's inventory. """
         if member is None:
@@ -34,7 +63,8 @@ class Points(commands.Cog):
                 embed.set_thumbnail(url=points_emoji.url)
 
         embed.add_field(name="Total", value="{} {.points_name}".format(format_points(user_total), config), inline=False)
-        embed.add_field(name="Leaderboard Position", value="#{} in {.name}".format(position[0], ctx.guild), inline=False)
+        embed.add_field(name="Leaderboard Position", value="#{} in {.name}".format(position[0], ctx.guild),
+                        inline=False)
 
         await ctx.send(embed=embed)
 

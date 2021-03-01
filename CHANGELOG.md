@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Features
 - Updated the `!leaderboard` command to include the user's position on the leaderboard.
+- Users can now gift points to other members of their guild.
 
 ### Tweaks
 - Ensured that the response message when running `!points add [negative value]` is correct, and the same for taking.
