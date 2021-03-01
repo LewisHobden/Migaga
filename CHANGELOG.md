@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.7.1] - 2021-03-01
+### Tweaks
+- Updated the Readme to be a bit more helpful for new people.
+- Fixed a permissions issue reading the leaderboard query.
+
 ## [4.7.0] - 2021-03-01
 ### Features
 - Updated the `!inventory` command to include the user's position on the leaderboard.

@@ -218,7 +218,7 @@ class PointTransaction(BaseModel):
 
     @classmethod
     async def get_position_in_guild_leaderboard(cls, guild_id: int, user_id: int) -> int:
-        with open("/app/storage/leaderboard_query.sql", 'r+') as file:
+        with open("/app/storage/leaderboard_query.sql", 'r') as file:
             query = file.read()
 
         for row in database.execute_sql(query.format(guild_id, user_id)):
