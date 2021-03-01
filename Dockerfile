@@ -1,4 +1,4 @@
-FROM python:3.8-slim-buster
+FROM python:3.9-slim-buster
 
 # Keeps Python from generating .pyc files in the container
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -9,6 +9,9 @@ ENV PYTHONUNBUFFERED 1
 # Install pip requirements
 ADD requirements.txt .
 RUN python -m pip install -r requirements.txt
+
+# Install default fonts.
+RUN apt update && apt install fonts-noto -y
 
 WORKDIR /app
 ADD . /app

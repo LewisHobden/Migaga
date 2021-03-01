@@ -52,8 +52,8 @@ class InventoryImage:
         return wrapper.fill(text=text)
 
     async def generate(self) -> Image:
-        font = ImageFont.truetype("/app/assets/fonts/Roboto-Medium.ttf", 36)
-        username_font = ImageFont.truetype("/app/assets/fonts/Roboto-Medium.ttf", 48)
+        font = ImageFont.truetype("NotoColorEmoji", 36)
+        username_font = ImageFont.truetype("NotoColorEmoji", 48)
 
         profile_image = self._member.avatar_url_as(format='png')
         profile_image_bytes = io.BytesIO(initial_bytes=await profile_image.read())
