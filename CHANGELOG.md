@@ -5,13 +5,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [4.7.0] - 2021-03-01
 ### Features
-- Updated the `!leaderboard` command to include the user's position on the leaderboard.
+- Updated the `!inventory` command to include the user's position on the leaderboard.
 - Users can now gift points to other members of their guild.
 
 ### Tweaks
 - Ensured that the response message when running `!points add [negative value]` is correct, and the same for taking.
 - Aliased "add, remove" for points assigning.
+
+### Maintenance
+- Updated Python version to 3.9.
 
 ## [4.6.1] - 2021-02-03
 ### Fixes
