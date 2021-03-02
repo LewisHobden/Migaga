@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.7.2] - 2021-03-02
+### Tweaks
+- Fixed an issue where leaderboard position would be incorrectly displayed when requesting another user's inventory.
+- Added an updated total display when a user gifts points to another user.
+
 ## [4.7.1] - 2021-03-01
 ### Tweaks
 - Updated the Readme to be a bit more helpful for new people.

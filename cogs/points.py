@@ -31,10 +31,16 @@ class Points(commands.Cog):
                               description="{.mention} just gifted {.mention} {} {.points_name}{}".format(
                                   ctx.author,
                                   member,
-                                  amount,
+                                  format_points(amount),
                                   config,
                                   "" if config.points_emoji is None else " " + config.points_emoji),
                               color=discord.Color.green())
+
+        embed.add_field(name="New total for {.display_name}".format(ctx.author),
+                        value=format_points(await PointTransaction.get_total_for_member(ctx.author)))
+
+        embed.add_field(name="New total for {.display_name}".format(member),
+                        value=format_points(await PointTransaction.get_total_for_member(member)))
 
         await ctx.send(embed=embed)
 
@@ -50,7 +56,7 @@ class Points(commands.Cog):
             return
 
         user_total = await PointTransaction.get_total_for_member(member)
-        position = await PointTransaction.get_position_in_guild_leaderboard(ctx.guild.id, ctx.author.id)
+        position = await PointTransaction.get_position_in_guild_leaderboard(ctx.guild.id, member.id)
 
         embed = discord.Embed(title="", color=member.colour)
         embed.set_author(name=member.display_name, icon_url=member.avatar_url)
