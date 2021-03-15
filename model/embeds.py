@@ -25,6 +25,7 @@ class StarboardEmbed(discord.Embed):
         self._remove_after_threshold = kwargs.get("remove_after_threshold", False)
         self._star_emoji = kwargs.get("star_emoji", "⭐")
 
+        kwargs['title'] = "Starred Message"
         kwargs['colour'] = discord.Colour.gold()
         super().__init__(**kwargs)
 
@@ -89,7 +90,7 @@ class StarboardEmbed(discord.Embed):
         if self._discord_message.content:
             content = "\"{}\"".format(self._discord_message.content)
 
-        self.add_field(name="Starred Message", value=content, inline=False)
+        self.description = content
 
     def _populate_reply(self):
         """
@@ -101,9 +102,14 @@ class StarboardEmbed(discord.Embed):
             return
 
         reply_message = self._discord_message.reference.resolved
+        reply_content = reply_message.clean_content
+
+        # Discord limits embed fields to 1024 characters.
+        if len(reply_content) > 1024:
+            reply_content = reply_content[:1000] + "..."
 
         self.add_field(name="Replying to a message by {.display_name}".format(reply_message.author),
-                       value="\"{}\"".format(reply_message.clean_content), inline=False)
+                       value="\"{}\"".format(reply_content), inline=False)
 
     def _populate_threshold_check(self, number_of_stars: int):
         """
