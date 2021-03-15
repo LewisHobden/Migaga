@@ -176,6 +176,7 @@ class Starboard(commands.Cog):
         if number_of_stars == 0:
             return
 
+        # If this message is going to be deleted by the cleaner, let the users know.
         if number_of_stars < starred_message.starboard.star_threshold:
             if remove_after_threshold:
                 return None
@@ -190,17 +191,19 @@ class Starboard(commands.Cog):
 
             e.set_footer(text=footer_template.format(star_emoji, countdown))
 
-        e.add_field(name="Awards", value="{} **{}**".format(star_emoji, number_of_stars), inline=True)
-        e.add_field(name="Message",
-                    value="[Jump to the message]({.jump_url})".format(discord_message),
-                    inline=True)
+        jump_link = "[Jump to the message]({.jump_url})".format(discord_message)
 
         # If this message is a reply, show a reference to the reply.
-        reply = discord_message.reference
-        if reply is not None and reply.resolved is not None:
-            author = reply.resolved.author
-            e.add_field(name="Replying to a message by {.display_name}".format(author),
-                        value="> {}".format(reply.resolved.clean_content), inline=False)
+        if discord_message.reference is not None and discord_message.reference.resolved is not None:
+            reply_message = discord_message.reference.resolved
+
+            jump_link += "\n[Jump to the reply]({.jump_url})".format(reply_message)
+
+            e.add_field(name="Replying to a message by {.display_name}".format(reply_message.author),
+                        value="> {}".format(reply_message.clean_content), inline=False)
+
+        e.add_field(name="Awards", value="{} **{}**".format(star_emoji, number_of_stars), inline=True)
+        e.add_field(name="Message", value=jump_link, inline=True)
 
         return e
 
