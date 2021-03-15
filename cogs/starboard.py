@@ -195,6 +195,13 @@ class Starboard(commands.Cog):
                     value="[Jump to the message]({.jump_url})".format(discord_message),
                     inline=True)
 
+        # If this message is a reply, show a reference to the reply.
+        reply = discord_message.reference
+        if reply is not None and reply.resolved is not None:
+            author = reply.resolved.author
+            e.add_field(name="Replying to a message by {.display_name}".format(author),
+                        value="> {}".format(reply.resolved.clean_content), inline=False)
+
         return e
 
     async def _on_reaction_removed(self, reaction: RawReactionActionEvent):
