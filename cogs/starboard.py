@@ -6,6 +6,7 @@ import discord
 from discord import RawReactionActionEvent, errors
 from discord.ext import commands, tasks
 
+from model.embeds import StarboardEmbed
 from model.model import *
 from .utilities import credential_checks
 
@@ -21,7 +22,6 @@ def _get_emoji_for_star(stars):
         return '\N{DIZZY SYMBOL}'
     else:
         return '\N{SPARKLES}'
-
 
 
 class Starboard(commands.Cog):
@@ -158,17 +158,6 @@ class Starboard(commands.Cog):
 
     async def _get_starred_embed(self, starred_message: StarredMessageModel, discord_message: discord.Message,
                                  remove_after_threshold: bool = False):
-        description = "\"{.content}\"".format(discord_message) if discord_message.content else ""
-        footer_template = "{} This message doesn't have enough stars to stay in the starboard and will be deleted {}!"
-
-        e = discord.Embed(description=description, colour=discord.Colour.gold())
-
-        author = discord_message.author
-        e.set_author(name=author.display_name)
-        e.set_thumbnail(url=author.avatar_url)
-
-        if discord_message.attachments:
-            e.set_image(url=discord_message.attachments[0].proxy_url)
 
         number_of_stars = len(starred_message.starrers)
         star_emoji = await self._get_emoji(discord_message.guild.id)
@@ -176,26 +165,13 @@ class Starboard(commands.Cog):
         if number_of_stars == 0:
             return
 
-        if number_of_stars < starred_message.starboard.star_threshold:
-            if remove_after_threshold:
-                return None
+        e = StarboardEmbed(message=discord_message,
+                           starred_message=starred_message,
+                           remove_after_threshold=remove_after_threshold,
+                           cleaner_next_iteration=self.cleaner.next_iteration,
+                           star_emoji=star_emoji)
 
-            star_emoji = '\N{GHOST}'
-
-            if self.cleaner.next_iteration:
-                timer = self.cleaner.next_iteration - datetime.now(timezone.utc)
-                countdown = "in {} minutes".format(round(timer.total_seconds() / 60))
-            else:
-                countdown = "soon"
-
-            e.set_footer(text=footer_template.format(star_emoji, countdown))
-
-        e.add_field(name="Awards", value="{} **{}**".format(star_emoji, number_of_stars), inline=True)
-        e.add_field(name="Message",
-                    value="[Jump to the message]({.jump_url})".format(discord_message),
-                    inline=True)
-
-        return e
+        return e.populate()
 
     async def _on_reaction_removed(self, reaction: RawReactionActionEvent):
         guild_emoji = await self._get_emoji(reaction.guild_id)

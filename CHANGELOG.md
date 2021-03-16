@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Features
+- When a message is starred that is a reply to another message, a summary of the message is included in the starboard post.
+- Improved the layout of a starboard message.
 
 ## [4.7.2] - 2021-03-02
 ### Tweaks
