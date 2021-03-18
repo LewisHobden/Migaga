@@ -1,6 +1,5 @@
 import logging
 import re
-from datetime import datetime
 from datetime import timedelta
 
 import discord
@@ -108,7 +107,7 @@ class Reminders(commands.Cog):
 
         hours += days * 24
 
-        if hours == 0 or minutes == 0:
+        if 0 == (hours + minutes):
             return await ctx.send(error)
 
         return await self.remind(ctx=ctx, destination=ctx.author, hours=hours, minutes=minutes, reminder=reminder)
