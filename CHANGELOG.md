@@ -5,9 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [4.7.3] - 2021-03-18
 ### Features
 - When a message is starred that is a reply to another message, a summary of the message is included in the starboard post.
 - Improved the layout of a starboard message.
+
+### Fixes
+- Fixed a bug that would cause some valid `!remindme` messages to fail validation.  
 
 ## [4.7.2] - 2021-03-02
 ### Tweaks
