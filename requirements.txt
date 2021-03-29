@@ -6,3 +6,4 @@ pillow
 cryptography
 python-dateutil
 flask
+discord-py-slash-command

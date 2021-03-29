@@ -1,4 +1,5 @@
 from discord.ext.commands import MinimalHelpCommand
+from discord_slash import SlashCommand
 
 from cogs.customcommands import *
 import configparser
@@ -16,6 +17,7 @@ bot_description = "Migaga (Version {})".format(version)
 prefix = "!"
 client = commands.Bot(command_prefix=prefix, description=bot_description, intents=discord.Intents.all(), pm_help=None)
 logging.basicConfig(level=logging.INFO)
+slash = SlashCommand(client, override_type=True, application_id=int(config.get("Env", "ClientId")))
 
 # Get our cogs.
 extensions = [
@@ -31,6 +33,7 @@ extensions = [
     "cogs.serverlogs",
     "cogs.reminders",
     "cogs.utilities.error_handling",
+    "cogs.slashcommands"
 ]
 
 
@@ -43,6 +46,7 @@ async def on_ready():
 
     activity = "Version {}!".format(version)
     await client.change_presence(status=discord.Status.online, activity=discord.Game(name=activity))
+    await slash.sync_all_commands()
 
 
 if __name__ == '__main__':
