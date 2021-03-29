@@ -89,6 +89,7 @@ class Config(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command()
+    @commands.has_permissions(manage_guild=True)
     async def config(self, ctx, action=None, *, value=None):
         """
         Allows you to tweak configuration settings or view what your server currently does.
