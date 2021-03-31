@@ -3,7 +3,31 @@ from datetime import datetime, timezone
 import discord
 import requests
 
-from model.model import StarredMessageModel, GuildConfig
+from model.model import StarredMessageModel
+
+class ConfigEmbed(discord.Embed):
+    def __init__(self, guild_config: GuildConfig, **kwargs):
+        super().__init__(**kwargs, color=discord.Color.blue(), title="Your Config",
+                         description="These are all the config settings for your server.")
+
+        logs_channel = "Not Enabled"
+
+        if guild_config.server_logs_channel_id is not None:
+            logs_channel = "<#{}>".format(guild_config.server_logs_channel_id)
+
+        starboard_emoji = "⭐"
+
+        if guild_config.starboard_emoji_id is not None:
+            starboard_emoji = guild_config.starboard_emoji_id
+
+        points_emoji = "*Not Setup*"
+        if guild_config.points_emoji is not None:
+            points_emoji = guild_config.points_emoji
+
+        self.add_field(name="Server Logs", value=logs_channel)
+        self.add_field(name="Points", value=guild_config.points_name if not None else "*Not Setup*")
+        self.add_field(name="Points Emoji", value=points_emoji)
+        self.add_field(name="Starboard Emoji", value=starboard_emoji)
 
 
 class StarboardEmbed(discord.Embed):
@@ -18,7 +42,6 @@ class StarboardEmbed(discord.Embed):
        remove_after_threshold: :class:`bool`
            Whether or not a starboard message will be removed if under the threshold.
        """
-
     def __init__(self, message: discord.Message, starred_message: StarredMessageModel, **kwargs):
         self._cleaner_next_iteration = kwargs.get("cleaner_next_iteration")
         self._discord_message = message
@@ -140,26 +163,9 @@ class StarboardEmbed(discord.Embed):
         self.set_footer(text=footer_template.format(star_emoji, countdown))
 
 
-class ConfigEmbed(discord.Embed):
-    def __init__(self, guild_config: GuildConfig, **kwargs):
-        super().__init__(**kwargs, color=discord.Color.blue(), title="Your Config",
-                         description="These are all the config settings for your server.")
+class UserEmbed(discord.Embed):
+    def __init__(self, user: discord.User, **kwargs):
+        self.set_thumbnail(url=user.avatar_url)
+        self.add_field(name="ID", value=user.id)
 
-        logs_channel = "Not Enabled"
-
-        if guild_config.server_logs_channel_id is not None:
-            logs_channel = "<#{}>".format(guild_config.server_logs_channel_id)
-
-        starboard_emoji = "⭐"
-
-        if guild_config.starboard_emoji_id is not None:
-            starboard_emoji = guild_config.starboard_emoji_id
-
-        points_emoji = "*Not Setup*"
-        if guild_config.points_emoji is not None:
-            points_emoji = guild_config.points_emoji
-
-        self.add_field(name="Server Logs", value=logs_channel)
-        self.add_field(name="Points", value=guild_config.points_name if not None else "*Not Setup*")
-        self.add_field(name="Points Emoji", value=points_emoji)
-        self.add_field(name="Starboard Emoji", value=starboard_emoji)
+        super().__init__(title="{.name}#{.discriminator}".format(user, user), **kwargs)

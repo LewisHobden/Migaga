@@ -6,9 +6,21 @@ from discord.ext import commands
 
 from cogs.utilities import credential_checks
 from converters.converters import GlobalUserConverter
+from model.embeds import UserEmbed
 from model.model import *
 
 log = logging.getLogger(__name__)
+
+
+async def _ban_user_process(ctx, user: discord.User, delete_message_days: int = 0, reason: str = ""):
+    try:
+        await ctx.guild.ban(user, delete_message_days=delete_message_days, reason=reason)
+    except discord.Forbidden:
+        await ctx.send("The bot does not have permissions to kick members.")
+    except discord.HTTPException:
+        await ctx.send("Kicking failed. I think it was my fault.. try again?")
+    else:
+        await ctx.send("BOOM! Banned " + user.name)
 
 
 async def _get_roles_from_iterable(iterable, guild: discord.Guild):
@@ -66,20 +78,27 @@ class Admin(commands.Cog):
         """ Get a URL to invite the bot to your own server! """
         await ctx.send(discord.utils.oauth_url(self.client.client_id))
 
-    @commands.command(no_pm=True, )
+    @commands.command(no_pm=True, name="ban")
     @credential_checks.has_permissions(ban_members=True)
-    async def ban(self, ctx, user: GlobalUserConverter, delete_message_days: int = 0, reason: str = ""):
+    async def ban(self, ctx, user: GlobalUserConverter, *, reason: str = ""):
         """Bans a member from the server. You can provide a user either by their ID or mentioning them.
         In order to do this, the bot and you must have Ban Member permissions.
+
         """
-        try:
-            await ctx.guild.ban(user, delete_message_days=delete_message_days, reason=reason)
-        except discord.Forbidden:
-            await ctx.send("The bot does not have permissions to kick members.")
-        except discord.HTTPException:
-            await ctx.send("Kicking failed. I think it was my fault.. try again?")
-        else:
-            await ctx.send("BOOM! Banned " + user.name)
+        embed = UserEmbed(user)
+
+        if reason:
+            embed.add_field(name="Reason for Banning", value=reason, inline=False)
+
+        await ctx.send("Are you sure you want to ban this user? (y/n)", embed=embed)
+        confirmation = await self.client.wait_for(
+            "message", check=lambda m: m.author == ctx.message.author and m.channel == ctx.channel)
+
+        if not confirmation.content.startswith("y"):
+            await ctx.send("Ban aborted!")
+            return
+
+        return await _ban_user_process(ctx, user, 0, reason)
 
     @commands.command(no_pm=True, )
     @credential_checks.has_permissions(ban_members=True)
@@ -97,7 +116,7 @@ class Admin(commands.Cog):
             user = await user_converter.convert(ctx, id)
 
             try:
-                await self.ban(ctx, user)
+                await _ban_user_process(ctx, user)
             except discord.NotFound:
                 await ctx.send("I could not find the user \"{}\"".format(id))
 
