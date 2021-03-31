@@ -137,3 +137,11 @@ class StarboardEmbed(discord.Embed):
             countdown = "soon"
 
         self.set_footer(text=footer_template.format(star_emoji, countdown))
+
+
+class UserEmbed(discord.Embed):
+    def __init__(self, user: discord.User, **kwargs):
+        self.set_thumbnail(url=user.avatar_url)
+        self.add_field(name="ID", value=user.id)
+
+        super().__init__(title="{.name}#{.discriminator}".format(user, user), **kwargs)
