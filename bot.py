@@ -11,10 +11,12 @@ config = configparser.ConfigParser()
 config.read("config.ini")
 
 # Set up the bot.
-version = "4.7.3"
+version = "4.7.4"
 bot_description = "Migaga (Version {})".format(version)
 prefix = "!"
-client = commands.Bot(command_prefix=prefix, description=bot_description, intents=discord.Intents.all(), pm_help=None)
+client = commands.Bot(command_prefix=prefix, description=bot_description, intents=discord.Intents.all(), pm_help=None,
+                      activity=discord.Game(name="Version {}!".format(version)))
+
 logging.basicConfig(level=logging.INFO)
 
 # Get our cogs.
@@ -40,9 +42,6 @@ async def on_ready():
     print('------')
 
     setattr(client, "client_id", config.get("Env", "ClientId"))
-
-    activity = "Version {}!".format(version)
-    await client.change_presence(status=discord.Status.online, activity=discord.Game(name=activity))
 
 
 if __name__ == '__main__':
