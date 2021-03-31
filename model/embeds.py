@@ -3,7 +3,8 @@ from datetime import datetime, timezone
 import discord
 import requests
 
-from model.model import StarredMessageModel
+from model.model import StarredMessageModel, GuildConfig
+
 
 class ConfigEmbed(discord.Embed):
     def __init__(self, guild_config: GuildConfig, **kwargs):
