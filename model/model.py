@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 from discord import Member
 from peewee import *
+from playhouse.mysql_ext import JSONField
+
 from storage.database_factory import DatabaseFactory
 import uuid
 
@@ -75,10 +77,11 @@ class FlairMessageReactionModel(BaseModel):
 
 class StarboardModel(BaseModel):
     id = AutoField()
-    guild_id = BigIntegerField(unique=True)
+    guild_id = BigIntegerField()
     channel_id = BigIntegerField(unique=True)
     is_locked = BooleanField()
     star_threshold = IntegerField(default=1)
+    emoji_id = CharField(null=True, index=True, max_length=255)
 
     @classmethod
     def get_for_guild(cls, guild_id: int):
@@ -177,9 +180,9 @@ class GuildConfig(BaseModel):
     id = AutoField()
     guild_id = BigIntegerField()
     server_logs_channel_id = BigIntegerField(null=True)
-    starboard_emoji_id = BigIntegerField(null=True)
     points_name = TextField(null=True)
     points_emoji = TextField(null=True)
+    config_data = JSONField(null=True)
 
     @classmethod
     async def get_for_guild(cls, guild_id: int) -> GuildConfig:
