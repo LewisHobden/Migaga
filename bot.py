@@ -17,6 +17,7 @@ bot_description = "Migaga (Version {})".format(version)
 prefix = "!"
 client = commands.Bot(command_prefix=prefix, description=bot_description, intents=discord.Intents.all(), pm_help=None,
                       activity=discord.Game(name="Version {}!".format(version)))
+slash = SlashCommand(client, override_type=True, application_id=int(config.get("Env", "ClientId")))
 
 logging.basicConfig(level=logging.INFO)
 

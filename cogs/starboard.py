@@ -9,6 +9,7 @@ from discord.ext import commands, tasks
 from model.embeds import StarboardEmbed
 from model.model import *
 from .utilities import credential_checks
+from discord_slash import cog_ext, SlashContext
 
 logger = logging.getLogger('discord')
 
@@ -275,6 +276,33 @@ class Starboard(commands.Cog):
             starred_message.save()
 
             return await embed_message.delete()
+
+    ### Slash Commands Below
+    @cog_ext.cog_subcommand(base="starboard", name="setup",
+                            description="Sets up a new starboard for this server in a given channel",
+                            guild_ids=[197972184466063381])
+    @commands.has_permissions(manage_guild=True)
+    async def _setup_starboard(self, ctx: SlashContext, channel: discord.TextChannel):
+        if channel is None:
+            await ctx.send("You need to provide an existing channel to turn it into a Starboard!")
+            return
+
+        args = []
+        bot_permissions = ctx.channel.permissions_for(ctx.guild.me)
+
+        # Make sure that people cannot send messages in the starboard.
+        if bot_permissions.manage_roles:
+            mine = discord.PermissionOverwrite(send_messages=True, manage_messages=True, embed_links=True)
+            everyone = discord.PermissionOverwrite(read_messages=True, send_messages=False, read_message_history=True,
+                                                   add_reactions=False)
+            args.append((ctx.guild.me, mine))
+            args.append((ctx.guild.default_role, everyone))
+        else:
+            await ctx.send("I can't update the channel permissions to stop people talking. Maybe check that?")
+
+        StarboardModel.create(guild_id=ctx.guild.id, channel_id=channel.id, is_locked=False)
+        await ctx.send(
+            '\N{GLOWING STAR} Starboard set up at {.mention}. Permissions have been updated.'.format(channel))
 
 
 def setup(client):
