@@ -8,7 +8,6 @@ from discord.ext import commands, tasks
 
 from model.embeds import StarboardEmbed
 from model.model import *
-from .utilities import credential_checks
 from discord_slash import cog_ext, SlashContext
 
 logger = logging.getLogger('discord')
@@ -72,61 +71,8 @@ class Starboard(commands.Cog):
     async def before_cleaner(self):
         await self.client.wait_until_ready()
 
-    @commands.command(no_pm=True)
-    @credential_checks.has_permissions(administrator=True)
-    async def starboard(self, ctx, *, channel: discord.TextChannel = None):
-        """Sets up the starboard for this server.
-        This creates a starboard in the specified channel
-        this makes it into the server's "starboard".
-
-        If the channel is deleted then the starboard is
-        deleted as well.
-
-        You must have Administrator permissions to use this
-        command.
-        """
-
-        if channel is None:
-            ctx.send("You need to provide an existing channel to turn it into a Starboard!")
-            return
-
-        # Check the database for a starboard.
-        previous_starboard = StarboardModel.get_for_guild(channel.guild.id)
-
-        if previous_starboard is not None:
-            # Then check if the channel still exists.
-            previous_channel = self.client.get_channel(previous_starboard.channel_id)
-            if previous_channel is not None:
-                fail_message = 'This server already has a starboard ({.mention})'
-                await ctx.send(fail_message.format(previous_channel))
-                return
-            else:
-                clear_message = "This server already _had_ a starboard. I notice it no longer exists or I can't get " \
-                                "it. I will delete the old record."
-
-                await ctx.send(clear_message)
-                previous_starboard.delete_instance()
-
-        bot_permissions = ctx.message.channel.permissions_for(ctx.guild.me)
-        await ctx.send("Updating permissions for {.mention}".format(channel))
-
-        args = []
-
-        # Make sure that people cannot send messages in the starboard.
-        if bot_permissions.manage_roles:
-            mine = discord.PermissionOverwrite(send_messages=True, manage_messages=True, embed_links=True)
-            everyone = discord.PermissionOverwrite(read_messages=True, send_messages=False, read_message_history=True,
-                                                   add_reactions=False)
-            args.append((ctx.guild.me, mine))
-            args.append((ctx.guild.default_role, everyone))
-        else:
-            await ctx.send("I can't update the channel permissions to stop people talking. Maybe check that?")
-
-        StarboardModel.create(guild_id=ctx.guild.id, channel_id=channel.id, is_locked=False)
-        await ctx.send('\N{GLOWING STAR} Starboard set up at {.mention}'.format(channel))
-
     @commands.command(no_pm=True, aliases=['threshold'])
-    @credential_checks.has_permissions(administrator=True)
+    @commands.has_permissions(administrator=True)
     async def starboardthreshold(self, ctx, threshold: int):
         """
         A command which allows you to set the amount of stars a single message can receive before it makes it into the starboard.
@@ -282,7 +228,7 @@ class Starboard(commands.Cog):
                             description="Sets up a new starboard for this server in a given channel",
                             guild_ids=[197972184466063381])
     @commands.has_permissions(manage_guild=True)
-    async def _setup_starboard(self, ctx: SlashContext, channel: discord.TextChannel):
+    async def _setup_starboard(self, ctx: SlashContext, channel: discord.TextChannel, emoji: discord.Emoji):
         if channel is None:
             await ctx.send("You need to provide an existing channel to turn it into a Starboard!")
             return
@@ -300,7 +246,7 @@ class Starboard(commands.Cog):
         else:
             await ctx.send("I can't update the channel permissions to stop people talking. Maybe check that?")
 
-        StarboardModel.create(guild_id=ctx.guild.id, channel_id=channel.id, is_locked=False)
+        StarboardModel.create(guild_id=ctx.guild.id, channel_id=channel.id, is_locked=False, emoji=str(emoji))
         await ctx.send(
             '\N{GLOWING STAR} Starboard set up at {.mention}. Permissions have been updated.'.format(channel))
 
