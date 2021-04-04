@@ -47,7 +47,6 @@ class StarboardEmbed(discord.Embed):
         self._cleaner_next_iteration = kwargs.get("cleaner_next_iteration")
         self._discord_message = message
         self._starred_message = starred_message
-        self._remove_after_threshold = kwargs.get("remove_after_threshold", False)
         self._star_emoji = kwargs.get("star_emoji", "⭐")
 
         kwargs['title'] = "Starred Message"
@@ -148,9 +147,6 @@ class StarboardEmbed(discord.Embed):
             return
 
         if number_of_stars > self._starred_message.starboard.star_threshold:
-            return
-
-        if self._remove_after_threshold:
             return
 
         star_emoji = '\N{GHOST}'

@@ -39,7 +39,6 @@ class Starboard(commands.Cog):
 
     @tasks.loop(minutes=5)
     async def cleaner(self):
-        # The cleaner checks all starboard messages in the past week.
         threshold = datetime.today() - timedelta(days=1)
         messages_to_check = StarredMessageModel.select().where(StarredMessageModel.datetime_added > threshold)
 
@@ -53,7 +52,7 @@ class Starboard(commands.Cog):
 
             try:
                 discord_message = await channel.fetch_message(message_to_check.message_id)
-                embed = await self._get_starred_embed(message_to_check, discord_message, True)
+                embed = await self._get_starred_embed(message_to_check, discord_message)
             except:
                 # Temporary error handling until discord.py releases 1.4.
                 e = sys.exc_info()[0]
@@ -64,7 +63,7 @@ class Starboard(commands.Cog):
             logger.info("Checked {.message_id}".format(message_to_check))
 
             # Only check if the message meets the threshold when cleaning up.
-            embed = await self._get_starred_embed(message_to_check, discord_message, True)
+            embed = await self._get_starred_embed(message_to_check, discord_message)
             await self._update_starred_message(message_to_check, embed)
 
     @cleaner.before_loop
@@ -103,8 +102,7 @@ class Starboard(commands.Cog):
 
         return self.client.get_emoji(guild_config.starboard_emoji_id)
 
-    async def _get_starred_embed(self, starred_message: StarredMessageModel, discord_message: discord.Message,
-                                 remove_after_threshold: bool = False):
+    async def _get_starred_embed(self, starred_message: StarredMessageModel, discord_message: discord.Message):
 
         number_of_stars = len(starred_message.starrers)
         star_emoji = await self._get_emoji(discord_message.guild.id)
@@ -114,7 +112,6 @@ class Starboard(commands.Cog):
 
         e = StarboardEmbed(message=discord_message,
                            starred_message=starred_message,
-                           remove_after_threshold=remove_after_threshold,
                            cleaner_next_iteration=self.cleaner.next_iteration,
                            star_emoji=star_emoji)
 
@@ -188,9 +185,6 @@ class Starboard(commands.Cog):
         embed = await self._get_starred_embed(starred_message, discord_message)
         await self._update_starred_message(starred_message, embed)
 
-    async def _get_guild_star(self, guild_id: int):
-        pass
-
     async def _update_starred_message(self, starred_message: StarredMessageModel,
                                       embed: discord.Embed):
 
@@ -246,7 +240,6 @@ class Starboard(commands.Cog):
         else:
             await ctx.send("I can't update the channel permissions to stop people talking. Maybe check that?")
 
-        StarboardModel.create(guild_id=ctx.guild.id, channel_id=channel.id, is_locked=False, emoji=str(emoji))
         await ctx.send(
             '\N{GLOWING STAR} Starboard set up at {.mention}. Permissions have been updated.'.format(channel))
 
