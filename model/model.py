@@ -84,6 +84,13 @@ class StarboardModel(BaseModel):
     emoji_id = CharField(null=True, index=True, max_length=255)
 
     @classmethod
+    def add_or_update(cls, guild_id: int, channel_id: int, emoji_id: str, threshold: int):
+        existing = cls.get_or_none(cls.guild_id == guild_id & cls.channel_id == channel_id)
+
+        if existing is None:
+            return cls.create(guild_id=guild_id, channel_id=channel_id, emoji_id=emoji_id, threshold=threshold)
+
+    @classmethod
     def get_for_guild(cls, guild_id: int):
         select = cls.select().where(cls.guild_id == guild_id).limit(1)
 

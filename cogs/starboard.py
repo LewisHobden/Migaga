@@ -3,8 +3,9 @@ import sys
 from datetime import *
 
 import discord
-from discord import RawReactionActionEvent, errors
+from discord import RawReactionActionEvent, errors, PartialEmoji
 from discord.ext import commands, tasks
+from discord.ext.commands import EmojiConverter, PartialEmojiConverter, PartialEmojiConversionFailure
 
 from model.embeds import StarboardEmbed
 from model.model import *
@@ -220,15 +221,22 @@ class Starboard(commands.Cog):
     ### Slash Commands Below
     @cog_ext.cog_subcommand(base="starboard", name="setup",
                             description="Sets up a new starboard for this server in a given channel",
+                            options=[{"name": "channel", "description": "The channel to set the class up in.", "type": 7, "required": True},
+                                     {"name": "emoji", "description": "The emoji for the starboard to use. Defaults to a star.", "type": 3},
+                                     {"name": "threshold", "description": "If a message has under these many stars, it will be automatically deleted.", "type": 4}],
                             guild_ids=[197972184466063381])
     @commands.has_permissions(manage_guild=True)
-    async def _setup_starboard(self, ctx: SlashContext, channel: discord.TextChannel, emoji: discord.Emoji):
-        if channel is None:
-            await ctx.send("You need to provide an existing channel to turn it into a Starboard!")
-            return
+    async def _setup_starboard(self, ctx: SlashContext, channel: discord.TextChannel, emoji: str = "⭐", threshold: int = 1):
+        emoji_converter = PartialEmojiConverter()
+        # @todo validate if a unicode emoji is provided.
+        try:
+            emoji = await emoji_converter.convert(ctx, emoji)
+        except PartialEmojiConversionFailure:
+            return await ctx.send("Unknown emoji: {}".format(emoji))
 
         args = []
         bot_permissions = ctx.channel.permissions_for(ctx.guild.me)
+        starboard_model = StarboardModel.add_or_update(ctx.guild.id, channel.id, emoji.id, threshold)
 
         # Make sure that people cannot send messages in the starboard.
         if bot_permissions.manage_roles:
