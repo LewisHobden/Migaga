@@ -16,11 +16,6 @@ class ConfigEmbed(discord.Embed):
         if guild_config.server_logs_channel_id is not None:
             logs_channel = "<#{}>".format(guild_config.server_logs_channel_id)
 
-        starboard_emoji = "⭐"
-
-        if guild_config.starboard_emoji_id is not None:
-            starboard_emoji = guild_config.starboard_emoji_id
-
         points_emoji = "*Not Setup*"
         if guild_config.points_emoji is not None:
             points_emoji = guild_config.points_emoji
@@ -28,7 +23,6 @@ class ConfigEmbed(discord.Embed):
         self.add_field(name="Server Logs", value=logs_channel)
         self.add_field(name="Points", value=guild_config.points_name if not None else "*Not Setup*")
         self.add_field(name="Points Emoji", value=points_emoji)
-        self.add_field(name="Starboard Emoji", value=starboard_emoji)
 
 
 class StarboardEmbed(discord.Embed):

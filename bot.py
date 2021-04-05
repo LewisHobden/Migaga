@@ -44,7 +44,7 @@ async def on_ready():
     print('------')
 
     setattr(client, "client_id", config.get("Env", "ClientId"))
-    # await slash.sync_all_commands()
+    await slash.sync_all_commands()
 
 
 if __name__ == '__main__':

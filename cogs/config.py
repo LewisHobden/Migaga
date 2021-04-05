@@ -1,8 +1,10 @@
+from discord import TextChannel
 from discord.ext import commands
+from discord.ext.commands import PartialEmojiConversionFailure
+from discord_slash import SlashContext, cog_ext
 
-import discord
-from discord.ext.commands import TextChannelConverter, PartialEmojiConverter, EmojiConverter
-
+from converters.converters import PartialEmojiWithUnicodeConverter
+from model.embeds import ConfigEmbed
 from model.model import GuildConfig
 
 
@@ -12,99 +14,57 @@ class Config(commands.Cog):
     def __init__(self, client: commands.Bot):
         self.client = client
 
-    async def _alter_config(self, ctx: commands.Context, config: GuildConfig, action, value=None):
-        # Route the user based on their input.
-        channel_converter = TextChannelConverter()
-        emoji_converter = EmojiConverter()
-
-        if action == "logs":
-            if value is None:
-                channel_id = None
-            else:
-                channel = await channel_converter.convert(ctx=ctx, argument=value)
-                channel_id = channel.id
-
-            config.server_logs_channel_id = channel_id
-
-        elif action == "points":
-            if value is None:
-                name = None
-            else:
-                name = value.strip()
-
-            config.points_name = name
-
-        elif action == "points-emoji":
-            if value is None:
-                emoji = None
-            else:
-                emoji = await emoji_converter.convert(ctx=ctx, argument=value)
-
-            config.points_emoji = emoji
-
-        elif action == "starboard-emoji":
-            if value is None:
-                emoji_id = None
-            else:
-                emoji = await emoji_converter.convert(ctx=ctx, argument=value)
-                emoji_id = emoji.id
-
-            config.starboard_emoji_id = emoji_id
-
-        # If someone tries to "Remove" a config option, re-run the command but with an empty val.
-        elif action == "remove":
-            return await self._alter_config(ctx=ctx, config=config, action=value, value=None)
-
-        else:
-            return await ctx.send("I'm not sure what config option you want me to update! Your options are: "
-                                  "logs, points, points-emoji, starboard-emoji, remove")
-
-        config.save()
-        await ctx.send("Your server logs have been updated!")
-        await self._display_config(ctx, config)
-
-    async def _display_config(self, ctx: commands.Context, guild_config: GuildConfig):
-        embed = discord.Embed(color=discord.Color.blue(), title="Your Config",
-                              description="These are all the config settings for your server.")
-
-        logs_channel = "Not Enabled"
-
-        if guild_config.server_logs_channel_id is not None:
-            logs_channel = self.client.get_channel(guild_config.server_logs_channel_id).mention
-
-        starboard_emoji = "⭐"
-
-        if guild_config.starboard_emoji_id is not None:
-            starboard_emoji = self.client.get_emoji(guild_config.starboard_emoji_id)
-
-        points_emoji = "*Not Setup*"
-        if guild_config.points_emoji is not None:
-            points_emoji = guild_config.points_emoji
-
-        embed.add_field(name="Server Logs", value=logs_channel)
-        embed.add_field(name="Points", value=guild_config.points_name if not None else "*Not Setup*")
-        embed.add_field(name="Points Emoji", value=points_emoji)
-        embed.add_field(name="Starboard Emoji", value=starboard_emoji)
-
-        return await ctx.send(embed=embed)
-
-    @commands.command()
+    @cog_ext.cog_subcommand(base="config", name="logs",
+                            description="Configures the logs channel for this server.",
+                            options=[{"name": "channel", "description": "The channel for your log messages to be posted in.", "type": 7, "required": True}],
+                            guild_ids=[197972184466063381])
     @commands.has_permissions(manage_guild=True)
-    async def config(self, ctx, action=None, *, value=None):
-        """
-        Allows you to tweak configuration settings or view what your server currently does.
-        Your options are: logs, points, points-emoji, starboard-emoji, remove
-        Example: `!config logs #server-logs`
+    async def _log_channel(self, ctx: SlashContext, log_channel: TextChannel):
+        channel_id = log_channel.id
 
-        You need "Manage Guild" permissions in order to use this command.
-        My attempt at a different style command. It routes the user based on the number of arguments they provide.
-        """
         guild_config = await GuildConfig.get_for_guild(ctx.guild.id)
+        guild_config.server_logs_channel_id = channel_id
+        guild_config.save()
 
-        if action is None:
-            return await self._display_config(ctx, guild_config)
+        embed = ConfigEmbed(guild_config=guild_config)
+        await ctx.send(content="Config has been updated.", embeds=[embed])
 
-        return await self._alter_config(ctx, guild_config, action, value)
+    @cog_ext.cog_subcommand(base="config", name="points",
+                            description="Configures the name of your points in this server.",
+                            options=[{"name": "points", "description": "The custom name of your points, e.g. rupees.", "type": 3, "required": True}],
+                            guild_ids=[197972184466063381])
+    @commands.has_permissions(manage_guild=True)
+    async def _points(self, ctx: SlashContext, points: str):
+        guild_config = await GuildConfig.get_for_guild(ctx.guild.id)
+        guild_config.points_name = points
+        guild_config.save()
+
+        embed = ConfigEmbed(guild_config=guild_config)
+        await ctx.send(content="Config has been updated.", embeds=[embed])
+
+    @cog_ext.cog_subcommand(base="config", name="points-emoji",
+                            description="Configures the custom emoji for points in this server.",
+                            options=[{"name": "emoji", "description": "The emoji to be displayed next to your points when they are displayed.", "type": 3, "required": True}],
+                            guild_ids=[197972184466063381])
+    @commands.has_permissions(manage_guild=True)
+    async def _points_emoji(self, ctx: SlashContext, emoji: str):
+        emoji_converter = PartialEmojiWithUnicodeConverter()
+
+        try:
+            emoji = await emoji_converter.convert(ctx, emoji)
+        except PartialEmojiConversionFailure:
+            return await ctx.send("Unknown emoji: {}".format(emoji))
+
+        if emoji not in ctx.guild.emojis and not isinstance(emoji, str):
+            await ctx.send("Warning, the emoji you have picked doesn't exist in this server. It could be deleted "
+                           "without your knowledge!")
+
+        guild_config = await GuildConfig.get_for_guild(ctx.guild.id)
+        guild_config.points_emoji = str(emoji)
+        guild_config.save()
+
+        embed = ConfigEmbed(guild_config=guild_config)
+        await ctx.send(content="Config has been updated.", embeds=[embed])
 
 
 def setup(client):
