@@ -146,7 +146,7 @@ class StarboardEmbed(discord.Embed):
         if self._starred_message.starboard.star_threshold == 1:
             return
 
-        if number_of_stars > self._starred_message.starboard.star_threshold:
+        if number_of_stars >= self._starred_message.starboard.star_threshold:
             return
 
         star_emoji = '\N{GHOST}'

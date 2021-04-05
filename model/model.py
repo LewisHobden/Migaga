@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import uuid
 from datetime import datetime
-from discord import Member
+from mailbox import Message
+
+from discord import Member, Emoji, Message
 from peewee import *
 from playhouse.mysql_ext import JSONField
 
 from storage.database_factory import DatabaseFactory
-import uuid
 
 factory = DatabaseFactory()
 database = factory.get_database_connection()
@@ -81,18 +83,24 @@ class StarboardModel(BaseModel):
     channel_id = BigIntegerField(unique=True)
     is_locked = BooleanField()
     star_threshold = IntegerField(default=1)
-    emoji_id = CharField(null=True, index=True, max_length=255)
+    emoji = CharField(null=True, index=True, max_length=255)
 
     @classmethod
-    def add_or_update(cls, guild_id: int, channel_id: int, emoji_id: str, threshold: int):
-        existing = cls.get_or_none(cls.guild_id == guild_id & cls.channel_id == channel_id)
+    def add_or_update(cls, guild_id: int, channel_id: int, emoji: str, threshold: int):
+        existing = cls.get_or_none(cls.channel_id == channel_id)
 
         if existing is None:
-            return cls.create(guild_id=guild_id, channel_id=channel_id, emoji_id=emoji_id, threshold=threshold)
+            return cls.create(guild_id=guild_id, channel_id=channel_id, emoji=emoji, threshold=threshold)
+
+        existing.emoji = emoji
+        existing.star_threshold = threshold
+        existing.save()
+
+        return existing
 
     @classmethod
-    def get_for_guild(cls, guild_id: int):
-        select = cls.select().where(cls.guild_id == guild_id).limit(1)
+    def get_for_guild(cls, guild_id: int, emoji: Emoji):
+        select = cls.select().where((cls.guild_id == guild_id) & (cls.emoji == str(emoji))).limit(1)
 
         for row in select:
             return row
@@ -102,7 +110,8 @@ class StarboardModel(BaseModel):
 
 
 class StarredMessageModel(BaseModel):
-    message_id = BigIntegerField(unique=True, primary_key=True)
+    id = AutoField(primary_key=True)
+    message_id = BigIntegerField()
     message_channel_id = BigIntegerField()
     starboard = ForeignKeyField(StarboardModel, related_name="messages")
     embed_message_id = BigIntegerField(unique=True, null=True)
@@ -110,22 +119,43 @@ class StarredMessageModel(BaseModel):
     user_id = BigIntegerField()
     is_muted = BooleanField()
 
+    @classmethod
+    async def get_in_starboard(cls, message_id: int, starboard_id: int):
+        select = cls.select().where((cls.message_id == message_id) & (cls.starboard_id == starboard_id))
+
+        for row in select:
+            return row
+
+    @classmethod
+    async def create_from_message(cls, message: Message, starboard: StarboardModel):
+        return cls.create(message_id=message.id,
+                          message_channel_id=message.channel.id,
+                          starboard_id=starboard.id,
+                          is_muted=False, datetime_added=datetime.utcnow(),
+                          user_id=message.author.id)
+
     class Meta:
         table_name = "discord_starboard_messages"
 
 
 class MessageStarrerModel(BaseModel):
     id = AutoField()
-    message = ForeignKeyField(StarredMessageModel, related_name="starrers")
+    message = ForeignKeyField(StarredMessageModel, column_name='starred_message_id', related_name="starrers")
     user_id = BigIntegerField()
     datetime_starred = DateTimeField()
 
+    @classmethod
+    async def add_starred_message(cls, message_id: int, starrer_id: int):
+        MessageStarrerModel.insert(starred_message_id=message_id, user_id=starrer_id, datetime_starred=datetime.utcnow()) \
+            .on_conflict(update={MessageStarrerModel.datetime_starred: datetime.utcnow()}).execute()
+
+    @classmethod
+    async def delete_starrer_message(cls, message_id: int, starrer_id: int):
+        return cls.delete().where((MessageStarrerModel.starred_message_id == message_id) &
+                                  (MessageStarrerModel.user_id == starrer_id)).execute()
+
     class Meta:
         table_name = "discord_starboard_message_starrers"
-
-        indexes = (
-            (("user_id", "message"), True),
-        )
 
 
 class ProfileModel(BaseModel):

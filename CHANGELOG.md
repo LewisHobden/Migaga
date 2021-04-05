@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Features
+- Servers can now have more than one starboard. 
+- Starboards can now be configured using slash commands.
+- Custom starboard emoji can now also include the default Discord unicode emoji.
+- Greatly streamlined the starboard process.
 
 ## [4.7.4] - 2021-03-31
 ### Tweaks
