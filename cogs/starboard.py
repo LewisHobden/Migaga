@@ -160,21 +160,27 @@ class Starboard(commands.Cog):
         # Finally, render the new embed.
         await original_message.edit(embed=new_embed)
 
-    # Slash Commands Below
     @cog_ext.cog_subcommand(base="starboard", name="setup",
-                            description="Sets up a new starboard for this server in a given channel",
+                            description="Sets up a new starboard for this server in a given channel - updates a starboard if there already is one in the channel.",
                             options=[{"name": "channel", "description": "The channel to set the class up in.", "type": 7, "required": True},
                                      {"name": "emoji", "description": "The emoji for the starboard to use.", "type": 3, "required": True},
                                      {"name": "threshold", "description": "If a message has under these many stars, it will be automatically deleted.", "type": 4}],
                             guild_ids=[197972184466063381])
     @commands.has_permissions(manage_guild=True)
-    async def _setup_starboard(self, ctx: SlashContext, channel: discord.TextChannel, emoji: str = "⭐", threshold: int = 1):
+    async def _setup_starboard(self, ctx: SlashContext, channel: discord.TextChannel, emoji: str, threshold: int = 1):
+        if not isinstance(channel, discord.TextChannel):
+            return await ctx.send("The channel you have provided is not supported.")
+
         emoji_converter = PartialEmojiWithUnicodeConverter()
 
         try:
             emoji = await emoji_converter.convert(ctx, emoji)
         except PartialEmojiConversionFailure:
             return await ctx.send("Unknown emoji: {}".format(emoji))
+
+        if emoji not in ctx.guild.emojis and not isinstance(emoji, str):
+            await ctx.send("Warning, the emoji you have picked doesn't exist in this server. It could be deleted "
+                           "without your knowledge!")
 
         StarboardModel.add_or_update(ctx.guild.id, channel.id, str(emoji), threshold)
 
@@ -191,8 +197,7 @@ class Starboard(commands.Cog):
         else:
             await ctx.send("I can't update the channel permissions to stop people talking. Maybe check that?")
 
-        await ctx.send(
-            '{} Starboard set up at {.mention}. Permissions have been updated.'.format(emoji, channel))
+        await ctx.send('{} Starboard set up at {.mention}. Permissions have been updated.'.format(emoji, channel))
 
 
 def setup(client):

@@ -100,7 +100,7 @@ class StarboardModel(BaseModel):
 
     @classmethod
     def get_for_guild(cls, guild_id: int, emoji: Emoji):
-        select = cls.select().where((cls.guild_id == guild_id) & (cls.emoji == str(emoji))).limit(1)
+        select = cls.select().where((cls.guild_id == guild_id) & (cls.emoji.contains(str(emoji)))).limit(1)
 
         for row in select:
             return row
