@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Features
 - Servers can now have more than one starboard. 
-- Starboards can now be configured using slash commands.
+- Starboards can now be configured using slash commands. The original way of adding starboards has been removed.
 - Custom starboard emoji can now also include the default Discord unicode emoji.
 - Greatly streamlined the starboard process.
+
+### Maintenance
+- Version number is now automatically picked up in the CI process.
 
 ## [4.7.4] - 2021-03-31
 ### Tweaks
