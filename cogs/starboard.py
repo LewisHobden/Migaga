@@ -164,8 +164,7 @@ class Starboard(commands.Cog):
                             description="Sets up a starboard for a given channel - updates it if there already is one in the channel.",
                             options=[{"name": "channel", "description": "The channel to set the class up in.", "type": 7, "required": True},
                                      {"name": "emoji", "description": "The emoji for the starboard to use.", "type": 3, "required": True},
-                                     {"name": "threshold", "description": "If a message has under these many stars, it will be automatically deleted.", "type": 4}],
-                            guild_ids=[197972184466063381])
+                                     {"name": "threshold", "description": "If a message has under these many stars, it will be automatically deleted.", "type": 4}])
     @commands.has_permissions(manage_guild=True)
     async def _setup_starboard(self, ctx: SlashContext, channel: discord.TextChannel, emoji: str, threshold: int = 1):
         if not isinstance(channel, discord.TextChannel):

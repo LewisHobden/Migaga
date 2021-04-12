@@ -16,8 +16,7 @@ class Config(commands.Cog):
 
     @cog_ext.cog_subcommand(base="config", name="logs",
                             description="Configures the logs channel for this server.",
-                            options=[{"name": "channel", "description": "The channel for your log messages to be posted in.", "type": 7, "required": True}],
-                            guild_ids=[197972184466063381])
+                            options=[{"name": "channel", "description": "The channel for your log messages to be posted in.", "type": 7, "required": True}])
     @commands.has_permissions(manage_guild=True)
     async def _log_channel(self, ctx: SlashContext, log_channel: TextChannel):
         channel_id = log_channel.id
@@ -31,8 +30,7 @@ class Config(commands.Cog):
 
     @cog_ext.cog_subcommand(base="config", name="points",
                             description="Configures the name of your points in this server.",
-                            options=[{"name": "points", "description": "The custom name of your points, e.g. rupees.", "type": 3, "required": True}],
-                            guild_ids=[197972184466063381])
+                            options=[{"name": "points", "description": "The custom name of your points, e.g. rupees.", "type": 3, "required": True}])
     @commands.has_permissions(manage_guild=True)
     async def _points(self, ctx: SlashContext, points: str):
         guild_config = await GuildConfig.get_for_guild(ctx.guild.id)
@@ -44,8 +42,7 @@ class Config(commands.Cog):
 
     @cog_ext.cog_subcommand(base="config", name="points-emoji",
                             description="Configures the custom emoji for points in this server.",
-                            options=[{"name": "emoji", "description": "The emoji to be displayed next to your points when they are displayed.", "type": 3, "required": True}],
-                            guild_ids=[197972184466063381])
+                            options=[{"name": "emoji", "description": "The emoji to be displayed next to your points when they are displayed.", "type": 3, "required": True}])
     @commands.has_permissions(manage_guild=True)
     async def _points_emoji(self, ctx: SlashContext, emoji: str):
         emoji_converter = PartialEmojiWithUnicodeConverter()
