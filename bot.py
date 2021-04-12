@@ -1,4 +1,5 @@
 from discord.ext.commands import MinimalHelpCommand
+from discord_slash import SlashCommand
 
 from cogs.customcommands import *
 import configparser
@@ -11,11 +12,12 @@ config = configparser.ConfigParser()
 config.read("config.ini")
 
 # Set up the bot.
-version = "4.7.4"
-bot_description = "Migaga (Version {})".format(version)
+version = config.get("Env", "Version")
+bot_description = "Migaga {}".format(version)
 prefix = "!"
 client = commands.Bot(command_prefix=prefix, description=bot_description, intents=discord.Intents.all(), pm_help=None,
-                      activity=discord.Game(name="Version {}!".format(version)))
+                      activity=discord.Game(name="{}!".format(version)))
+slash = SlashCommand(client, override_type=True, application_id=int(config.get("Env", "ClientId")))
 
 logging.basicConfig(level=logging.INFO)
 
@@ -42,6 +44,7 @@ async def on_ready():
     print('------')
 
     setattr(client, "client_id", config.get("Env", "ClientId"))
+    await slash.sync_all_commands()
 
 
 if __name__ == '__main__':

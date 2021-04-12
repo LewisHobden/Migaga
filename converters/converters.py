@@ -1,7 +1,8 @@
 import discord
 from discord.ext import commands
-from discord.ext.commands import BadArgument, UserConverter
+from discord.ext.commands import BadArgument, UserConverter, PartialEmojiConversionFailure
 import re
+from emoji import UNICODE_EMOJI_ENGLISH
 
 from model.model import GuildConfig
 
@@ -33,3 +34,14 @@ class GlobalUserConverter(commands.IDConverter):
 class GuildConfigConverter(commands.Converter):
     async def convert(self, ctx, argument):
         return await GuildConfig.get_for_guild(ctx.guild.id)
+
+
+class PartialEmojiWithUnicodeConverter(commands.PartialEmojiConverter):
+    async def convert(self, ctx, argument):
+        try:
+            return await super().convert(ctx, argument)
+        except PartialEmojiConversionFailure:
+            if argument in UNICODE_EMOJI_ENGLISH:
+                return argument
+
+        raise PartialEmojiConversionFailure(argument)

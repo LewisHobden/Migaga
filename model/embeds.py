@@ -3,7 +3,26 @@ from datetime import datetime, timezone
 import discord
 import requests
 
-from model.model import StarredMessageModel
+from model.model import StarredMessageModel, GuildConfig
+
+
+class ConfigEmbed(discord.Embed):
+    def __init__(self, guild_config: GuildConfig, **kwargs):
+        super().__init__(**kwargs, color=discord.Color.blue(), title="Your Config",
+                         description="These are all the config settings for your server.")
+
+        logs_channel = "Not Enabled"
+
+        if guild_config.server_logs_channel_id is not None:
+            logs_channel = "<#{}>".format(guild_config.server_logs_channel_id)
+
+        points_emoji = "*Not Setup*"
+        if guild_config.points_emoji is not None:
+            points_emoji = guild_config.points_emoji
+
+        self.add_field(name="Server Logs", value=logs_channel)
+        self.add_field(name="Points", value=guild_config.points_name if not None else "*Not Setup*")
+        self.add_field(name="Points Emoji", value=points_emoji)
 
 
 class StarboardEmbed(discord.Embed):
@@ -22,7 +41,6 @@ class StarboardEmbed(discord.Embed):
         self._cleaner_next_iteration = kwargs.get("cleaner_next_iteration")
         self._discord_message = message
         self._starred_message = starred_message
-        self._remove_after_threshold = kwargs.get("remove_after_threshold", False)
         self._star_emoji = kwargs.get("star_emoji", "⭐")
 
         kwargs['title'] = "Starred Message"
@@ -122,10 +140,7 @@ class StarboardEmbed(discord.Embed):
         if self._starred_message.starboard.star_threshold == 1:
             return
 
-        if number_of_stars > self._starred_message.starboard.star_threshold:
-            return
-
-        if self._remove_after_threshold:
+        if number_of_stars >= self._starred_message.starboard.star_threshold:
             return
 
         star_emoji = '\N{GHOST}'
