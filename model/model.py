@@ -3,8 +3,9 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 from mailbox import Message
+from typing import List
 
-from discord import Member, Emoji, Message
+from discord import Member, Emoji, Message, Guild, Role
 from peewee import *
 from playhouse.mysql_ext import JSONField
 
@@ -146,7 +147,8 @@ class MessageStarrerModel(BaseModel):
 
     @classmethod
     async def add_starred_message(cls, message_id: int, starrer_id: int):
-        MessageStarrerModel.insert(starred_message_id=message_id, user_id=starrer_id, datetime_starred=datetime.utcnow()) \
+        MessageStarrerModel.insert(starred_message_id=message_id, user_id=starrer_id,
+                                   datetime_starred=datetime.utcnow()) \
             .on_conflict(update={MessageStarrerModel.datetime_starred: datetime.utcnow()}).execute()
 
     @classmethod
@@ -266,6 +268,32 @@ class PointTransaction(BaseModel):
 
     class Meta:
         table_name = "discord_point_transactions"
+
+
+class PointLeaderboard(BaseModel):
+    id = AutoField()
+    guild_id = BigIntegerField()
+    name = CharField(max_length=255)
+
+    @classmethod
+    async def add_for_guild(cls, guild: Guild, leaderboard_name: str, roles: List[Role]):
+        leaderboard = cls.create(guild_id=guild.id, name=leaderboard_name)
+
+        # Add PointLeaderBoardTeam objects based on roles.
+
+        return leaderboard
+
+    class Meta:
+        table_name = "discord_point_leaderboards"
+
+
+class PointLeaderboardTeam(BaseModel):
+    id = AutoField()
+    leaderboard_id = ForeignKeyField(PointLeaderboard, related_name="teams")
+    discord_role_id = BigIntegerField()
+
+    class Meta:
+        table_name = "discord_point_leaderboard_teams"
 
 
 class RoleAlias(BaseModel):

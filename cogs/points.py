@@ -1,5 +1,7 @@
 import discord
 from discord.ext import commands
+from discord.ext.commands import RoleConverter, RoleNotFound
+from discord_slash import cog_ext, SlashContext
 
 from cogs.utilities.formatting import format_points
 from model.model import *
@@ -147,6 +149,32 @@ class Points(commands.Cog):
         embed.add_field(name="New Total", value=format_points(user_total))
 
         await ctx.send(embed=embed)
+
+    @cog_ext.cog_subcommand(base="points", name="setup-leaderboard",
+                            description="Sets up a new leaderboard, provided a list of roles that are in it.",
+                            options=[
+                                {"name": "leaderboard_name", "description": "The name of the leaderboard.", "type": 3, "required": True},
+                                {"name": "roles", "description": "Comma-separated list of roles that are in the leaderboard.", "type": 3, "required": True},
+                            ],
+                            guild_ids=[197972184466063381])
+    @commands.has_permissions(manage_guild=True)
+    async def _setup_team(self, ctx: SlashContext, leaderboard_name: str, roles: str):
+        errors = []
+        role_converter = RoleConverter()
+        role_objects = []
+
+        for role in roles.split(","):
+            try:
+                print(role)
+                role_objects.append(await role_converter.convert(ctx, role.strip()))
+            except RoleNotFound:
+                errors.append("Role could not be found: {}".format(role))
+
+        if errors:
+            return await ctx.send("\n".join(errors))
+
+        leaderboard = await PointLeaderboard.add_for_guild(ctx.guild, leaderboard_name, roles)
+        await ctx.send("Made a leaderboard by ID {}".format(leaderboard.id))
 
 
 def setup(client: commands.Bot):
