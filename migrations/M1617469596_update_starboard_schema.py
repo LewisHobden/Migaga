@@ -39,7 +39,7 @@ with database.atomic() as transaction:
     database.execute_sql(
         "UPDATE discord_starboard "
         "JOIN discord_guild_configs config ON config.`guild_id` = discord_starboard.`guild_id` "
-        "SET discord_starboard.`emoji_id` = config.`starboard_emoji_id`"
+        "SET discord_starboard.`emoji` = config.`starboard_emoji_id`"
     )
 
     migrate(
