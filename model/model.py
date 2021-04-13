@@ -277,9 +277,14 @@ class PointLeaderboard(BaseModel):
 
     @classmethod
     async def add_for_guild(cls, guild: Guild, leaderboard_name: str, roles: List[Role]):
+        if cls.get_or_none((cls.name == leaderboard_name) & (cls.guild_id == guild.id)) is not None:
+            raise IntegrityError("Guild already has a leaderboard by that name.")
+
         leaderboard = cls.create(guild_id=guild.id, name=leaderboard_name)
 
         # Add PointLeaderBoardTeam objects based on roles.
+        for role in roles:
+            PointLeaderboardTeam.create(leaderboard_id=leaderboard.id, discord_role_id=role.id)
 
         return leaderboard
 

@@ -153,8 +153,11 @@ class Points(commands.Cog):
     @cog_ext.cog_subcommand(base="points", name="setup-leaderboard",
                             description="Sets up a new leaderboard, provided a list of roles that are in it.",
                             options=[
-                                {"name": "leaderboard_name", "description": "The name of the leaderboard.", "type": 3, "required": True},
-                                {"name": "roles", "description": "Comma-separated list of roles that are in the leaderboard.", "type": 3, "required": True},
+                                {"name": "leaderboard_name", "description": "The name of the leaderboard.", "type": 3,
+                                 "required": True},
+                                {"name": "roles",
+                                 "description": "Comma-separated list of roles that are in the leaderboard.", "type": 3,
+                                 "required": True},
                             ],
                             guild_ids=[197972184466063381])
     @commands.has_permissions(manage_guild=True)
@@ -165,7 +168,6 @@ class Points(commands.Cog):
 
         for role in roles.split(","):
             try:
-                print(role)
                 role_objects.append(await role_converter.convert(ctx, role.strip()))
             except RoleNotFound:
                 errors.append("Role could not be found: {}".format(role))
@@ -173,8 +175,11 @@ class Points(commands.Cog):
         if errors:
             return await ctx.send("\n".join(errors))
 
-        leaderboard = await PointLeaderboard.add_for_guild(ctx.guild, leaderboard_name, roles)
-        await ctx.send("Made a leaderboard by ID {}".format(leaderboard.id))
+        try:
+            leaderboard = await PointLeaderboard.add_for_guild(ctx.guild, leaderboard_name, role_objects)
+            await ctx.send("Made a leaderboard by ID {}".format(leaderboard.id))
+        except IntegrityError as e:
+            await ctx.send(str(e))
 
 
 def setup(client: commands.Bot):
