@@ -288,6 +288,10 @@ class PointLeaderboard(BaseModel):
 
         return leaderboard
 
+    @classmethod
+    async def get_for_guild(cls, guild: Guild, leaderboard_name: str):
+        return cls.get_or_none((cls.name == leaderboard_name) & (cls.guild_id == guild.id))
+
     class Meta:
         table_name = "discord_point_leaderboards"
 

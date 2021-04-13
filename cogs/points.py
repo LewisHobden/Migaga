@@ -77,14 +77,40 @@ class Points(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    async def leaderboard(self, ctx):
+    async def leaderboard(self, ctx, *, leaderboard_name: str = None):
         """ Shows the leaderboard for the server.
 
-         If you mention a person then you can get your placement on the leaderboard. """
+         If your server has custom leaderboards, you can provide the leaderboard's name to get that. """
         config = await GuildConfig.get_for_guild(ctx.guild.id)
 
         if config.points_name is None:
+            return await ctx.send("A server admin needs to set up points using the points config command!")
+
+        if leaderboard_name:
+            leaderboard = await PointLeaderboard.get_for_guild(ctx.guild, leaderboard_name)
+
+            if leaderboard is None:
+                return
+
+            # Iterate the teams, query the DB for their total points.
+            msg = ""
+
+            for team in leaderboard.teams:
+                team = ctx.guild.get_role(team.discord_role_id)
+                members = map(lambda x: x.id, team.members)
+
+                transactions = (PointTransaction
+                                .select(fn.SUM(PointTransaction.amount).alias('total_points'))
+                                .where((PointTransaction.guild_id == ctx.guild.id) &
+                                       (PointTransaction.recipient_user_id << list(members))))
+
+                for transaction in transactions:
+                    msg += "{} - {}\n".format(team.name, format_points(transaction.total_points))
+
+            await ctx.send(msg)
+
             return
+
         transactions = (PointTransaction
                         .select(PointTransaction.recipient_user_id,
                                 fn.SUM(PointTransaction.amount).alias('total_points'))
