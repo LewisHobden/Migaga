@@ -94,7 +94,7 @@ class Admin(commands.Cog):
         confirmation = await self.client.wait_for(
             "message", check=lambda m: m.author == ctx.message.author and m.channel == ctx.channel)
 
-        if not confirmation.content.startswith("y"):
+        if not confirmation.content.lower().startswith("y"):
             await ctx.send("Ban aborted!")
             return
 

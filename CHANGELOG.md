@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Greatly streamlined the starboard process.
 
 ### Maintenance
+- Banning confirmation now ignored the case of the response.
 - Version number is now automatically picked up in the CI process.
 
 ## [4.7.4] - 2021-03-31
