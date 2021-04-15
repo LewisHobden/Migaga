@@ -2,7 +2,10 @@ from datetime import datetime, timezone
 
 import discord
 import requests
+from discord import Guild
+from emoji import emojize
 
+from cogs.utilities.formatting import format_points
 from model.model import StarredMessageModel, GuildConfig
 
 
@@ -23,6 +26,26 @@ class ConfigEmbed(discord.Embed):
         self.add_field(name="Server Logs", value=logs_channel)
         self.add_field(name="Points", value=guild_config.points_name if not None else "*Not Setup*")
         self.add_field(name="Points Emoji", value=points_emoji)
+
+
+class LeaderboardEmbed(discord.Embed):
+    def __init__(self, config: GuildConfig, guild: Guild, **kwargs):
+        self.entries = []
+
+        points = config.points_name[0].upper()
+        points += config.points_name[1:]
+
+        super().__init__(**kwargs, title="{} Leaderboard for {}".format(points, guild.name))
+
+    def add_entry(self, position: int, item: str, total: float):
+        if 1 == position:
+            position = emojize(":star: {}".format(position))
+
+        self.entries.append("{}. **{}** - {}".format(position, item, format_points(total)))
+
+    def populate(self):
+        self.description = "\n".join(self.entries)
+        return self
 
 
 class StarboardEmbed(discord.Embed):

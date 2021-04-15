@@ -254,6 +254,23 @@ class PointTransaction(BaseModel):
         return query.scalar()
 
     @classmethod
+    def get_total_for_guild_members(cls, guild: Guild, members) -> float:
+        query = (cls.select(fn.SUM(PointTransaction.amount).alias('total_points'))
+                 .where((PointTransaction.guild_id == guild.id) &
+                        (PointTransaction.recipient_user_id << members)))
+
+        return query.scalar()
+
+    @classmethod
+    def get_leaderboard_for_guild(cls, guild: Guild, limit: int = 10):
+        return (cls.select(PointTransaction.recipient_user_id,
+                           fn.SUM(PointTransaction.amount).alias('total_points'))
+                .where(PointTransaction.guild_id == guild.id)
+                .group_by(PointTransaction.recipient_user_id)
+                .order_by(SQL('total_points DESC'))
+                .limit(limit))
+
+    @classmethod
     async def grant_member(cls, amount: float, member: Member, sender: Member) -> float:
         return cls.create(guild_id=member.guild.id, recipient_user_id=member.id, sender_user_id=sender.id,
                           amount=amount).save()

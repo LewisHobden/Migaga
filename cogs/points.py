@@ -4,7 +4,35 @@ from discord.ext.commands import RoleConverter, RoleNotFound
 from discord_slash import cog_ext, SlashContext
 
 from cogs.utilities.formatting import format_points
+from model.embeds import LeaderboardEmbed
 from model.model import *
+
+
+def _populate_embed_from_guild(embed: LeaderboardEmbed, guild: Guild):
+    index = 1
+    for transaction in PointTransaction.get_leaderboard_for_guild(guild):
+        member = guild.get_member(transaction.recipient_user_id)
+
+        embed.add_entry(index, member.display_name, transaction.total_points)
+        index += 1
+
+
+async def _populate_embed_from_leaderboard(embed: LeaderboardEmbed, leaderboard_name: str, guild: Guild):
+    leaderboard = await PointLeaderboard.get_for_guild(guild, leaderboard_name)
+
+    if leaderboard is None:
+        return
+
+    # Iterate the teams, query the DB for their total points.
+    index = 1
+    for team in leaderboard.teams:
+        team = guild.get_role(team.discord_role_id)
+        members = map(lambda x: x.id, team.members)
+
+        total_points = PointTransaction.get_total_for_guild_members(guild, list(members))
+        embed.add_entry(index, team.name, total_points)
+
+        index += 1
 
 
 class Points(commands.Cog):
@@ -86,55 +114,14 @@ class Points(commands.Cog):
         if config.points_name is None:
             return await ctx.send("A server admin needs to set up points using the points config command!")
 
+        embed = LeaderboardEmbed(colour=discord.Colour.gold(), config=config, guild=ctx.guild)
+
         if leaderboard_name:
-            leaderboard = await PointLeaderboard.get_for_guild(ctx.guild, leaderboard_name)
+            await _populate_embed_from_leaderboard(embed, leaderboard_name, ctx.guild)
+        else:
+            _populate_embed_from_guild(embed, ctx.guild)
 
-            if leaderboard is None:
-                return
-
-            # Iterate the teams, query the DB for their total points.
-            msg = ""
-
-            for team in leaderboard.teams:
-                team = ctx.guild.get_role(team.discord_role_id)
-                members = map(lambda x: x.id, team.members)
-
-                transactions = (PointTransaction
-                                .select(fn.SUM(PointTransaction.amount).alias('total_points'))
-                                .where((PointTransaction.guild_id == ctx.guild.id) &
-                                       (PointTransaction.recipient_user_id << list(members))))
-
-                for transaction in transactions:
-                    msg += "{} - {}\n".format(team.name, format_points(transaction.total_points))
-
-            await ctx.send(msg)
-
-            return
-
-        transactions = (PointTransaction
-                        .select(PointTransaction.recipient_user_id,
-                                fn.SUM(PointTransaction.amount).alias('total_points'))
-                        .where(PointTransaction.guild_id == ctx.guild.id)
-                        .group_by(PointTransaction.recipient_user_id)
-                        .order_by(SQL('total_points DESC'))
-                        .limit(10))
-
-        body = "Showing the Top 10..\n"
-
-        index = 1
-        for transaction in transactions:
-            member = ctx.guild.get_member(transaction.recipient_user_id)
-            points = config.points_name[0].upper()
-            points += config.points_name[1:]
-
-            body += ("{}. **{}** - {}\n".format(index, member.display_name, format_points(transaction.total_points)))
-            index += 1
-
-        e = discord.Embed(colour=discord.Colour.gold(),
-                          title="{} Leaderboard for {}".format(points, ctx.guild.name),
-                          description=body)
-
-        await ctx.send(embed=e)
+        await ctx.send(embed=embed.populate())
 
     @commands.command()
     @commands.has_permissions(manage_roles=True)
