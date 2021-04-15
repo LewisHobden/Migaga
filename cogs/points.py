@@ -25,15 +25,18 @@ async def _populate_embed_from_leaderboard(embed: LeaderboardEmbed, leaderboard_
 
     # Iterate the teams, query the DB for their total points.
     index = 1
+    indexed_teams = {}
     for team in leaderboard.teams:
         team = guild.get_role(team.discord_role_id)
         members = map(lambda x: x.id, team.members)
 
         total_points = PointTransaction.get_total_for_guild_members(guild, list(members))
-        embed.add_entry(index, team.name, total_points)
+        indexed_teams[team.name] = float(total_points)
+
+    for team_name in sorted(indexed_teams, key=indexed_teams.get, reverse=True):
+        embed.add_entry(index, team_name, indexed_teams[team_name])
 
         index += 1
-
 
 class Points(commands.Cog):
     def __init__(self, client: commands.Bot):
@@ -190,7 +193,7 @@ class Points(commands.Cog):
 
         try:
             leaderboard = await PointLeaderboard.add_for_guild(ctx.guild, leaderboard_name, role_objects)
-            await ctx.send("Made a leaderboard by ID {}".format(leaderboard.id))
+            await ctx.send("Boom! You've got a new leaderboard setup for those roles.".format(leaderboard.id))
         except IntegrityError as e:
             await ctx.send(str(e))
 

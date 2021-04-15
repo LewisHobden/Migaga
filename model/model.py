@@ -259,7 +259,7 @@ class PointTransaction(BaseModel):
                  .where((PointTransaction.guild_id == guild.id) &
                         (PointTransaction.recipient_user_id << members)))
 
-        return query.scalar()
+        return 0 if query.scalar() is None else query.scalar()
 
     @classmethod
     def get_leaderboard_for_guild(cls, guild: Guild, limit: int = 10):
