@@ -38,6 +38,7 @@ async def _populate_embed_from_leaderboard(embed: LeaderboardEmbed, leaderboard_
 
         index += 1
 
+
 class Points(commands.Cog):
     def __init__(self, client: commands.Bot):
         self.client = client
@@ -163,6 +164,13 @@ class Points(commands.Cog):
 
         embed.add_field(name="Total {}".format(action), value=str(abs(amount)))
         embed.add_field(name="New Total", value=format_points(user_total))
+
+        # If the user exists in 1 or more teams, add a field to the embed about it.
+        teams = filter(lambda x: PointLeaderboardTeam.exists_for_role(x), member.roles)
+        team_message = ", ".join(map(lambda x: x.name, teams))
+
+        if len(team_message):
+            embed.add_field(name="Helped out their teams!", value=team_message, inline=False)
 
         await ctx.send(embed=embed)
 

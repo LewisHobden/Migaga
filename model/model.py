@@ -318,6 +318,10 @@ class PointLeaderboardTeam(BaseModel):
     leaderboard_id = ForeignKeyField(PointLeaderboard, related_name="teams")
     discord_role_id = BigIntegerField()
 
+    @classmethod
+    def exists_for_role(cls, role: Role):
+        return cls.get_or_none(cls.discord_role_id == role.id) is not None
+
     class Meta:
         table_name = "discord_point_leaderboard_teams"
 
