@@ -1,4 +1,3 @@
-from discord import TextChannel
 from discord.ext import commands
 from discord.ext.commands import PartialEmojiConversionFailure
 from discord_slash import SlashContext, cog_ext
@@ -13,20 +12,6 @@ class Config(commands.Cog):
 
     def __init__(self, client: commands.Bot):
         self.client = client
-
-    @cog_ext.cog_subcommand(base="config", name="logs",
-                            description="Configures the logs channel for this server.",
-                            options=[{"name": "channel", "description": "The channel for your log messages to be posted in.", "type": 7, "required": True}])
-    @commands.has_permissions(manage_guild=True)
-    async def _log_channel(self, ctx: SlashContext, log_channel: TextChannel):
-        channel_id = log_channel.id
-
-        guild_config = await GuildConfig.get_for_guild(ctx.guild.id)
-        guild_config.server_logs_channel_id = channel_id
-        guild_config.save()
-
-        embed = ConfigEmbed(guild_config=guild_config)
-        await ctx.send(content="Config has been updated.", embeds=[embed])
 
     @cog_ext.cog_subcommand(base="config", name="points",
                             description="Configures the name of your points in this server.",
