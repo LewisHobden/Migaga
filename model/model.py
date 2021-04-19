@@ -3,8 +3,9 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 from mailbox import Message
+from typing import List
 
-from discord import Member, Emoji, Message
+from discord import Member, Emoji, Message, Guild, Role
 from peewee import *
 from playhouse.mysql_ext import JSONField
 
@@ -146,7 +147,8 @@ class MessageStarrerModel(BaseModel):
 
     @classmethod
     async def add_starred_message(cls, message_id: int, starrer_id: int):
-        MessageStarrerModel.insert(starred_message_id=message_id, user_id=starrer_id, datetime_starred=datetime.utcnow()) \
+        MessageStarrerModel.insert(starred_message_id=message_id, user_id=starrer_id,
+                                   datetime_starred=datetime.utcnow()) \
             .on_conflict(update={MessageStarrerModel.datetime_starred: datetime.utcnow()}).execute()
 
     @classmethod
@@ -252,6 +254,23 @@ class PointTransaction(BaseModel):
         return query.scalar()
 
     @classmethod
+    def get_total_for_guild_members(cls, guild: Guild, members) -> float:
+        query = (cls.select(fn.SUM(PointTransaction.amount).alias('total_points'))
+                 .where((PointTransaction.guild_id == guild.id) &
+                        (PointTransaction.recipient_user_id << members)))
+
+        return 0 if query.scalar() is None else query.scalar()
+
+    @classmethod
+    def get_leaderboard_for_guild(cls, guild: Guild, limit: int = 10):
+        return (cls.select(PointTransaction.recipient_user_id,
+                           fn.SUM(PointTransaction.amount).alias('total_points'))
+                .where(PointTransaction.guild_id == guild.id)
+                .group_by(PointTransaction.recipient_user_id)
+                .order_by(SQL('total_points DESC'))
+                .limit(limit))
+
+    @classmethod
     async def grant_member(cls, amount: float, member: Member, sender: Member) -> float:
         return cls.create(guild_id=member.guild.id, recipient_user_id=member.id, sender_user_id=sender.id,
                           amount=amount).save()
@@ -266,6 +285,45 @@ class PointTransaction(BaseModel):
 
     class Meta:
         table_name = "discord_point_transactions"
+
+
+class PointLeaderboard(BaseModel):
+    id = AutoField()
+    guild_id = BigIntegerField()
+    name = CharField(max_length=255)
+
+    @classmethod
+    async def add_for_guild(cls, guild: Guild, leaderboard_name: str, roles: List[Role]):
+        if cls.get_or_none((cls.name == leaderboard_name) & (cls.guild_id == guild.id)) is not None:
+            raise IntegrityError("Guild already has a leaderboard by that name.")
+
+        leaderboard = cls.create(guild_id=guild.id, name=leaderboard_name)
+
+        # Add PointLeaderBoardTeam objects based on roles.
+        for role in roles:
+            PointLeaderboardTeam.create(leaderboard_id=leaderboard.id, discord_role_id=role.id)
+
+        return leaderboard
+
+    @classmethod
+    async def get_for_guild(cls, guild: Guild, leaderboard_name: str):
+        return cls.get_or_none((cls.name == leaderboard_name) & (cls.guild_id == guild.id))
+
+    class Meta:
+        table_name = "discord_point_leaderboards"
+
+
+class PointLeaderboardTeam(BaseModel):
+    id = AutoField()
+    leaderboard_id = ForeignKeyField(PointLeaderboard, related_name="teams")
+    discord_role_id = BigIntegerField()
+
+    @classmethod
+    def exists_for_role(cls, role: Role):
+        return cls.get_or_none(cls.discord_role_id == role.id) is not None
+
+    class Meta:
+        table_name = "discord_point_leaderboard_teams"
 
 
 class RoleAlias(BaseModel):

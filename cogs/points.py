@@ -1,8 +1,42 @@
 import discord
 from discord.ext import commands
+from discord.ext.commands import RoleConverter, RoleNotFound
+from discord_slash import cog_ext, SlashContext
 
 from cogs.utilities.formatting import format_points
+from model.embeds import LeaderboardEmbed
 from model.model import *
+
+
+def _populate_embed_from_guild(embed: LeaderboardEmbed, guild: Guild):
+    index = 1
+    for transaction in PointTransaction.get_leaderboard_for_guild(guild):
+        member = guild.get_member(transaction.recipient_user_id)
+
+        embed.add_entry(index, member.display_name, transaction.total_points)
+        index += 1
+
+
+async def _populate_embed_from_leaderboard(embed: LeaderboardEmbed, leaderboard_name: str, guild: Guild):
+    leaderboard = await PointLeaderboard.get_for_guild(guild, leaderboard_name)
+
+    if leaderboard is None:
+        return
+
+    # Iterate the teams, query the DB for their total points.
+    index = 1
+    indexed_teams = {}
+    for team in leaderboard.teams:
+        team = guild.get_role(team.discord_role_id)
+        members = map(lambda x: x.id, team.members)
+
+        total_points = PointTransaction.get_total_for_guild_members(guild, list(members))
+        indexed_teams[team.name] = float(total_points)
+
+    for team_name in sorted(indexed_teams, key=indexed_teams.get, reverse=True):
+        embed.add_entry(index, team_name, indexed_teams[team_name])
+
+        index += 1
 
 
 class Points(commands.Cog):
@@ -75,38 +109,23 @@ class Points(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    async def leaderboard(self, ctx):
+    async def leaderboard(self, ctx, *, leaderboard_name: str = None):
         """ Shows the leaderboard for the server.
 
-         If you mention a person then you can get your placement on the leaderboard. """
+         If your server has custom leaderboards, you can provide the leaderboard's name to get that. """
         config = await GuildConfig.get_for_guild(ctx.guild.id)
 
         if config.points_name is None:
-            return
-        transactions = (PointTransaction
-                        .select(PointTransaction.recipient_user_id,
-                                fn.SUM(PointTransaction.amount).alias('total_points'))
-                        .where(PointTransaction.guild_id == ctx.guild.id)
-                        .group_by(PointTransaction.recipient_user_id)
-                        .order_by(SQL('total_points DESC'))
-                        .limit(10))
+            return await ctx.send("A server admin needs to set up points using the points config command!")
 
-        body = "Showing the Top 10..\n"
+        embed = LeaderboardEmbed(colour=discord.Colour.gold(), config=config, guild=ctx.guild)
 
-        index = 1
-        for transaction in transactions:
-            member = ctx.guild.get_member(transaction.recipient_user_id)
-            points = config.points_name[0].upper()
-            points += config.points_name[1:]
+        if leaderboard_name:
+            await _populate_embed_from_leaderboard(embed, leaderboard_name, ctx.guild)
+        else:
+            _populate_embed_from_guild(embed, ctx.guild)
 
-            body += ("{}. **{}** - {}\n".format(index, member.display_name, format_points(transaction.total_points)))
-            index += 1
-
-        e = discord.Embed(colour=discord.Colour.gold(),
-                          title="{} Leaderboard for {}".format(points, ctx.guild.name),
-                          description=body)
-
-        await ctx.send(embed=e)
+        await ctx.send(embed=embed.populate())
 
     @commands.command()
     @commands.has_permissions(manage_roles=True)
@@ -146,7 +165,45 @@ class Points(commands.Cog):
         embed.add_field(name="Total {}".format(action), value=str(abs(amount)))
         embed.add_field(name="New Total", value=format_points(user_total))
 
+        # If the user exists in 1 or more teams, add a field to the embed about it.
+        teams = filter(lambda x: PointLeaderboardTeam.exists_for_role(x), member.roles)
+        team_message = ", ".join(map(lambda x: x.name, teams))
+
+        if len(team_message):
+            embed.add_field(name="Helped out their teams!", value=team_message, inline=False)
+
         await ctx.send(embed=embed)
+
+    @cog_ext.cog_subcommand(base="points", name="setup-leaderboard",
+                            description="Sets up a new leaderboard, provided a list of roles that are in it.",
+                            options=[
+                                {"name": "leaderboard_name", "description": "The name of the leaderboard.", "type": 3,
+                                 "required": True},
+                                {"name": "roles",
+                                 "description": "Comma-separated list of roles that are in the leaderboard.", "type": 3,
+                                 "required": True},
+                            ],
+                            guild_ids=[197972184466063381])
+    @commands.has_permissions(manage_guild=True)
+    async def _setup_team(self, ctx: SlashContext, leaderboard_name: str, roles: str):
+        errors = []
+        role_converter = RoleConverter()
+        role_objects = []
+
+        for role in roles.split(","):
+            try:
+                role_objects.append(await role_converter.convert(ctx, role.strip()))
+            except RoleNotFound:
+                errors.append("Role could not be found: {}".format(role))
+
+        if errors:
+            return await ctx.send("\n".join(errors))
+
+        try:
+            leaderboard = await PointLeaderboard.add_for_guild(ctx.guild, leaderboard_name, role_objects)
+            await ctx.send("Boom! You've got a new leaderboard setup for those roles.".format(leaderboard.id))
+        except IntegrityError as e:
+            await ctx.send(str(e))
 
 
 def setup(client: commands.Bot):
