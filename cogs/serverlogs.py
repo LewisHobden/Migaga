@@ -1,12 +1,15 @@
-from discord.ext import commands
+import asyncio
+import datetime
+import io
+from enum import Enum
 
 import discord
-import datetime
+from discord import TextChannel
+from discord.ext import commands
+from discord_slash import cog_ext, SlashContext
+from emoji import emojize
 
-import os
-import io
-
-from model.model import GuildConfig
+from model.model import GuildConfig, ServerLogChannel
 
 
 async def _generate_boilerplate_embed(author: discord.Member, colour=None, channel: discord.TextChannel = None):
@@ -181,6 +184,64 @@ class ServerLogs(commands.Cog, name="Server Logs"):
 
         await server_logs.send(embed=embed)
 
+    @cog_ext.cog_subcommand(base="server-logs", name="setup-channel",
+                            description="Sets up a new log channel channel for this server. The bot will reply!",
+                            options=[
+                                {"name": "channel", "description": "The channel for your log messages to be posted in.",
+                                 "type": 7, "required": True}],
+                            guild_ids=[197972184466063381])
+    @commands.has_permissions(manage_guild=True)
+    async def _log_channel(self, ctx: SlashContext, log_channel: TextChannel):
+        db_channel = ServerLogChannel.add_for_channel(log_channel.id)
+
+        async def check(reaction, user):
+            return True
+
+        msg = await ctx.send(
+            "A new server logs channels has been created. By default it records all events.. React to this message. You have 2 minutes.")
+
+        for group in EventGroup:
+            await msg.add_reaction(emoji=emojize(group.get_emoji()))
+
+        try:
+            reaction, user = await self.client.wait_for('reaction_add', timeout=120, check=check)
+        except asyncio.TimeoutError:
+            await ctx.send("Timeout.")
+        else:
+            await ctx.send('Met the criteria')
+
 
 def setup(client):
     client.add_cog(ServerLogs(client))
+
+
+class EventGroup(Enum):
+    MESSAGE_DELETED = "message.delete"
+    MESSAGE_EDITED = "message.edt"
+    USER_AVATAR_CHANGES = "member.avatarChange"
+    USER_JOIN_LEAVE = "member.joinLeave"
+    USER_PROFILE_UPDATE = "user.profileUpdated"
+
+    def __init__(self, *args):
+        self._group_to_event_map = {
+            self.MESSAGE_DELETED: ["on_message_delete"],
+            self.MESSAGE_EDITED: ["on_message_edit"],
+            self.USER_AVATAR_CHANGES: ["on_member_update"],
+            self.USER_JOIN_LEAVE: ["on_user_update", "on_member_leave", "on_member_join", "on_member_ban",
+                                   "on_member_unban"],
+            self.USER_PROFILE_UPDATE: ["on_member_update"],
+        }
+
+        self._group_to_emoji_map = {
+            self.MESSAGE_DELETED: ":wastebasket:",
+            self.MESSAGE_EDITED: ":pencil:",
+            self.USER_AVATAR_CHANGES: ":portrait:",
+            self.USER_JOIN_LEAVE: ":car:",
+            self.USER_PROFILE_UPDATE: ":silhouette:",
+        }
+
+    def get_emoji(self):
+        return self._group_to_event_map[self]
+
+    def get_events(self):
+        return self._group_to_event_map[self]
