@@ -338,6 +338,28 @@ class RoleAlias(BaseModel):
         table_name = "discord_role_aliases"
 
 
+class ServerLogChannel(BaseModel):
+    id = AutoField()
+    channel_id = BigIntegerField(unique=True)
+    should_post_all_events = BooleanField(default=True)
+
+    @classmethod
+    def add_for_channel(cls, channel_id: int):
+        return cls.create(channel_id=channel_id)
+
+    class Meta:
+        table_name = "discord_server_log_channels"
+
+
+class ServerLogChannelEvent(BaseModel):
+    id = AutoField()
+    leaderboard_id = ForeignKeyField(PointLeaderboard, related_name="teams")
+    event_type = CharField(max_length=100)
+
+    class Meta:
+        table_name = "discord_server_log_channel_events"
+
+
 class WelcomeMessage(BaseModel):
     id = AutoField()
     message = CharField(max_length=2000)

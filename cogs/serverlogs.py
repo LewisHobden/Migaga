@@ -4,7 +4,7 @@ import io
 from enum import Enum
 
 import discord
-from discord import TextChannel
+from discord import TextChannel, Colour
 from discord.ext import commands
 from discord_slash import cog_ext, SlashContext
 from emoji import emojize
@@ -194,22 +194,22 @@ class ServerLogs(commands.Cog, name="Server Logs"):
     async def _log_channel(self, ctx: SlashContext, log_channel: TextChannel):
         db_channel = ServerLogChannel.add_for_channel(log_channel.id)
 
-        async def check(reaction, user):
-            return True
-
-        msg = await ctx.send(
-            "A new server logs channels has been created. By default it records all events.. React to this message. You have 2 minutes.")
-
+        title = "New Server Logs Channel Created"
+        message = "**By default it records all events!** To specify specific events, react to this message.\n"
+        footer = "Reactions expire in 2 minutes -  call this command again with the same channel to update it again."
         for group in EventGroup:
-            await msg.add_reaction(emoji=emojize(group.get_emoji()))
+            message += "\nFor " + group.description + " react with " + group.emoji
 
-        try:
-            reaction, user = await self.client.wait_for('reaction_add', timeout=120, check=check)
-        except asyncio.TimeoutError:
-            await ctx.send("Timeout.")
-        else:
-            await ctx.send('Met the criteria')
+        embed = discord.Embed(title=title, colour=Colour.blurple(), description=message, footer=footer)
+        embed.add_field(name="Channel", value=log_channel.mention)
 
+        msg = await ctx.send(embed=embed)
+        for group in EventGroup:
+            await msg.add_reaction(emoji=group.emoji)
+
+        # I know what I am trying to achieve and I reckon it would be very simple in JS.
+        # Watch the message object for a minute, and if a reaction comes in, add a record to the events table.
+        # For this framework I guess we will have to add a reaction listener.
 
 def setup(client):
     client.add_cog(ServerLogs(client))
@@ -217,31 +217,44 @@ def setup(client):
 
 class EventGroup(Enum):
     MESSAGE_DELETED = "message.delete"
-    MESSAGE_EDITED = "message.edt"
+    MESSAGE_EDITED = "message.edit"
     USER_AVATAR_CHANGES = "member.avatarChange"
     USER_JOIN_LEAVE = "member.joinLeave"
     USER_PROFILE_UPDATE = "user.profileUpdated"
 
     def __init__(self, *args):
         self._group_to_event_map = {
-            self.MESSAGE_DELETED: ["on_message_delete"],
-            self.MESSAGE_EDITED: ["on_message_edit"],
-            self.USER_AVATAR_CHANGES: ["on_member_update"],
-            self.USER_JOIN_LEAVE: ["on_user_update", "on_member_leave", "on_member_join", "on_member_ban",
-                                   "on_member_unban"],
-            self.USER_PROFILE_UPDATE: ["on_member_update"],
+            "message.delete": ["on_message_delete"],
+            "message.edit": ["on_message_edit"],
+            "member.avatarChange": ["on_member_update"],
+            "member.joinLeave": ["on_user_update", "on_member_leave", "on_member_join", "on_member_ban",
+                                 "on_member_unban"],
+            "user.profileUpdated": ["on_member_update"],
         }
 
         self._group_to_emoji_map = {
-            self.MESSAGE_DELETED: ":wastebasket:",
-            self.MESSAGE_EDITED: ":pencil:",
-            self.USER_AVATAR_CHANGES: ":portrait:",
-            self.USER_JOIN_LEAVE: ":car:",
-            self.USER_PROFILE_UPDATE: ":silhouette:",
+            "message.delete": ":wastebasket:",
+            "message.edit": ":pencil:",
+            "member.avatarChange": ":frame_photo:",
+            "member.joinLeave": ":person_running:",
+            "user.profileUpdated": ":bust_in_silhouette:",
         }
 
-    def get_emoji(self):
-        return self._group_to_event_map[self]
+        self._group_to_description_map = {
+            "message.delete": "deleted messages",
+            "message.edit": "edited messages",
+            "member.avatarChange": "avatar updates",
+            "member.joinLeave": "people joining and leaving",
+            "user.profileUpdated": "when people update their profiles",
+        }
 
-    def get_events(self):
-        return self._group_to_event_map[self]
+    @property
+    def emoji(self):
+        return emojize(self._group_to_emoji_map[self.value])
+
+    @property
+    def description(self):
+        return self._group_to_description_map[self.value]
+
+    def events(self):
+        return self._group_to_event_map[self.value]
