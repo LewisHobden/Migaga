@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from itertools import chain
 from mailbox import Message
 from typing import List
 
@@ -9,6 +10,7 @@ from discord import Member, Emoji, Message, Guild, Role
 from peewee import *
 from playhouse.mysql_ext import JSONField
 
+from cogs.serverlogs import EventGroup
 from storage.database_factory import DatabaseFactory
 
 factory = DatabaseFactory()
@@ -340,12 +342,22 @@ class RoleAlias(BaseModel):
 
 class ServerLogChannel(BaseModel):
     id = AutoField()
+    guild_id = BigIntegerField(unique=True)
     channel_id = BigIntegerField(unique=True)
     should_post_all_events = BooleanField(default=True)
 
     @classmethod
-    def add_for_channel(cls, channel_id: int):
-        return cls.create(channel_id=channel_id)
+    def add_for_channel(cls, guild_id: int, channel_id: int):
+        return cls.create(guild_id=guild_id, channel_id=channel_id)
+
+    @classmethod
+    def get_all_for_guild(cls, guild: Guild, group: EventGroup):
+        all_events = cls.select().where((cls.guild_id == guild.id) & (cls.should_post_all_events is True))
+        specific_channels = cls.select().join(ServerLogChannelEvent).where(
+            (cls.guild_id == guild.id) & (ServerLogChannelEvent.event_type == group)
+        )
+
+        return chain([all_events, specific_channels])
 
     class Meta:
         table_name = "discord_server_log_channels"

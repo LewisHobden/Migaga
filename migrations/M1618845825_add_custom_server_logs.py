@@ -18,7 +18,7 @@ with database.atomic() as transaction:
     ])
 
     for config in GuildConfig.select(GuildConfig.server_logs_channel_id != None):
-        ServerLogChannel.add_for_channel(config.server_logs_channel_id)
+        ServerLogChannel.add_for_channel(config.guild_id, config.server_logs_channel_id)
 
     migrate(
         migrator.drop_column('discord_guild_configs', 'server_logs_channel_id'),
