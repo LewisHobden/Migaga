@@ -381,7 +381,6 @@ class Admin(commands.Cog):
 
     @cog_ext.cog_subcommand(base="user", subcommand_group="warnings", name="add",
                             description="Records a warning for a user.",
-                            guild_ids=[197972184466063381],
                             options=[
                                 {"name": "member", "description": "The person you're trying to warn.", "type": SlashCommandOptionType.USER,
                                  "required": True},
@@ -391,19 +390,16 @@ class Admin(commands.Cog):
     async def _warn_user(self, ctx: SlashContext, member: discord.Member, reason_for_warning: str):
         MemberWarning.add_for_member(member, reason_for_warning)
 
-        await ctx.send("done!")\
+        await ctx.send("Lay down the law!", embed=WarningsEmbed(member=member))
 
     @cog_ext.cog_subcommand(base="user", subcommand_group="warnings", name="view",
                             description="Views all warnings for a user.",
-                            guild_ids=[197972184466063381],
                             options=[
                                 {"name": "member", "description": "The person you're looking for.", "type": SlashCommandOptionType.USER,
                                  "required": True}])
     @commands.has_permissions(kick_members=True)
     async def _user_warnings(self, ctx: SlashContext, member: discord.Member):
-        embed = WarningsEmbed(member=member)
-
-        await ctx.send(embed=embed)
+        await ctx.send(embed=WarningsEmbed(member=member))
 
     async def _on_message(self, message: discord.Message):
         if not message.content.startswith(self.client.command_prefix):
