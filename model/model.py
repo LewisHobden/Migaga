@@ -350,3 +350,17 @@ class WelcomeMessage(BaseModel):
 
     class Meta:
         table_name = "discord_welcome_messages"
+
+
+class MemberWarning(BaseModel):
+    id = AutoField()
+    guild_id = BigIntegerField()
+    member_id = BigIntegerField()
+    note = TextField()
+
+    @classmethod
+    def add_for_member(cls, member: Member, reason_for_warning: str):
+        return cls.create(guild_id=member.guild.id, member_id=member.id, note=reason_for_warning)
+
+    class Meta:
+        table_name = "discord_warnings"

@@ -3,6 +3,7 @@ import logging
 import discord
 from discord import RawReactionActionEvent
 from discord.ext import commands
+from discord_slash import cog_ext, SlashContext
 
 from cogs.utilities import credential_checks
 from converters.converters import GlobalUserConverter
@@ -377,6 +378,20 @@ class Admin(commands.Cog):
             await ctx.send("I don't have permission to do this!")
         except discord.HTTPException:
             await ctx.send("I was unable to purge these messages. Are any of them older than 14 days?")
+
+    @cog_ext.cog_subcommand(base="user", name="warn",
+                            description="Records a warning for a user.",
+                            guild_ids=[197972184466063381],
+                            options=[
+                                {"name": "member", "description": "The person you're trying to warn.", "type": 6,
+                                 "required": True},
+                                {"name": "reason_for_warning", "description": "The reason for warning this user.", "type": 3,
+                                 "required": True}])
+    @commands.has_permissions(manage_guild=True)
+    async def _warn_user(self, ctx: SlashContext, member: discord.Member, reason_for_warning: str):
+        MemberWarning.add_for_member(member, reason_for_warning)
+
+        await ctx.send("done!")
 
     async def _on_message(self, message: discord.Message):
         if not message.content.startswith(self.client.command_prefix):
