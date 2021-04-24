@@ -6,7 +6,7 @@ from discord import Guild
 from emoji import emojize
 
 from cogs.utilities.formatting import format_points
-from model.model import StarredMessageModel, GuildConfig
+from model.model import StarredMessageModel, GuildConfig, MemberWarning
 
 
 class ConfigEmbed(discord.Embed):
@@ -183,3 +183,17 @@ class UserEmbed(discord.Embed):
         self.add_field(name="ID", value=user.id)
 
         super().__init__(title="{.name}#{.discriminator}".format(user, user), **kwargs)
+
+
+class WarningsEmbed(discord.Embed):
+    def __init__(self, member: discord.Member, **kwargs):
+        self.set_thumbnail(url=member.avatar_url)
+
+        total = 0
+
+        for warning in MemberWarning.get_for_member(member):
+            total += 1
+            self.add_field(name="On {}".format(warning.date_time_created), value=warning.reason_for_warning, inline=False)
+
+        self.set_footer(text="Total Warnings: {}".format(total))
+        super().__init__(title="Warnings for {.name}".format(member), colour=member.colour, **kwargs)

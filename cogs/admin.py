@@ -3,11 +3,11 @@ import logging
 import discord
 from discord import RawReactionActionEvent
 from discord.ext import commands
-from discord_slash import cog_ext, SlashContext
+from discord_slash import cog_ext, SlashContext, SlashCommandOptionType
 
 from cogs.utilities import credential_checks
 from converters.converters import GlobalUserConverter
-from model.embeds import UserEmbed
+from model.embeds import UserEmbed, WarningsEmbed
 from model.model import *
 
 log = logging.getLogger(__name__)
@@ -379,19 +379,31 @@ class Admin(commands.Cog):
         except discord.HTTPException:
             await ctx.send("I was unable to purge these messages. Are any of them older than 14 days?")
 
-    @cog_ext.cog_subcommand(base="user", name="warn",
+    @cog_ext.cog_subcommand(base="user", subcommand_group="warnings", name="add",
                             description="Records a warning for a user.",
                             guild_ids=[197972184466063381],
                             options=[
-                                {"name": "member", "description": "The person you're trying to warn.", "type": 6,
+                                {"name": "member", "description": "The person you're trying to warn.", "type": SlashCommandOptionType.USER,
                                  "required": True},
-                                {"name": "reason_for_warning", "description": "The reason for warning this user.", "type": 3,
+                                {"name": "reason_for_warning", "description": "The reason for warning this user.", "type": SlashCommandOptionType.STRING,
                                  "required": True}])
-    @commands.has_permissions(manage_guild=True)
+    @commands.has_permissions(kick_members=True)
     async def _warn_user(self, ctx: SlashContext, member: discord.Member, reason_for_warning: str):
         MemberWarning.add_for_member(member, reason_for_warning)
 
-        await ctx.send("done!")
+        await ctx.send("done!")\
+
+    @cog_ext.cog_subcommand(base="user", subcommand_group="warnings", name="view",
+                            description="Views all warnings for a user.",
+                            guild_ids=[197972184466063381],
+                            options=[
+                                {"name": "member", "description": "The person you're looking for.", "type": SlashCommandOptionType.USER,
+                                 "required": True}])
+    @commands.has_permissions(kick_members=True)
+    async def _user_warnings(self, ctx: SlashContext, member: discord.Member):
+        embed = WarningsEmbed(member=member)
+
+        await ctx.send(embed=embed)
 
     async def _on_message(self, message: discord.Message):
         if not message.content.startswith(self.client.command_prefix):

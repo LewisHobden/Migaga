@@ -354,13 +354,18 @@ class WelcomeMessage(BaseModel):
 
 class MemberWarning(BaseModel):
     id = AutoField()
+    date_time_created = DateTimeField(default=datetime.now())
     guild_id = BigIntegerField()
     member_id = BigIntegerField()
-    note = TextField()
+    reason_for_warning = TextField()
 
     @classmethod
     def add_for_member(cls, member: Member, reason_for_warning: str):
-        return cls.create(guild_id=member.guild.id, member_id=member.id, note=reason_for_warning)
+        return cls.create(guild_id=member.guild.id, member_id=member.id, reason_for_warning=reason_for_warning)
+
+    @classmethod
+    def get_for_member(cls, member: Member):
+        return cls.select().where((cls.guild_id == member.guild.id) & (cls.member_id == member.id))
 
     class Meta:
         table_name = "discord_warnings"
