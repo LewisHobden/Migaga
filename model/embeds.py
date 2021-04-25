@@ -193,7 +193,10 @@ class WarningsEmbed(discord.Embed):
 
         for warning in MemberWarning.get_for_member(member):
             total += 1
-            self.add_field(name="On {}".format(warning.date_time_created), value=warning.reason_for_warning, inline=False)
+            self.add_field(name="{}".format(warning.date_time_created.strftime("%d/%m/%Y %H:%M:%S")),
+                           value=warning.reason_for_warning, inline=False)
 
-        self.set_footer(text="Total Warnings: {}".format(total))
-        super().__init__(title="Warnings for {.name}".format(member), colour=member.colour, **kwargs)
+        self.set_footer(text="User ID: {.id}".format(member))
+        super().__init__(title="Warnings for {.name}".format(member),
+                         description="This user has {} {}.".format(total, "warning" if total == 1 else "warnings"),
+                         colour=member.colour, **kwargs)
