@@ -3,10 +3,11 @@ import logging
 import discord
 from discord import RawReactionActionEvent
 from discord.ext import commands
+from discord_slash import cog_ext, SlashContext, SlashCommandOptionType
 
 from cogs.utilities import credential_checks
 from converters.converters import GlobalUserConverter
-from model.embeds import UserEmbed
+from model.embeds import UserEmbed, WarningsEmbed
 from model.model import *
 
 log = logging.getLogger(__name__)
@@ -377,6 +378,28 @@ class Admin(commands.Cog):
             await ctx.send("I don't have permission to do this!")
         except discord.HTTPException:
             await ctx.send("I was unable to purge these messages. Are any of them older than 14 days?")
+
+    @cog_ext.cog_subcommand(base="user", subcommand_group="warnings", name="add",
+                            description="Records a warning for a user.",
+                            options=[
+                                {"name": "member", "description": "The person you're trying to warn.", "type": SlashCommandOptionType.USER,
+                                 "required": True},
+                                {"name": "reason_for_warning", "description": "The reason for warning this user.", "type": SlashCommandOptionType.STRING,
+                                 "required": True}])
+    @commands.has_permissions(kick_members=True)
+    async def _warn_user(self, ctx: SlashContext, member: discord.Member, reason_for_warning: str):
+        MemberWarning.add_for_member(member, reason_for_warning)
+
+        await ctx.send("Lay down the law!", embed=WarningsEmbed(member=member))
+
+    @cog_ext.cog_subcommand(base="user", subcommand_group="warnings", name="view",
+                            description="Views all warnings for a user.",
+                            options=[
+                                {"name": "member", "description": "The person you're looking for.", "type": SlashCommandOptionType.USER,
+                                 "required": True}])
+    @commands.has_permissions(kick_members=True)
+    async def _user_warnings(self, ctx: SlashContext, member: discord.Member):
+        await ctx.send(embed=WarningsEmbed(member=member))
 
     async def _on_message(self, message: discord.Message):
         if not message.content.startswith(self.client.command_prefix):

@@ -5,7 +5,7 @@ import discord
 from discord import RawReactionActionEvent
 from discord.ext import commands, tasks
 from discord.ext.commands import PartialEmojiConversionFailure
-from discord_slash import cog_ext, SlashContext
+from discord_slash import cog_ext, SlashContext, SlashCommandOptionType
 
 from converters.converters import PartialEmojiWithUnicodeConverter
 from model.embeds import StarboardEmbed
@@ -162,9 +162,9 @@ class Starboard(commands.Cog):
 
     @cog_ext.cog_subcommand(base="starboard", name="setup",
                             description="Sets up a starboard for a given channel - updates it if there already is one in the channel.",
-                            options=[{"name": "channel", "description": "The channel to set the class up in.", "type": 7, "required": True},
-                                     {"name": "emoji", "description": "The emoji for the starboard to use.", "type": 3, "required": True},
-                                     {"name": "threshold", "description": "If a message has under these many stars, it will be automatically deleted.", "type": 4}])
+                            options=[{"name": "channel", "description": "The channel to set the class up in.", "type": SlashCommandOptionType.CHANNEL, "required": True},
+                                     {"name": "emoji", "description": "The emoji for the starboard to use.", "type": SlashCommandOptionType.STRING, "required": True},
+                                     {"name": "threshold", "description": "If a message has under these many stars, it will be automatically deleted.", "type": SlashCommandOptionType.INTEGER}])
     @commands.has_permissions(manage_guild=True)
     async def _setup_starboard(self, ctx: SlashContext, channel: discord.TextChannel, emoji: str, threshold: int = 1):
         if not isinstance(channel, discord.TextChannel):

@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from discord.ext.commands import RoleConverter, RoleNotFound
-from discord_slash import cog_ext, SlashContext
+from discord_slash import cog_ext, SlashContext, SlashCommandOptionType
 
 from cogs.utilities.formatting import format_points
 from model.embeds import LeaderboardEmbed
@@ -177,13 +177,12 @@ class Points(commands.Cog):
     @cog_ext.cog_subcommand(base="points", name="setup-leaderboard",
                             description="Sets up a new leaderboard, provided a list of roles that are in it.",
                             options=[
-                                {"name": "leaderboard_name", "description": "The name of the leaderboard.", "type": 3,
+                                {"name": "leaderboard_name", "description": "The name of the leaderboard.", "type": SlashCommandOptionType.STRING,
                                  "required": True},
                                 {"name": "roles",
-                                 "description": "Comma-separated list of roles that are in the leaderboard.", "type": 3,
+                                 "description": "Comma-separated list of roles that are in the leaderboard.", "type": SlashCommandOptionType.STRING,
                                  "required": True},
-                            ],
-                            guild_ids=[197972184466063381])
+                            ])
     @commands.has_permissions(manage_guild=True)
     async def _setup_team(self, ctx: SlashContext, leaderboard_name: str, roles: str):
         errors = []

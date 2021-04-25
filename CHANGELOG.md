@@ -14,8 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Custom starboard emoji can now also include the default Discord unicode emoji.
 - Greatly streamlined the starboard process.
 
+### Warnings
+- Server admins can now add warnings to people in their server.
+- Warnings can be viewed using a slash command.
+
 ### Maintenance
-- Banning confirmation now ignored the case of the response.
+- Banning confirmation now ignore the case of the response.
 - Version number is now automatically picked up in the CI process.
 
 ## [4.7.4] - 2021-03-31
