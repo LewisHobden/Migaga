@@ -1,3 +1,4 @@
+from discord import TextChannel
 from discord.ext import commands
 from discord.ext.commands import PartialEmojiConversionFailure
 from discord_slash import SlashContext, cog_ext

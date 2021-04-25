@@ -179,7 +179,10 @@ class ServerLogs(commands.Cog, name="Server Logs"):
 
         server_logs = discord.utils.get(guild.channels, id=logs_channel_id)
 
-        await server_logs.send(embed=embed)
+        try:
+            await server_logs.send(embed=embed)
+        except:
+            pass
 
 
 def setup(client):
