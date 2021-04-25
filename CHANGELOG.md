@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [4.8.1] - 2021-04-25
 ### Features
 - Updated the `!invite` command to also ask for slash commands permissions.
+- Reinstated the log channel server, lost to the annals of git.
 
 ## [4.8.0] - 2021-04-25
 ### Slash Commands
