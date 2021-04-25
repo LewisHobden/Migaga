@@ -1,7 +1,7 @@
 import logging
 
 import discord
-from discord import RawReactionActionEvent
+from discord import RawReactionActionEvent, Permissions
 from discord.ext import commands
 from discord_slash import cog_ext, SlashContext, SlashCommandOptionType
 
@@ -77,7 +77,11 @@ class Admin(commands.Cog):
     @commands.command()
     async def invite(self, ctx):
         """ Get a URL to invite the bot to your own server! """
-        await ctx.send(discord.utils.oauth_url(self.client.client_id))
+        oauth_url = discord.utils.oauth_url(client_id=self.client.client_id,
+                                            permissions=Permissions(permissions=1074130006),
+                                            scopes=('bot', 'applications.commands')
+                                            )
+        await ctx.send("Click the link below to add me to your server! {}".format(oauth_url))
 
     @commands.command(no_pm=True, name="ban")
     @credential_checks.has_permissions(ban_members=True)
@@ -242,7 +246,7 @@ class Admin(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(aliases=["rmwm", "deletewelcome","removewm"])
+    @commands.command(aliases=["rmwm", "deletewelcome", "removewm"])
     @credential_checks.has_permissions(manage_guild=True)
     async def removewelcomemessage(self, ctx):
         """
@@ -382,9 +386,11 @@ class Admin(commands.Cog):
     @cog_ext.cog_subcommand(base="user", subcommand_group="warnings", name="add",
                             description="Records a warning for a user.",
                             options=[
-                                {"name": "member", "description": "The person you're trying to warn.", "type": SlashCommandOptionType.USER,
+                                {"name": "member", "description": "The person you're trying to warn.",
+                                 "type": SlashCommandOptionType.USER,
                                  "required": True},
-                                {"name": "reason_for_warning", "description": "The reason for warning this user.", "type": SlashCommandOptionType.STRING,
+                                {"name": "reason_for_warning", "description": "The reason for warning this user.",
+                                 "type": SlashCommandOptionType.STRING,
                                  "required": True}])
     @commands.has_permissions(kick_members=True)
     async def _warn_user(self, ctx: SlashContext, member: discord.Member, reason_for_warning: str):
@@ -395,7 +401,8 @@ class Admin(commands.Cog):
     @cog_ext.cog_subcommand(base="user", subcommand_group="warnings", name="view",
                             description="Views all warnings for a user.",
                             options=[
-                                {"name": "member", "description": "The person you're looking for.", "type": SlashCommandOptionType.USER,
+                                {"name": "member", "description": "The person you're looking for.",
+                                 "type": SlashCommandOptionType.USER,
                                  "required": True}])
     @commands.has_permissions(kick_members=True)
     async def _user_warnings(self, ctx: SlashContext, member: discord.Member):

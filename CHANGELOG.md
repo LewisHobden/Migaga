@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.8.1] - 2021-04-25
+### Features
+- Updated the `!invite` command to also ask for slash commands permissions.
+
 ## [4.8.0] - 2021-04-25
 ### Slash Commands
 - Starboards can now be configured using slash commands. The original way of adding starboards has been removed.
