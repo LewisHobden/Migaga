@@ -18,8 +18,8 @@ class Config(commands.Cog):
                             description="Configures the logs channel for this server.",
                             options=[{"name": "channel", "description": "The channel for your log messages to be posted in.", "type": 7, "required": True}])
     @commands.has_permissions(manage_guild=True)
-    async def _log_channel(self, ctx: SlashContext, log_channel: TextChannel):
-        channel_id = log_channel.id
+    async def _log_channel(self, ctx: SlashContext, channel: TextChannel):
+        channel_id = channel.id
 
         guild_config = await GuildConfig.get_for_guild(ctx.guild.id)
         guild_config.server_logs_channel_id = channel_id

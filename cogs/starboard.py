@@ -92,6 +92,10 @@ class Starboard(commands.Cog):
 
     async def _on_reaction_removed(self, reaction: RawReactionActionEvent):
         starboard = StarboardModel.get_for_guild(reaction.guild_id, reaction.emoji)
+
+        if starboard is None:
+            return
+
         starred_message = await StarredMessageModel.get_in_starboard(reaction.message_id, starboard.id)
 
         if starred_message is None:

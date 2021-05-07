@@ -91,7 +91,7 @@ class StarboardModel(BaseModel):
         existing = cls.get_or_none(cls.channel_id == channel_id)
 
         if existing is None:
-            return cls.create(guild_id=guild_id, channel_id=channel_id, emoji=emoji, threshold=threshold)
+            return cls.create(guild_id=guild_id, channel_id=channel_id, emoji=emoji, star_threshold=threshold)
 
         existing.emoji = emoji
         existing.star_threshold = threshold
