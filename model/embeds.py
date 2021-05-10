@@ -24,6 +24,7 @@ class ConfigEmbed(discord.Embed):
             points_emoji = guild_config.points_emoji
 
         self.add_field(name="Server Logs", value=logs_channel)
+        self.add_field(name="Prefix", value=guild_config.prefix)
         self.add_field(name="Points", value=guild_config.points_name if not None else "*Not Setup*")
         self.add_field(name="Points Emoji", value=points_emoji)
 

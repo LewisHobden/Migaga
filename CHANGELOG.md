@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Features
+- Migaga now supports custom prefixes!
+
+### Tweaks
+- When requesting an inventory for somebody without points, a message is now sent.
+- When using `!addrole` the prefix is automatically removed to avoid double prefix requirements.
+- Point commands can now be triggered by whitelisted bots.
 
 ## [4.8.3] - 2021-05-07
 ### Fixes

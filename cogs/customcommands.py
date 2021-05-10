@@ -123,14 +123,14 @@ class CustomCommands(commands.Cog, name="Custom Commands"):
         await ctx.send(result_str)
 
     async def _on_message(self, message: discord.Message):
-        if not message.content.startswith(self.client.command_prefix):
+        bot_prefix = await self.client.command_prefix(self.client, message)
+
+        if not message.content.startswith(bot_prefix):
             return
 
-        space_location = message.content.find(" ")
-        if space_location == -1:
-            command = message.content[1:]
-        else:
-            command = message.content[1:space_location]
+        prefix_length = len(bot_prefix)
+        split_location = message.content.find(" ")
+        command = message.content[prefix_length:split_location if split_location > 0 else None]
 
         response = await check_if_command_triggered(message, command)
 
