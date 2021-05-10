@@ -573,6 +573,14 @@ class FlairMessage(commands.Cog, name="Reaction Flairs"):
             member, channel, roles_to_provide, "{.mention}, I have given you the role(s) ")
 
 
+class SpecialCommands(commands.Cog, command_attrs=dict(hidden=True)):
+    @commands.command(name="say")
+    @commands.is_owner()
+    async def _say(self, ctx, *, message: str):
+        await ctx.send(message)
+
+
 def setup(client):
     client.add_cog(Admin(client))
     client.add_cog(FlairMessage(client))
+    client.add_cog(SpecialCommands(client))
