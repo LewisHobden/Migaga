@@ -222,6 +222,7 @@ class GuildConfig(BaseModel):
     points_name = TextField(null=True)
     points_emoji = TextField(null=True)
     config_data = JSONField(null=True)
+    prefix = CharField(null=False, max_length=5, index=True, default="!")
 
     @classmethod
     async def get_for_guild(cls, guild_id: int) -> GuildConfig:
