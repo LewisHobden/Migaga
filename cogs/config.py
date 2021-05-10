@@ -1,7 +1,7 @@
 from discord import TextChannel
 from discord.ext import commands
 from discord.ext.commands import PartialEmojiConversionFailure
-from discord_slash import SlashContext, cog_ext
+from discord_slash import SlashContext, cog_ext, SlashCommandOptionType
 
 from converters.converters import PartialEmojiWithUnicodeConverter
 from model.embeds import ConfigEmbed
@@ -35,6 +35,21 @@ class Config(commands.Cog):
     async def _points(self, ctx: SlashContext, points: str):
         guild_config = await GuildConfig.get_for_guild(ctx.guild.id)
         guild_config.points_name = points
+        guild_config.save()
+
+        embed = ConfigEmbed(guild_config=guild_config)
+        await ctx.send(content="Config has been updated.", embeds=[embed])\
+
+    @cog_ext.cog_subcommand(base="config", name="prefix",
+                            description="Configures the prefix for commands in this server.",
+                            options=[{"name": "prefix", "description": "The prefix for the bot to use,", "type": SlashCommandOptionType.STRING, "required": True}])
+    @commands.has_permissions(manage_guild=True)
+    async def _prefix(self, ctx: SlashContext, prefix: str):
+        if len(prefix) > 5:
+            return ctx.send("Prefixes cannot be longer than 5 characters!")
+
+        guild_config = await GuildConfig.get_for_guild(ctx.guild.id)
+        guild_config.prefix = prefix
         guild_config.save()
 
         embed = ConfigEmbed(guild_config=guild_config)
