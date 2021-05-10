@@ -188,9 +188,9 @@ class Admin(commands.Cog):
         else:
             await ctx.send("Softbanned {.name}. Their messages should be gone now.".format(user))
 
-    @commands.command(no_pm=True, aliases=['rolecommand'])
+    @commands.command(no_pm=True, name='addrole', aliases=['rolecommand'])
     @checks.has_permissions(manage_roles=True)
-    async def addrole(self, ctx, role: discord.Role):
+    async def _add_role(self, ctx, role: discord.Role):
         """Adds a role to the bot so that it can either be self assigned by a user or given by an admin.
 
         If you have roles with the same name the last one will be chosen.
@@ -201,7 +201,8 @@ class Admin(commands.Cog):
             "message",
             check=lambda m: m.author == ctx.message.author and m.channel == ctx.message.channel)
 
-        alias = alias.content.lower().strip()
+        # If the user provides the prefix when adding the role, automatically remove it. Strip spaces and loweercase.
+        alias = alias.content.lower().strip().replace(ctx.prefix, "")
 
         RoleAlias.create(alias=alias, role_id=role.id, server_id=ctx.message.guild.id, is_admin_only=False, uses=0)
 
