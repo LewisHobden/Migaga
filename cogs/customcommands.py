@@ -3,7 +3,7 @@ import logging
 import discord
 from discord.ext import commands
 
-from cogs.utilities import credential_checks
+from cogs.utilities import checks
 from model.model import *
 
 log = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ class CustomCommands(commands.Cog, name="Custom Commands"):
         self.client.add_listener(self._on_message, "on_message")
 
     @commands.command(no_pm=True, )
-    @credential_checks.has_permissions(manage_emojis=True)
+    @checks.has_permissions(manage_emojis=True)
     async def addcommand(self, ctx, command_name: str):
         """ Add a new command to the server!
 
@@ -54,7 +54,7 @@ class CustomCommands(commands.Cog, name="Custom Commands"):
         await ctx.send(embed=embed)
 
     @commands.command(no_pm=True, )
-    @credential_checks.has_permissions(manage_emojis=True)
+    @checks.has_permissions(manage_emojis=True)
     async def deletecommand(self, ctx, command_name: str):
         """ Delete a command from the server """
         results = list(CustomCommand.get_responses_by_name(ctx.message.guild.id, command_name))

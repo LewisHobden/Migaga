@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord.ext.commands import RoleConverter, RoleNotFound
 from discord_slash import cog_ext, SlashContext, SlashCommandOptionType
 
+from cogs.utilities.checks import is_human_or_whitelisted_bot
 from cogs.utilities.formatting import format_points
 from model.embeds import LeaderboardEmbed
 from model.model import *
@@ -129,6 +130,7 @@ class Points(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(manage_roles=True)
+    @is_human_or_whitelisted_bot()
     async def points(self, ctx, action: str, member: discord.Member, amount: float):
         """ Give or takes away points from a user based on the action and how much you define.
         Your action is "give" or "take".. example, !points remove @Migaga 10
