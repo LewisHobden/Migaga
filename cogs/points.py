@@ -93,6 +93,9 @@ class Points(commands.Cog):
         user_total = await PointTransaction.get_total_for_member(member)
         position = await PointTransaction.get_position_in_guild_leaderboard(ctx.guild.id, member.id)
 
+        if user_total is None:
+            return await ctx.send("No points earned yet!")
+
         embed = discord.Embed(title="", color=member.colour)
         embed.set_author(name=member.display_name, icon_url=member.avatar_url)
 
