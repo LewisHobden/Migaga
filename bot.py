@@ -1,4 +1,4 @@
-from discord.ext.commands import MinimalHelpCommand
+from discord.ext.commands import MinimalHelpCommand, Bot
 from discord_slash import SlashCommand
 
 from cogs.customcommands import *
@@ -7,6 +7,13 @@ import discord
 
 import logging
 
+
+async def prefix(bot: Bot, message: Message):
+    guild_config = await GuildConfig.get_for_guild(message.guild.id)
+
+    return guild_config.prefix
+
+
 # Load the config
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -14,7 +21,6 @@ config.read("config.ini")
 # Set up the bot.
 version = config.get("Env", "Version")
 bot_description = "Migaga {}".format(version)
-prefix = "!"
 client = commands.Bot(command_prefix=prefix, description=bot_description, intents=discord.Intents.all(), pm_help=None,
                       activity=discord.Game(name="{}!".format(version)))
 slash = SlashCommand(client, override_type=True, application_id=int(config.get("Env", "ClientId")))
