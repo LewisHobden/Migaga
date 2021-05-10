@@ -409,14 +409,14 @@ class Admin(commands.Cog):
         await ctx.send(embed=WarningsEmbed(member=member))
 
     async def _on_message(self, message: discord.Message):
-        if not message.content.startswith(self.client.command_prefix):
+        bot_prefix = await self.client.command_prefix(self.client, message)
+
+        if not message.content.startswith(bot_prefix):
             return
 
-        space_location = message.content.find(" ")
-        if space_location == -1:
-            command = message.content[1:]
-        else:
-            command = message.content[1:space_location]
+        prefix_length = len(bot_prefix)
+        split_location = message.content.find(" ")
+        command = message.content[prefix_length:split_location if split_location > 0 else None]
 
         aliases = RoleAlias.select().where(RoleAlias.server_id == message.guild.id and RoleAlias.alias % command)
         roles_to_provide, roles_to_remove = await _get_roles_from_iterable(aliases, message.guild)
