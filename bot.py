@@ -44,6 +44,7 @@ async def on_ready():
     print('------')
 
     setattr(client, "client_id", config.get("Env", "ClientId"))
+    setattr(client, "whitelisted_bot_ids", config.get("Bot", "WhitelistedBotIds").split(" "))
     await slash.sync_all_commands()
 
 

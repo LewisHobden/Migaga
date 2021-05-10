@@ -5,7 +5,7 @@ from discord import RawReactionActionEvent, Permissions
 from discord.ext import commands
 from discord_slash import cog_ext, SlashContext, SlashCommandOptionType
 
-from cogs.utilities import credential_checks
+from cogs.utilities import checks
 from converters.converters import GlobalUserConverter
 from model.embeds import UserEmbed, WarningsEmbed
 from model.model import *
@@ -84,7 +84,7 @@ class Admin(commands.Cog):
         await ctx.send("Click the link below to add me to your server! {}".format(oauth_url))
 
     @commands.command(no_pm=True, name="ban")
-    @credential_checks.has_permissions(ban_members=True)
+    @checks.has_permissions(ban_members=True)
     async def ban(self, ctx, user: GlobalUserConverter, *, reason: str = ""):
         """Bans a member from the server. You can provide a user either by their ID or mentioning them.
         In order to do this, the bot and you must have Ban Member permissions.
@@ -106,7 +106,7 @@ class Admin(commands.Cog):
         return await _ban_user_process(ctx, user, 0, reason)
 
     @commands.command(no_pm=True, )
-    @credential_checks.has_permissions(ban_members=True)
+    @checks.has_permissions(ban_members=True)
     async def massban(self, ctx, *, users: str):
         """
         Finds and bans people based on a list of user IDs.
@@ -126,7 +126,7 @@ class Admin(commands.Cog):
                 await ctx.send("I could not find the user \"{}\"".format(id))
 
     @commands.command(no_pm=True, )
-    @credential_checks.has_permissions(ban_members=True)
+    @checks.has_permissions(ban_members=True)
     async def unban(self, ctx, member: discord.User):
         """Unbans a member from the server. You can provide a user either by their ID or mentioning them.
         In order to do this, the bot and you must have Ban Member permissions.
@@ -141,7 +141,7 @@ class Admin(commands.Cog):
             await ctx.send("Ok! Unbanned " + member.name)
 
     @commands.command(no_pm=True, )
-    @credential_checks.has_permissions(kick_members=True)
+    @checks.has_permissions(kick_members=True)
     async def kick(self, ctx, member: discord.Member):
         """Kicks a member from the server.
         In order to do this, the bot and you must have Kick Member permissions.
@@ -156,7 +156,7 @@ class Admin(commands.Cog):
             await ctx.send("BOOM. Kicked " + member.name)
 
     @commands.command(no_pm=True, )
-    @credential_checks.has_permissions(manage_roles=True)
+    @checks.has_permissions(manage_roles=True)
     async def unflaired(self, ctx):
         """ Counts the total number of people without flairs in the server.
 
@@ -170,7 +170,7 @@ class Admin(commands.Cog):
         await ctx.send("I found " + str(len(unflaired_users)) + " " + plural + " without a role in this server.\n")
 
     @commands.command(no_pm=True, )
-    @credential_checks.has_permissions(ban_members=True)
+    @checks.has_permissions(ban_members=True)
     async def softban(self, ctx, user: discord.User, delete_message_days: int = 0, reason: str = ""):
         """Bans and unbans a member from the server. You can provide a user either by their ID or mentioning them.
         In order to do this, the bot and you must have Ban Member permissions.
@@ -189,7 +189,7 @@ class Admin(commands.Cog):
             await ctx.send("Softbanned {.name}. Their messages should be gone now.".format(user))
 
     @commands.command(no_pm=True, aliases=['rolecommand'])
-    @credential_checks.has_permissions(manage_roles=True)
+    @checks.has_permissions(manage_roles=True)
     async def addrole(self, ctx, role: discord.Role):
         """Adds a role to the bot so that it can either be self assigned by a user or given by an admin.
 
@@ -212,7 +212,7 @@ class Admin(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["wm"])
-    @credential_checks.has_permissions(manage_guild=True)
+    @checks.has_permissions(manage_guild=True)
     async def welcomemessage(self, ctx, *, message):
         """
         Creates an automatic welcome message for the bot to say when a new user joins. Use <@> for user mention,
@@ -247,7 +247,7 @@ class Admin(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["rmwm", "deletewelcome", "removewm"])
-    @credential_checks.has_permissions(manage_guild=True)
+    @checks.has_permissions(manage_guild=True)
     async def removewelcomemessage(self, ctx):
         """
         Allows the user to delete a welcome message from the guild.
@@ -298,7 +298,7 @@ class Admin(commands.Cog):
             await ctx.send("I'm not sure what you just tried to delete.. Run the command again?")
 
     @commands.command(no_pm=True, aliases=["roleoverwrite", "rolerule"])
-    @credential_checks.has_permissions(manage_roles=True)
+    @checks.has_permissions(manage_roles=True)
     async def overwrite(self, ctx, *, role: discord.Role):
         """When a role has been assigned a command, any overwrite will remove that role when the command is used.
 
@@ -326,7 +326,7 @@ class Admin(commands.Cog):
         await ctx.send("Done! Roles will be overwritten when they use the command.")
 
     @commands.command(no_pm=True, hidden=True, )
-    @credential_checks.has_permissions(manage_roles=True)
+    @checks.has_permissions(manage_roles=True)
     async def roleinfo(self, ctx, *, role: discord.Role):
         """Get information on a role.
 
@@ -366,7 +366,7 @@ class Admin(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(no_pm=True, hidden=True)
-    @credential_checks.has_permissions(manage_messages=True)
+    @checks.has_permissions(manage_messages=True)
     async def purge(self, ctx, number_of_messages: int, channel: discord.TextChannel = None):
         """Delete a number of messages from the channel you type it in!
         Messages cannot be purged if they are older than 14 days.
@@ -573,6 +573,14 @@ class FlairMessage(commands.Cog, name="Reaction Flairs"):
             member, channel, roles_to_provide, "{.mention}, I have given you the role(s) ")
 
 
+class SpecialCommands(commands.Cog, command_attrs=dict(hidden=True)):
+    @commands.command(name="say")
+    @commands.is_owner()
+    async def _say(self, ctx, *, message: str):
+        await ctx.send(message)
+
+
 def setup(client):
     client.add_cog(Admin(client))
     client.add_cog(FlairMessage(client))
+    client.add_cog(SpecialCommands(client))
