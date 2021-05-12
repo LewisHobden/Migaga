@@ -129,8 +129,8 @@ class StarboardEmbed(discord.Embed):
         """
         content = "_I can't seem to show this message, jump to it and see for yourself?_"
 
-        if self._discord_message.content:
-            content = "\"{}\"".format(self._discord_message.content)
+        if self._discord_message.content or self.image:
+            content = self._discord_message.content
 
         self.description = content
 

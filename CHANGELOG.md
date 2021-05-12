@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.9.1] - 2021-05-12
+### Tweaks
+- Fixed a rendering issue when displaying starboard messages with an image and no content.
+
 ## [4.9.0] - 2021-05-10
 ### Features
 - Migaga now supports custom prefixes!
