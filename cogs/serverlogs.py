@@ -1,10 +1,8 @@
-from discord.ext import commands
+import datetime
+import io
 
 import discord
-import datetime
-
-import os
-import io
+from discord.ext import commands
 
 from model.model import GuildConfig
 
@@ -93,9 +91,11 @@ class ServerLogs(commands.Cog, name="Server Logs"):
             # Save and post each attachment.
             for attachment in message.attachments:
                 buffer = io.BytesIO()
-                await attachment.save(fp=buffer, use_cached=True)
-
-                e.set_image(url=await self._save_file_to_cdn(buffer, attachment.filename))
+                try:
+                    await attachment.save(fp=buffer, use_cached=True)
+                    e.set_image(url=await self._save_file_to_cdn(buffer, attachment.filename))
+                except discord.errors.NotFound:
+                    return
 
         await self._notify(e, message.channel.guild)
 
@@ -130,10 +130,13 @@ class ServerLogs(commands.Cog, name="Server Logs"):
 
             buffer = io.BytesIO()
             before_avatar_path = str(after.id) + "." + image_format
-            await before.avatar_url_as(format=image_format).save(fp=buffer)
 
-            e.set_image(url=await self._save_file_to_cdn(buffer, filename=before_avatar_path))
-            e.set_thumbnail(url=after.avatar_url)
+            try:
+                await before.avatar_url_as(format=image_format).save(fp=buffer)
+                e.set_image(url=await self._save_file_to_cdn(buffer, filename=before_avatar_path))
+                e.set_thumbnail(url=after.avatar_url)
+            except discord.errors.NotFound:
+                return
 
         for guild in self.client.guilds:
             member = discord.utils.find(lambda m: m.id == after.id, guild.members)
