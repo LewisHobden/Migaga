@@ -7,6 +7,8 @@ import discord
 
 import logging
 
+from model.bot import Migaga
+
 
 async def prefix(bot: Bot, message: Message):
     guild_config = await GuildConfig.get_for_guild(message.guild.id)
@@ -21,8 +23,8 @@ config.read("config.ini")
 # Set up the bot.
 version = config.get("Env", "Version")
 bot_description = "Migaga {}".format(version)
-client = commands.Bot(command_prefix=prefix, description=bot_description, intents=discord.Intents.all(), pm_help=None,
-                      activity=discord.Game(name="{}!".format(version)))
+client = Migaga(command_prefix=prefix, description=bot_description, intents=discord.Intents.all(), pm_help=None,
+                activity=discord.Game(name="{}!".format(version)))
 slash = SlashCommand(client, override_type=True, application_id=int(config.get("Env", "ClientId")))
 
 logging.basicConfig(level=logging.INFO)

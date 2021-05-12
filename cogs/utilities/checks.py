@@ -24,12 +24,3 @@ def has_permissions(**permissions):
         return _check_permissions(ctx, **permissions)
 
     return commands.check(predicate)
-
-
-def is_human_or_whitelisted_bot():
-    def predicate(ctx):
-        author = ctx.message.author
-
-        return (not author.bot) or str(author.id) in ctx.bot.whitelisted_bot_ids
-
-    return commands.check(predicate)
