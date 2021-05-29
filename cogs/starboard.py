@@ -56,10 +56,11 @@ class Starboard(commands.Cog):
             try:
                 original_message = await original_message_channel.fetch_message(message_to_check.message_id)
                 new_embed = await self._get_starred_embed(message_to_check, original_message)
-
-                starboard_message = await starboard_channel.fetch_message(message_to_check.embed_message_id)
-            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+            except discord.NotFound:
                 new_embed = None
+
+            if message_to_check.embed_message_id:
+                starboard_message = await starboard_channel.fetch_message(message_to_check.embed_message_id)
 
             star_threshold = message_to_check.starboard.star_threshold
             number_of_stars = len(message_to_check.starrers)

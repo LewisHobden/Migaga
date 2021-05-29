@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.9.2] - 2021-05-29
+### Tweaks
+- Fixed an issue that would cause starred messages to persist if the original message was deleted.
+
 ## [4.9.1] - 2021-05-12
 ### Tweaks
 - Fixed a rendering issue when displaying starboard messages with an image and no content.
