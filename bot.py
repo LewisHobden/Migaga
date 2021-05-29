@@ -43,6 +43,7 @@ extensions = [
     "cogs.serverlogs",
     "cogs.reminders",
     "cogs.utilities.error_handling",
+    "cogs.games.dice",
 ]
 
 
@@ -53,7 +54,7 @@ async def on_ready():
 
     setattr(client, "client_id", config.get("Env", "ClientId"))
     setattr(client, "whitelisted_bot_ids", config.get("Bot", "WhitelistedBotIds").split(" "))
-    await slash.sync_all_commands()
+    # await slash.sync_all_commands()
 
 
 if __name__ == '__main__':
