@@ -1,3 +1,4 @@
+import itertools
 from random import randint
 
 from discord.ext import commands
@@ -14,7 +15,7 @@ class DiceConverter(commands.Converter):
         total_requested = dice_components[0] if dice_components[0].isnumeric() and int(dice_components[0]) > 0 else 0
         dice_figure = dice_components[1] if dice_components[1].isnumeric() and int(dice_components[1]) > 0 else 0
 
-        return [Dice(total_sides=dice_figure) for _ in total_requested]
+        return DiceInstruction(total_sides=dice_figure, total_rolls=total_requested)
 
 
 class KeepConverter(commands.Converter):
@@ -35,14 +36,15 @@ class KeepConverter(commands.Converter):
         return {"lowest": keep.startswith("kl"), "number_to_keep": int(number_to_keep)}
 
 
-class Dice:
-    def __init__(self, total_sides: int):
-        self._total_sides = total_sides
+class DiceInstruction:
+    def __init__(self, total_sides: int, total_rolls: int):
+        self._total_rolls = int(total_rolls)
+        self._total_sides = int(total_sides)
         self._roll_value = None
 
     def roll(self) -> int:
-        if self._roll_value is None:
-            self._roll_value = randint(1, self._total_sides)
+        for index in range(0, self._total_rolls):
+            self._roll_value += randint(1, int(self._total_sides))
 
         return self._roll_value
 
@@ -54,11 +56,13 @@ class DiceCog(commands.Cog, name="Dice"):
     @commands.command(name="roll", aliases=["dice"])
     async def _roll(self, ctx, dice: Greedy[DiceConverter], keep: KeepConverter = None):
         """ Ask the bot to roll a dice a number of times, try "3 D20" or "4 40". """
-        index = 0
+        total = 0
 
-        for die_list in dice:
-            for die in die_list:
-                await ctx.send("rolling a dice.. {}".format(die.roll()))
+        async with ctx.channel.typing():
+            for die in dice:
+                total += die.roll()
+
+            await ctx.send("Here is your total: {}".format(total))
 
         # if dice_type < 2 or dice_type > 100000:
         #     return await ctx.send("I don't really recognise that kind of dice.")
