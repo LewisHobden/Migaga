@@ -1,6 +1,9 @@
 import itertools
+import json
 from random import randint
+from typing import List
 
+from discord import Embed, Colour
 from discord.ext import commands
 from discord.ext.commands import Greedy, BadArgument
 
@@ -15,7 +18,7 @@ class DiceConverter(commands.Converter):
         total_requested = dice_components[0] if dice_components[0].isnumeric() and int(dice_components[0]) > 0 else 0
         dice_figure = dice_components[1] if dice_components[1].isnumeric() and int(dice_components[1]) > 0 else 0
 
-        return DiceInstruction(total_sides=dice_figure, total_rolls=total_requested)
+        return [Die(total_sides=dice_figure) for _ in range(0, int(total_requested))]
 
 
 class KeepConverter(commands.Converter):
@@ -27,7 +30,7 @@ class KeepConverter(commands.Converter):
             return None
 
         # The keep string should either be empty, or "kl|k" followed by a number.
-        if not keep.startswith("kl") or not keep.startswith("k"):
+        if not keep.startswith("kl") and not keep.startswith("k"):
             raise BadArgument("Unknown \"keep\" argument: {}".format(keep))
 
         if not number_to_keep.isnumeric():
@@ -36,17 +39,44 @@ class KeepConverter(commands.Converter):
         return {"lowest": keep.startswith("kl"), "number_to_keep": int(number_to_keep)}
 
 
-class DiceInstruction:
-    def __init__(self, total_sides: int, total_rolls: int):
-        self._total_rolls = int(total_rolls)
+class Die:
+    def __init__(self, total_sides: int):
         self._total_sides = int(total_sides)
         self._roll_value = None
 
     def roll(self) -> int:
-        for index in range(0, self._total_rolls):
-            self._roll_value += randint(1, int(self._total_sides))
+        if self._roll_value is None:
+            self._roll_value = randint(1, int(self._total_sides))
 
         return self._roll_value
+
+
+class DiceEmbed(Embed):
+    def __init__(self, **kwargs):
+        kwargs['colour'] = Colour.red()
+
+        super().__init__(**kwargs)
+
+    def set_dice(self, dice: List[List[Die]], number_to_keep: int = None, keep_lowest: bool = False):
+        total = 0
+        rolls = []
+
+        for dice_instruction in dice:
+            for die in dice_instruction:
+                rolls.append(die.roll())
+
+            total += sum(rolls)
+
+        self.add_field(name="Total", value=str(total))
+        self.description = "`{}`".format(json.dumps(rolls))
+
+        if number_to_keep is not None:
+            # Sort the list.
+            rolls.sort(reverse=keep_lowest is False)
+            filtered_rolls = rolls[0:number_to_keep]
+
+            self.add_field(name="Dice To Keep", value="`{}`".format(json.dumps(filtered_rolls)))
+            self.add_field(name="Kept Dice Total", value=str(sum(filtered_rolls)))
 
 
 class DiceCog(commands.Cog, name="Dice"):
@@ -56,29 +86,12 @@ class DiceCog(commands.Cog, name="Dice"):
     @commands.command(name="roll", aliases=["dice"])
     async def _roll(self, ctx, dice: Greedy[DiceConverter], keep: KeepConverter = None):
         """ Ask the bot to roll a dice a number of times, try "3 D20" or "4 40". """
-        total = 0
+        async with ctx.typing():
+            embed = DiceEmbed(title="The dice have been cast!")
+            embed.set_dice(dice, keep['number_to_keep'], keep['lowest'])
+            embed.set_footer(text="Requested by {.display_name}".format(ctx.author))
 
-        async with ctx.channel.typing():
-            for die in dice:
-                total += die.roll()
-
-            await ctx.send("Here is your total: {}".format(total))
-
-        # if dice_type < 2 or dice_type > 100000:
-        #     return await ctx.send("I don't really recognise that kind of dice.")
-        #
-        # if number_of_dice > 500:
-        #     return await ctx.send("I can't roll that many dice!")
-        #
-        # for i in range(1, number_of_dice):
-        #     rolls.append(random.randint(0, dice_type))
-        #
-        # total_dice_formatted = "`{}`\n = ".format(" + ".join(map(str, rolls)))
-        #
-        # if len(total_dice_formatted) > 1950:
-        #     total_dice_formatted = ""
-        #
-        # await ctx.send("You rolled\n{}**{}**!".format(total_dice_formatted, sum(rolls)))
+            await ctx.send(embed=embed)
 
 
 def setup(client):
