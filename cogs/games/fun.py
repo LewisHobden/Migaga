@@ -54,38 +54,6 @@ class Fun(commands.Cog):
 
         await ctx.send("Here you are!", file=file)
 
-    @commands.command(name="roll", aliases=["dice", "throw"])
-    async def _roll(self, ctx, dice: str):
-        """ Ask the bot to roll a dice, try "D20" or "40". """
-        dice_type = int(dice.replace("d", ""))
-
-        if dice_type < 2 or dice_type > 100000:
-            return await ctx.send("I don't really recognise that kind of dice.")
-
-        await ctx.send("You rolled a **{}**!".format(random.randint(0, dice_type)))
-
-    @commands.command(name="rollmultiple", aliases=["multidice", "multiroll"])
-    async def _roll_multiple(self, ctx, number_of_dice: int, dice: str):
-        """ Ask the bot to roll a dice a number of times, try "3 D20" or "4 40". """
-        dice_type = int(dice.replace("d", ""))
-        rolls = []
-
-        if dice_type < 2 or dice_type > 100000:
-            return await ctx.send("I don't really recognise that kind of dice.")
-
-        if number_of_dice > 500:
-            return await ctx.send("I can't roll that many dice!")
-
-        for i in range(1, number_of_dice):
-            rolls.append(random.randint(0, dice_type))
-
-        total_dice_formatted = "`{}`\n = ".format(" + ".join(map(str, rolls)))
-
-        if len(total_dice_formatted) > 1950:
-            total_dice_formatted = ""
-
-        await ctx.send("You rolled\n{}**{}**!".format(total_dice_formatted, sum(rolls)))
-
     @commands.command()
     async def kitten(self, ctx):
         """ Random kitten pictures! So sweet. """
