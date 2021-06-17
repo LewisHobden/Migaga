@@ -1,11 +1,11 @@
-import itertools
 import json
+from datetime import datetime
 from random import randint
 from typing import List
 
 from discord import Embed, Colour
 from discord.ext import commands
-from discord.ext.commands import Greedy, BadArgument
+from discord.ext.commands import BadArgument
 
 
 class DiceConverter(commands.Converter):
@@ -15,10 +15,11 @@ class DiceConverter(commands.Converter):
         if len(dice_components) != 2:
             raise KeyError("Unknown dice input: {}".format(argument))
 
+        # Parse the input for its 2 components, its number of sides and how many to roll.
         total_requested = dice_components[0] if dice_components[0].isnumeric() and int(dice_components[0]) > 0 else 0
         dice_figure = dice_components[1] if dice_components[1].isnumeric() and int(dice_components[1]) > 0 else 0
 
-        return [Die(total_sides=dice_figure) for _ in range(0, int(total_requested))]
+        return [Die(total_sides=int(dice_figure)) for _ in range(0, int(total_requested))]
 
 
 class KeepConverter(commands.Converter):
@@ -41,7 +42,10 @@ class KeepConverter(commands.Converter):
 
 class Die:
     def __init__(self, total_sides: int):
-        self._total_sides = int(total_sides)
+        if total_sides < 2 or total_sides > 5000:
+            raise BadArgument("Can't roll a dice with that many sides!")
+
+        self._total_sides = total_sides
         self._roll_value = None
 
     def roll(self) -> int:
@@ -54,20 +58,20 @@ class Die:
 class DiceEmbed(Embed):
     def __init__(self, **kwargs):
         kwargs['colour'] = Colour.red()
+        kwargs['timestamp'] = datetime.utcnow()
 
         super().__init__(**kwargs)
 
-    def set_dice(self, dice: List[List[Die]], number_to_keep: int = None, keep_lowest: bool = False):
+    def set_dice(self, dice: List[Die], number_to_keep: int = None, keep_lowest: bool = False):
         total = 0
         rolls = []
 
-        for dice_instruction in dice:
-            for die in dice_instruction:
-                rolls.append(die.roll())
+        for die in dice:
+            rolls.append(die.roll())
 
             total += sum(rolls)
 
-        self.add_field(name="Total", value=str(total))
+        self.add_field(name="Total", value=str(total), inline=False)
         self.description = "`{}`".format(json.dumps(rolls))
 
         if number_to_keep is not None:
@@ -84,10 +88,13 @@ class DiceCog(commands.Cog, name="Dice"):
         self.client = client
 
     @commands.command(name="roll", aliases=["dice"])
-    async def _roll(self, ctx, dice: Greedy[DiceConverter], keep: KeepConverter = None):
+    async def _roll(self, ctx, dice: DiceConverter, keep: KeepConverter = None):
         """ Ask the bot to roll a dice a number of times, try "3 D20" or "4 40". """
+        if keep is None:
+            keep = {"number_to_keep": None, "lowest": False}
+
         async with ctx.typing():
-            embed = DiceEmbed(title="The dice have been cast!")
+            embed = DiceEmbed(title="🎲 The dice have been cast!")
             embed.set_dice(dice, keep['number_to_keep'], keep['lowest'])
             embed.set_footer(text="Requested by {.display_name}".format(ctx.author))
 
