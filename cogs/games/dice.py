@@ -93,12 +93,11 @@ class DiceCog(commands.Cog, name="Dice"):
         if keep is None:
             keep = {"number_to_keep": None, "lowest": False}
 
-        async with ctx.typing():
-            embed = DiceEmbed(title="🎲 The dice have been cast!")
-            embed.set_dice(dice, keep['number_to_keep'], keep['lowest'])
-            embed.set_footer(text="Requested by {.display_name}".format(ctx.author))
+        embed = DiceEmbed(title="🎲 The dice have been cast!")
+        embed.set_dice(dice, keep['number_to_keep'], keep['lowest'])
+        embed.set_footer(text="Requested by {.display_name}".format(ctx.author))
 
-            await ctx.send(embed=embed)
+        await ctx.send(embed=embed)
 
 
 def setup(client):
