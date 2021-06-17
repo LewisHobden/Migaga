@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.9.3] - 2021-06-17
+### Features
+- Added a few more features to the dice rolling commands.
+- You can now request Migaga send a message when banning a user. 
+
 ## [4.9.2] - 2021-05-29
 ### Features
 - Added some functions for rolling dice.

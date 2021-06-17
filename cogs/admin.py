@@ -1,7 +1,7 @@
 import logging
 
 import discord
-from discord import RawReactionActionEvent, Permissions
+from discord import RawReactionActionEvent, Permissions, Embed, Colour
 from discord.ext import commands
 from discord_slash import cog_ext, SlashContext, SlashCommandOptionType
 
@@ -95,13 +95,34 @@ class Admin(commands.Cog):
         if reason:
             embed.add_field(name="Reason for Banning", value=reason, inline=False)
 
-        await ctx.send("Are you sure you want to ban this user? (y/n)", embed=embed)
+        await ctx.send("Are you sure you want to ban this user? Should I (m)essage them with the reason for banning? "
+                       "(y/m/n)", embed=embed)
+
         confirmation = await self.client.wait_for(
             "message", check=lambda m: m.author == ctx.message.author and m.channel == ctx.channel)
 
-        if not confirmation.content.lower().startswith("y"):
+        ban_with_message = confirmation.content.lower().startswith("m")
+
+        if not (confirmation.content.lower().startswith("y") or ban_with_message):
             await ctx.send("Ban aborted!")
             return
+
+        if ban_with_message:
+            await ctx.send("What's the message? (Or say `cancel`)")
+            new_message = await self.client.wait_for(
+                "message", check=lambda m: m.author == ctx.message.author and m.channel == ctx.channel)
+
+            if "cancel" == new_message.content.lower():
+                await ctx.send("Ban aborted!")
+                return
+
+            ban_embed = Embed(colour=Colour.dark_red(), title="You have been banned from: {}".format(ctx.guild),
+                              description="The admin says:\n\n{}".format(new_message.content))
+
+            try:
+                await user.send(embed=ban_embed)
+            except:
+                await ctx.send("I was unable to send a message to that user!")
 
         return await _ban_user_process(ctx, user, 0, reason)
 
