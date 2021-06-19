@@ -91,13 +91,13 @@ class NitroBooster(commands.Cog):
         for stored_message in stored_messages:
             await ctx.send(embed=BoosterMessageEmbed(message=stored_message, member=ctx.author, title="Booster Notification"))
 
-    async def _on_member_updated(self, member_before: Member, member_after: Member, force=False):
-        if force or not (member_before.premium_since is None and member_after.premium_since is not None):
+    async def _on_member_updated(self, member_before: Member, member_after: Member):
+        if not (member_before.premium_since is None and member_after.premium_since is not None):
             return
 
         boost_messages = BoosterMessage.get_for_guild(member_after.guild)
 
-        if not boost_messages:
+        if len(boost_messages) < 1:
             return
 
         for boost_message in boost_messages:
@@ -106,7 +106,7 @@ class NitroBooster(commands.Cog):
             except discord.NotFound:
                 continue  # Should we delete the message from the database?
 
-            controller = BoosterMessageController(boost_message)
+            controller = BoosterMessageController(boost_message.message)
             await controller.send_boost_message(destination, member_after)
 
 
