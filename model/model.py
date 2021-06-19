@@ -5,6 +5,7 @@ from datetime import datetime
 from mailbox import Message
 from typing import List
 
+import discord
 from discord import Member, Emoji, Message, Guild, Role
 from peewee import *
 from playhouse.mysql_ext import JSONField
@@ -22,6 +23,26 @@ def _generate_reference():
 class BaseModel(Model):
     class Meta:
         database = database
+
+
+class BoosterMessage(BaseModel):
+    reference = CharField(max_length=255, primary_key=True)
+    guild_id = BigIntegerField()
+    channel_id = BigIntegerField()
+    message = TextField()
+
+    @classmethod
+    def add_for_guild(cls, guild_id: int, channel: discord.TextChannel, message: str) -> BoosterMessage:
+        reference = _generate_reference()
+
+        return BoosterMessage.create(reference=reference, guild_id=guild_id, channel_id=channel.id, message=message)
+
+    @classmethod
+    def get_for_guild(cls, guild: Guild) -> List[BoosterMessage]:
+        return cls.select().where(guild_id=guild.id)
+
+    class Meta:
+        table_name = "discord_booster_messages"
 
 
 class CustomCommand(BaseModel):
