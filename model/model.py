@@ -49,7 +49,7 @@ class BoosterMessage(BaseModel):
         return BoosterMessage.create(reference=reference, guild_id=guild_id, channel_id=channel.id, message=message)
 
     @classmethod
-    def get_for_guild(cls, guild: Guild, channel: Optional[TextChannel]) -> List[BoosterMessage]:
+    def get_for_guild(cls, guild: Guild, channel: Optional[TextChannel] = None) -> List[BoosterMessage]:
         select = cls.select().where(cls.guild_id == guild.id)
 
         if channel:

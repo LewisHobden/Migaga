@@ -1,7 +1,7 @@
 import datetime
 import discord
 from datetime import datetime
-from discord import TextChannel, Member
+from discord import TextChannel, Member, message
 from discord.ext import commands
 from discord_slash import cog_ext, SlashCommandOptionType, SlashContext
 from peewee import DoesNotExist
@@ -45,7 +45,7 @@ class NitroBooster(commands.Cog):
 
     @cog_ext.cog_subcommand(base="booster", subcommand_group="notification", name="add",
                             description="Sets up a new message for when somebody boosts the guild.",
-                            guild_ids=[750683930549551164],
+                            guild_ids=[197972184466063381],
                             options=[{"name": "channel", "description": "The channel to post the message in.",
                                       "type": SlashCommandOptionType.CHANNEL, "required": True},
                                      {"name": "message",
@@ -57,25 +57,14 @@ class NitroBooster(commands.Cog):
             return await ctx.send("That channel type isn't supported!")
 
         db_message = BoosterMessage.add_for_guild(ctx.guild_id, channel, message)
-        controller = BoosterMessageController(db_message.message)
 
-        embed = discord.Embed(colour=discord.Colour.purple(),
-                              title="New Booster Message Added!",
-                              description=controller.format_message(ctx.author),
-                              timestamp=datetime.utcnow())
-
-        embed.add_field(name="Channel", value=channel.mention)
-        embed.add_field(name="Reference", value=db_message.reference)
-
-        embed.set_footer(text="The \"reference\" is used to delete this message. You can find it later.")
-
-        await ctx.send()
+        await ctx.send(embed=BoosterMessageEmbed(message=db_message, member=ctx.author, title="New Message Added!"))
 
     @cog_ext.cog_subcommand(base="booster", subcommand_group="notification", name="delete",
                             description="Deletes a booster notification from the guild.",
-                            guild_ids=[750683930549551164],
+                            guild_ids=[197972184466063381],
                             options=[{"name": "reference", "description": "The reference of the message to delete.",
-                                      "type": SlashCommandOptionType.STRING, "required": False}])
+                                      "type": SlashCommandOptionType.STRING, "required": True}])
     @commands.has_permissions(manage_guild=True)
     async def _delete_message(self, ctx: SlashContext, reference: str):
         try:
@@ -89,18 +78,18 @@ class NitroBooster(commands.Cog):
 
     @cog_ext.cog_subcommand(base="booster", subcommand_group="notification", name="list",
                             description="Lists all booster notifications in your guild.",
-                            guild_ids=[750683930549551164],
+                            guild_ids=[197972184466063381],
                             options=[{"name": "channel", "description": "The channel specifically to search.",
                                       "type": SlashCommandOptionType.CHANNEL, "required": False}])
     @commands.has_permissions(manage_guild=True)
     async def _list_messages(self, ctx: SlashContext, channel: TextChannel = None):
-        if not isinstance(channel, discord.TextChannel):
+        if channel is not None and not isinstance(channel, discord.TextChannel):
             return await ctx.send("That channel type isn't supported!")
 
-        stored_messages = BoosterMessage.get_for_guild(ctx.guild_id, channel.id if channel else None)
+        stored_messages = BoosterMessage.get_for_guild(ctx.guild, channel)
 
         for stored_message in stored_messages:
-            await ctx.send(BoosterMessage(stored_message, title="Booster Notification"))
+            await ctx.send(embed=BoosterMessageEmbed(message=stored_message, member=ctx.author, title="Booster Notification"))
 
     async def _on_member_updated(self, member_before: Member, member_after: Member, force=False):
         if force or not (member_before.premium_since is None and member_after.premium_since is not None):
