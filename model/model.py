@@ -3,10 +3,10 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 from mailbox import Message
-from typing import List
+from typing import List, Optional
 
 import discord
-from discord import Member, Emoji, Message, Guild, Role
+from discord import Member, Emoji, Message, Guild, Role, TextChannel
 from peewee import *
 from playhouse.mysql_ext import JSONField
 
@@ -21,6 +21,17 @@ def _generate_reference():
 
 
 class BaseModel(Model):
+    @classmethod
+    def generate_unique_reference(cls):
+        new_primary_key = _generate_reference()
+
+        try:
+            while True:
+                cls.get_by_id(new_primary_key)
+                new_primary_key = _generate_reference()
+        except DoesNotExist:
+            return new_primary_key
+
     class Meta:
         database = database
 
@@ -33,13 +44,18 @@ class BoosterMessage(BaseModel):
 
     @classmethod
     def add_for_guild(cls, guild_id: int, channel: discord.TextChannel, message: str) -> BoosterMessage:
-        reference = _generate_reference()
+        reference = cls.generate_unique_reference()
 
         return BoosterMessage.create(reference=reference, guild_id=guild_id, channel_id=channel.id, message=message)
 
     @classmethod
-    def get_for_guild(cls, guild: Guild) -> List[BoosterMessage]:
-        return cls.select().where(guild_id=guild.id)
+    def get_for_guild(cls, guild: Guild, channel: Optional[TextChannel]) -> List[BoosterMessage]:
+        select = cls.select().where(cls.guild_id == guild.id)
+
+        if channel:
+            select.where((cls.guild_id == guild.id) & (cls.channel_id == channel.id))
+
+        return select
 
     class Meta:
         table_name = "discord_booster_messages"
@@ -86,17 +102,6 @@ class FlairMessageReactionModel(BaseModel):
 
     class Meta:
         table_name = "discord_flair_message_reactions"
-
-    @classmethod
-    def generate_unique_reference(cls):
-        id = _generate_reference()
-
-        try:
-            while True:
-                cls.get_by_id(id)
-                id = _generate_reference()
-        except DoesNotExist:
-            return id
 
 
 class StarboardModel(BaseModel):

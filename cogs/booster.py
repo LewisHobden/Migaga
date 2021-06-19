@@ -4,8 +4,25 @@ from datetime import datetime
 from discord import TextChannel, Member
 from discord.ext import commands
 from discord_slash import cog_ext, SlashCommandOptionType, SlashContext
+from peewee import DoesNotExist
 
 from model.model import BoosterMessage
+
+
+class BoosterMessageEmbed(discord.Embed):
+    def __init__(self, message: BoosterMessage, member: Member, **kwargs):
+        controller = BoosterMessageController(message.message)
+
+        kwargs['colour'] = discord.Colour.purple()
+        kwargs['description'] = controller.format_message(member)
+        kwargs['timestamp'] = datetime.utcnow()
+
+        super().__init__(**kwargs)
+
+        self.add_field(name="Channel", value="<#{}>".format(message.channel_id))
+        self.add_field(name="Reference", value=message.reference)
+
+        self.set_footer(text="The \"reference\" is used to delete this message.")
 
 
 class BoosterMessageController:
@@ -26,26 +43,8 @@ class NitroBooster(commands.Cog):
         client.add_listener(self._on_member_updated, "on_member_update")
         self.client = client
 
-    async def _on_member_updated(self, member_before: Member, member_after: Member, force=False):
-        if force or not (member_before.premium_since is None and member_after.premium_since is not None):
-            return
-
-        boost_messages = BoosterMessage.get_for_guild(member_after.guild)
-
-        if not boost_messages:
-            return
-
-        for boost_message in boost_messages:
-            try:
-                destination = self.client.get_channel(boost_message.channel_id)
-            except discord.NotFound:
-                continue  # Should we delete the message from the database?
-
-            controller = BoosterMessageController(boost_message)
-            await controller.send_boost_message(destination, member_after)
-
     @cog_ext.cog_subcommand(base="booster", subcommand_group="notification", name="add",
-                            description="Sets up a new message for when somebody boosts the server.",
+                            description="Sets up a new message for when somebody boosts the guild.",
                             guild_ids=[750683930549551164],
                             options=[{"name": "channel", "description": "The channel to post the message in.",
                                       "type": SlashCommandOptionType.CHANNEL, "required": True},
@@ -53,7 +52,7 @@ class NitroBooster(commands.Cog):
                                       "description": "The message to post. You can use placeholders!",
                                       "type": SlashCommandOptionType.STRING, "required": True}])
     @commands.has_permissions(manage_guild=True)
-    async def _setup_message(self, ctx: SlashContext, channel: TextChannel, message: str):
+    async def _add_message(self, ctx: SlashContext, channel: TextChannel, message: str):
         if not isinstance(channel, discord.TextChannel):
             return await ctx.send("That channel type isn't supported!")
 
@@ -71,6 +70,55 @@ class NitroBooster(commands.Cog):
         embed.set_footer(text="The \"reference\" is used to delete this message. You can find it later.")
 
         await ctx.send()
+
+    @cog_ext.cog_subcommand(base="booster", subcommand_group="notification", name="delete",
+                            description="Deletes a booster notification from the guild.",
+                            guild_ids=[750683930549551164],
+                            options=[{"name": "reference", "description": "The reference of the message to delete.",
+                                      "type": SlashCommandOptionType.STRING, "required": False}])
+    @commands.has_permissions(manage_guild=True)
+    async def _delete_message(self, ctx: SlashContext, reference: str):
+        try:
+            stored_message = BoosterMessage.get_by_id(reference)
+        except DoesNotExist:
+            return await ctx.send("A message could not be found for that ID. Try listing the messages?")
+
+        stored_message.delete_instance()
+
+        await ctx.send("Message was deleted successfully!")
+
+    @cog_ext.cog_subcommand(base="booster", subcommand_group="notification", name="list",
+                            description="Lists all booster notifications in your guild.",
+                            guild_ids=[750683930549551164],
+                            options=[{"name": "channel", "description": "The channel specifically to search.",
+                                      "type": SlashCommandOptionType.CHANNEL, "required": False}])
+    @commands.has_permissions(manage_guild=True)
+    async def _list_messages(self, ctx: SlashContext, channel: TextChannel = None):
+        if not isinstance(channel, discord.TextChannel):
+            return await ctx.send("That channel type isn't supported!")
+
+        stored_messages = BoosterMessage.get_for_guild(ctx.guild_id, channel.id if channel else None)
+
+        for stored_message in stored_messages:
+            await ctx.send(BoosterMessage(stored_message, title="Booster Notification"))
+
+    async def _on_member_updated(self, member_before: Member, member_after: Member, force=False):
+        if force or not (member_before.premium_since is None and member_after.premium_since is not None):
+            return
+
+        boost_messages = BoosterMessage.get_for_guild(member_after.guild)
+
+        if not boost_messages:
+            return
+
+        for boost_message in boost_messages:
+            try:
+                destination = self.client.get_channel(boost_message.channel_id)
+            except discord.NotFound:
+                continue  # Should we delete the message from the database?
+
+            controller = BoosterMessageController(boost_message)
+            await controller.send_boost_message(destination, member_after)
 
 
 def setup(client):
