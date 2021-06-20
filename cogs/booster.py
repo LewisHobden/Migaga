@@ -101,8 +101,8 @@ class BoosterRoleCog(commands.Cog, name="Booster Roles"):
         if not booster_config.is_active:
             return await ctx.reply("Booster roles are not currently enabled in this server! An admin must enable them.")
 
-        if not ctx.author.premium_since:
-            return await ctx.reply("You must boost this server in order to use this command!")
+        # if not ctx.author.premium_since:
+        #     return await ctx.reply("You must boost this server in order to use this command!")
 
         msg = await ctx.reply("Getting that ready for you!")
         stored_role = BoosterRole.get_for_member(ctx.author)
@@ -111,8 +111,15 @@ class BoosterRoleCog(commands.Cog, name="Booster Roles"):
         if not stored_role:
             await msg.edit(content="You don't have a booster role just yet, I'll set you up one now...")
 
+            anchor_role = ctx.guild.get_role(booster_config.anchor_role_id)
+
+            # If an anchor isn't configured, find their "Nitro Booster" role.
+            if anchor_role is None:
+                anchor_role = discord.utils.get(ctx.guild.roles, is_premium_subscriber=True)
+
             role = await ctx.guild.create_role(name="Test Booster Role Name")
             stored_role = BoosterRole.add_for_member(ctx.author, role)
+            await role.edit(position=0 if anchor_role is None else anchor_role.position)
 
             await ctx.author.add_roles(role)
 
