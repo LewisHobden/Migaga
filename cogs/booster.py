@@ -39,7 +39,7 @@ class BoosterRoleEmbed(discord.Embed):
         self.add_field(name="Role Name", value=role.name)
 
         if include_instructions:
-            self.set_footer(text="Use {}boosterrole + \"set\" to update any of these fields.".format(prefix))
+            self.set_footer(text="Tip: use the command {}help br for details on how to update your role".format(prefix))
 
 
 class BoosterRoleController:
@@ -76,7 +76,13 @@ class BoosterRoleCog(commands.Cog, name="Booster Roles"):
 
     @commands.command(name="boosterrole", aliases=["br", "myrole"])
     async def _booster_role(self, ctx, instruction: str = None, field: str = None, *, value: str = None):
-        """ A command that allows you to edit your own booster role! You must Nitro boost this server for it to work."""
+        """ A command that allows you to edit your own booster role! You must Nitro boost this server for it to work.
+
+            Edit your role using "set" and then "name" or "colour".
+
+            i.e. `!boosterrole set name [name]` would update your role name.
+            or `!boosterrole set colour [colour]` would update your role colour.
+        """
         # if not ctx.author.premium_since:
         #     return await ctx.reply("You must boost this server in order to use this command!")
         msg = await ctx.reply("Getting that ready for you!")
@@ -89,11 +95,16 @@ class BoosterRoleCog(commands.Cog, name="Booster Roles"):
             role = await ctx.guild.create_role(name="Test Booster Role Name")
             stored_role = BoosterRole.add_for_member(ctx.author, role)
 
+            await ctx.author.add_roles(role)
+
         if role is None:
-            try:
-                role = ctx.guild.get_role(stored_role.role_id)
-            except discord.NotFound:
-                return await msg.edit("I can't find your role! Something has gone wrong.")
+            role = ctx.guild.get_role(stored_role.role_id)
+
+            if role is None:
+                stored_role.delete_instance()
+
+                return await msg.edit(content="I can't find your role! Perhaps an admin has deleted it. I'll fix it, "
+                                              "please run the command again!")
 
         if instruction in ["set", "edit"] and field is not None and value is not None:
             controller = BoosterRoleController(role)
