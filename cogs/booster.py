@@ -1,12 +1,14 @@
 import datetime
-import discord
 from datetime import datetime
-from discord import TextChannel, Member, message
+
+import discord
+from discord import TextChannel, Member, Role, Colour
 from discord.ext import commands
+from discord.ext.commands import ColourConverter
 from discord_slash import cog_ext, SlashCommandOptionType, SlashContext
 from peewee import DoesNotExist
 
-from model.model import BoosterMessage
+from model.model import BoosterMessage, BoosterRole
 
 
 class BoosterMessageEmbed(discord.Embed):
@@ -25,6 +27,36 @@ class BoosterMessageEmbed(discord.Embed):
         self.set_footer(text="The \"reference\" is used to delete this message.")
 
 
+class BoosterRoleEmbed(discord.Embed):
+    def __init__(self, role: Role, prefix: str, include_instructions=True, **kwargs):
+        kwargs['colour'] = role.colour
+        kwargs['title'] = "Booster Role"
+        kwargs['timestamp'] = datetime.utcnow()
+
+        super().__init__(**kwargs)
+
+        self.add_field(name="Colour", value=role.colour.to_rgb())
+        self.add_field(name="Role Name", value=role.name)
+
+        if include_instructions:
+            self.set_footer(text="Use {}boosterrole + \"set\" to update any of these fields.".format(prefix))
+
+
+class BoosterRoleController:
+    def __init__(self, role: Role):
+        self.role = role
+
+    async def set_role_attribute(self, ctx, attribute: str, value: str):
+        if attribute.lower() in ["name", "title"]:  # Update the title
+            await self.role.edit(name=value)
+
+        if attribute.lower() in ["color", "colour"]:  # Update the colour
+            converter = ColourConverter()
+            colour = await converter.convert(ctx, value)
+
+            await self.role.edit(colour=colour, reason="Requested using the Booster Role command.")
+
+
 class BoosterMessageController:
     def __init__(self, message: str):
         self.message = message
@@ -38,7 +70,41 @@ class BoosterMessageController:
         await destination.send(self.format_message(booster))
 
 
-class NitroBooster(commands.Cog):
+class BoosterRoleCog(commands.Cog, name="Booster Roles"):
+    def __init__(self, client: commands.Bot):
+        self.client = client
+
+    @commands.command(name="boosterrole", aliases=["br", "myrole"])
+    async def _booster_role(self, ctx, instruction: str = None, field: str = None, *, value: str = None):
+        """ A command that allows you to edit your own booster role! You must Nitro boost this server for it to work."""
+        # if not ctx.author.premium_since:
+        #     return await ctx.reply("You must boost this server in order to use this command!")
+        msg = await ctx.reply("Getting that ready for you!")
+        stored_role = BoosterRole.get_for_member(ctx.author)
+        role = None
+
+        if not stored_role:
+            await msg.edit(content="You don't have a booster role just yet, I'll set you up one now...")
+
+            role = await ctx.guild.create_role(name="Test Booster Role Name")
+            stored_role = BoosterRole.add_for_member(ctx.author, role)
+
+        if role is None:
+            try:
+                role = ctx.guild.get_role(stored_role.role_id)
+            except discord.NotFound:
+                return await msg.edit("I can't find your role! Something has gone wrong.")
+
+        if instruction in ["set", "edit"] and field is not None and value is not None:
+            controller = BoosterRoleController(role)
+            await controller.set_role_attribute(ctx, field, value)
+
+            role = controller.role
+
+        return await msg.edit(content="", embed=BoosterRoleEmbed(role, ctx.prefix))
+
+
+class BoosterNotificationCog(commands.Cog):
     def __init__(self, client: commands.Bot):
         client.add_listener(self._on_member_updated, "on_member_update")
         self.client = client
@@ -89,7 +155,8 @@ class NitroBooster(commands.Cog):
         stored_messages = BoosterMessage.get_for_guild(ctx.guild, channel)
 
         for stored_message in stored_messages:
-            await ctx.send(embed=BoosterMessageEmbed(message=stored_message, member=ctx.author, title="Booster Notification"))
+            await ctx.send(
+                embed=BoosterMessageEmbed(message=stored_message, member=ctx.author, title="Booster Notification"))
 
     async def _on_member_updated(self, member_before: Member, member_after: Member):
         if not (member_before.premium_since is None and member_after.premium_since is not None):
@@ -111,4 +178,5 @@ class NitroBooster(commands.Cog):
 
 
 def setup(client):
-    client.add_cog(NitroBooster(client))
+    client.add_cog(BoosterRoleCog(client))
+    client.add_cog(BoosterNotificationCog(client))
