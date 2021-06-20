@@ -61,6 +61,29 @@ class BoosterMessage(BaseModel):
         table_name = "discord_booster_messages"
 
 
+class BoosterRole(BaseModel):
+    id = AutoField()
+    guild_id = BigIntegerField()
+    user_id = BigIntegerField()
+    role_id = BigIntegerField()
+
+    @classmethod
+    def get_for_member(cls, member: Member):
+        return cls.get_or_none((cls.guild_id == member.guild.id) & (cls.user_id == member.id))
+
+    class Meta:
+        table_name = "discord_booster_roles"
+
+
+class BoosterRoleConfig(BaseModel):
+    id = AutoField()
+    guild_id = BigIntegerField()
+    config = JSONField()
+
+    class Meta:
+        table_name = "discord_booster_role_configs"
+
+
 class CustomCommand(BaseModel):
     id = AutoField()
     name = CharField(max_length=255)
