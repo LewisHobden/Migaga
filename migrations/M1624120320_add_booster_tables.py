@@ -5,5 +5,6 @@ connection = factory.get_database_connection()
 
 connection.create_tables([
     BoosterMessage,
+    BoosterRoleConfig,
     BoosterRole,
 ])

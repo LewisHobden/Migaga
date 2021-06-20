@@ -82,7 +82,17 @@ class BoosterRole(BaseModel):
 class BoosterRoleConfig(BaseModel):
     id = AutoField()
     guild_id = BigIntegerField()
-    config = JSONField()
+    anchor_role_id = BigIntegerField(null=True)
+    is_active = BooleanField(default=False)
+
+    @classmethod
+    def get_for_guild(cls, guild: Guild):
+        config = cls.get_or_none(cls.guild_id == guild.id)
+
+        if config is None:
+            return cls.create(guild_id=guild.id)
+
+        return config
 
     class Meta:
         table_name = "discord_booster_role_configs"

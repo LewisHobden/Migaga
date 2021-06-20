@@ -8,7 +8,7 @@ from discord.ext.commands import ColourConverter
 from discord_slash import cog_ext, SlashCommandOptionType, SlashContext
 from peewee import DoesNotExist
 
-from model.model import BoosterMessage, BoosterRole
+from model.model import BoosterMessage, BoosterRole, BoosterRoleConfig
 
 
 class BoosterMessageEmbed(discord.Embed):
@@ -40,6 +40,19 @@ class BoosterRoleEmbed(discord.Embed):
 
         if include_instructions:
             self.set_footer(text="Tip: use the command {}help br for details on how to update your role".format(prefix))
+
+
+class BoosterRoleConfigEmbed(discord.Embed):
+    def __init__(self, config: BoosterRoleConfig, anchor_role: Role = None, **kwargs):
+        kwargs['colour'] = discord.Colour.green()
+        kwargs['timestamp'] = datetime.utcnow()
+        kwargs['footer'] = "Tip: if an anchor role isn't provided, booster roles will be put under the default " \
+                           "discord booster role. "
+
+        super().__init__(**kwargs)
+
+        self.add_field(name="Anchor Role", value="Missing, please reconfigure" if not anchor_role else anchor_role.name)
+        self.add_field(name="Active?", value="Yes" if config.is_active else "No")
 
 
 class BoosterRoleController:
@@ -83,8 +96,14 @@ class BoosterRoleCog(commands.Cog, name="Booster Roles"):
             i.e. `!boosterrole set name [name]` would update your role name.
             or `!boosterrole set colour [colour]` would update your role colour.
         """
-        # if not ctx.author.premium_since:
-        #     return await ctx.reply("You must boost this server in order to use this command!")
+        booster_config = BoosterRoleConfig.get_for_guild(ctx.guild)
+
+        if not booster_config.is_active:
+            return await ctx.reply("Booster roles are not currently enabled in this server! An admin must enable them.")
+
+        if not ctx.author.premium_since:
+            return await ctx.reply("You must boost this server in order to use this command!")
+
         msg = await ctx.reply("Getting that ready for you!")
         stored_role = BoosterRole.get_for_member(ctx.author)
         role = None
@@ -113,6 +132,36 @@ class BoosterRoleCog(commands.Cog, name="Booster Roles"):
             role = controller.role
 
         return await msg.edit(content="", embed=BoosterRoleEmbed(role, ctx.prefix))
+
+    @cog_ext.cog_subcommand(base="booster", subcommand_group="role", name="setup",
+                            description="Sets up booster roles for your guild!",
+                            guild_ids=[197972184466063381],
+                            options=[dict(name="anchor_role",
+                                          description="The role that booster roles will be placed directly below "
+                                                      "when created.",
+                                          type=SlashCommandOptionType.ROLE, required=False)])
+    @commands.has_permissions(manage_guild=True)
+    async def _setup_booster_roles(self, ctx: SlashContext, anchor_role: Role = None):
+        config = BoosterRoleConfig.get_for_guild(ctx.guild)
+        config.anchor_role_id = anchor_role.id
+        config.save()
+
+        embed = BoosterRoleConfigEmbed(config, anchor_role, title="Booster Role Config for {}".format(ctx.guild.name))
+        await ctx.send(embed=embed)
+
+    @cog_ext.cog_subcommand(base="booster", subcommand_group="role", name="enable",
+                            description="Enable or disable booster roles for your server.",
+                            guild_ids=[197972184466063381],
+                            options=[dict(name="enabled", description="Are booster roles enabled in this server?",
+                                          type=SlashCommandOptionType.BOOLEAN, required=True)])
+    @commands.has_permissions(manage_guild=True)
+    async def _toggle_booster_roles(self, ctx: SlashContext, is_active: bool):
+        config = BoosterRoleConfig.get_for_guild(ctx.guild)
+        config.is_active = is_active
+        config.save()
+
+        return await ctx.send(embed=BoosterRoleConfigEmbed(config, ctx.guild.get_role(config.anchor_role_id),
+                                                           title="Booster Role Config for {}".format(ctx.guild.name)))
 
 
 class BoosterNotificationCog(commands.Cog):
