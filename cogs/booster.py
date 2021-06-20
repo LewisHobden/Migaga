@@ -117,7 +117,7 @@ class BoosterRoleCog(commands.Cog, name="Booster Roles"):
             if anchor_role is None:
                 anchor_role = discord.utils.get(ctx.guild.roles, is_premium_subscriber=True)
 
-            role = await ctx.guild.create_role(name="Test Booster Role Name")
+            role = await ctx.guild.create_role(name="{} Booster Role".format(ctx.author.display_name))
             stored_role = BoosterRole.add_for_member(ctx.author, role)
             await role.edit(position=0 if anchor_role is None else anchor_role.position)
 
