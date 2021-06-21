@@ -195,7 +195,7 @@ class BoosterRoleCog(commands.Cog, name="Booster Roles"):
                 output += "❎ Couldn't find a booster role for {}.\n".format(formatted_username)
                 continue
 
-            BoosterRole.add_for_member(ctx.author, booster_role)
+            BoosterRole.add_for_member(user, booster_role)
             output += "☑️Role set up for {}, the role name is {}.\n".format(formatted_username, booster_role.name)
 
         await ctx.send("No users boost this server!" if 0 == len(output) else output)
