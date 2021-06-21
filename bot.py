@@ -32,6 +32,7 @@ logging.basicConfig(level=logging.INFO)
 # Get our cogs.
 extensions = [
     "cogs.admin",
+    "cogs.booster",
     "cogs.config",
     "cogs.games.games",
     "cogs.customcommands",
@@ -54,7 +55,7 @@ async def on_ready():
 
     setattr(client, "client_id", config.get("Env", "ClientId"))
     setattr(client, "whitelisted_bot_ids", config.get("Bot", "WhitelistedBotIds").split(" "))
-    # await slash.sync_all_commands()
+    await slash.sync_all_commands()
 
 
 if __name__ == '__main__':

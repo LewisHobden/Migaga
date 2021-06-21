@@ -3,9 +3,10 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 from mailbox import Message
-from typing import List
+from typing import List, Optional
 
-from discord import Member, Emoji, Message, Guild, Role
+import discord
+from discord import Member, Emoji, Message, Guild, Role, TextChannel
 from peewee import *
 from playhouse.mysql_ext import JSONField
 
@@ -20,8 +21,81 @@ def _generate_reference():
 
 
 class BaseModel(Model):
+    @classmethod
+    def generate_unique_reference(cls):
+        new_primary_key = _generate_reference()
+
+        try:
+            while True:
+                cls.get_by_id(new_primary_key)
+                new_primary_key = _generate_reference()
+        except DoesNotExist:
+            return new_primary_key
+
     class Meta:
         database = database
+
+
+class BoosterMessage(BaseModel):
+    reference = CharField(max_length=255, primary_key=True)
+    guild_id = BigIntegerField()
+    channel_id = BigIntegerField()
+    message = TextField()
+
+    @classmethod
+    def add_for_guild(cls, guild_id: int, channel: discord.TextChannel, message: str) -> BoosterMessage:
+        reference = cls.generate_unique_reference()
+
+        return BoosterMessage.create(reference=reference, guild_id=guild_id, channel_id=channel.id, message=message)
+
+    @classmethod
+    def get_for_guild(cls, guild: Guild, channel: Optional[TextChannel] = None) -> List[BoosterMessage]:
+        select = cls.select().where(cls.guild_id == guild.id)
+
+        if channel:
+            select.where((cls.guild_id == guild.id) & (cls.channel_id == channel.id))
+
+        return select
+
+    class Meta:
+        table_name = "discord_booster_messages"
+
+
+class BoosterRole(BaseModel):
+    id = AutoField()
+    guild_id = BigIntegerField()
+    user_id = BigIntegerField()
+    role_id = BigIntegerField()
+
+    @classmethod
+    def add_for_member(cls, member: Member, role: Role):
+        return cls.create(guild_id=member.guild.id, user_id=member.id, role_id=role.id)
+
+    @classmethod
+    def get_for_member(cls, member: Member):
+        return cls.get_or_none((cls.guild_id == member.guild.id) & (cls.user_id == member.id))
+
+    class Meta:
+        table_name = "discord_booster_roles"
+
+
+class BoosterRoleConfig(BaseModel):
+    id = AutoField()
+    guild_id = BigIntegerField()
+    anchor_role_id = BigIntegerField(null=True)
+    is_active = BooleanField(default=False)
+
+    @classmethod
+    def get_for_guild(cls, guild: Guild):
+        config = cls.get_or_none(cls.guild_id == guild.id)
+
+        if config is None:
+            return cls.create(guild_id=guild.id)
+
+        return config
+
+    class Meta:
+        table_name = "discord_booster_role_configs"
 
 
 class CustomCommand(BaseModel):
@@ -65,17 +139,6 @@ class FlairMessageReactionModel(BaseModel):
 
     class Meta:
         table_name = "discord_flair_message_reactions"
-
-    @classmethod
-    def generate_unique_reference(cls):
-        id = _generate_reference()
-
-        try:
-            while True:
-                cls.get_by_id(id)
-                id = _generate_reference()
-        except DoesNotExist:
-            return id
 
 
 class StarboardModel(BaseModel):

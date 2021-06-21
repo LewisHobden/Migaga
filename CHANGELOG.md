@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Booster Features
+- You can now configure messages to be posted when a person newly boosts a server. 
+- You can now enable booster roles for your server - allowing users who boost the server to assign themselves roles.
+- Users can edit the name and the colour for these booster roles.
+- If your server already uses booster roles, you can import them into Migaga to work instantly.
+
 ### Tweaks
 - Fixed the default number of dice when rolling without specifying a number of dice.
 - The ID of the user who caused an action is now included in server logs.
