@@ -93,7 +93,7 @@ def _get_booster_role(roles, anchor_position):
 
 
 async def _on_member_updated(member_before: Member, member_after: Member):
-    if member_after.premium_since is not None:
+    if not (member_before.premium_since is not None and member_after.premium_since is None):
         return
 
     booster_role = BoosterRole.get_for_member(member_after)
