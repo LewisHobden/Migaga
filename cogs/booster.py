@@ -83,6 +83,15 @@ class BoosterMessageController:
         await destination.send(self.format_message(booster))
 
 
+def _get_booster_role(roles, anchor_position):
+    for role in roles:
+        if role.position >= anchor_position:
+            continue
+
+        if len(role.members) == 1:
+            return role
+
+
 class BoosterRoleCog(commands.Cog, name="Booster Roles"):
     def __init__(self, client: commands.Bot):
         self.client = client
@@ -101,8 +110,8 @@ class BoosterRoleCog(commands.Cog, name="Booster Roles"):
         if not booster_config.is_active:
             return await ctx.reply("Booster roles are not currently enabled in this server! An admin must enable them.")
 
-        # if not ctx.author.premium_since:
-        #     return await ctx.reply("You must boost this server in order to use this command!")
+        if not ctx.author.premium_since:
+            return await ctx.reply("You must boost this server in order to use this command!")
 
         msg = await ctx.reply("Getting that ready for you!")
         stored_role = BoosterRole.get_for_member(ctx.author)
@@ -155,6 +164,43 @@ class BoosterRoleCog(commands.Cog, name="Booster Roles"):
 
         embed = BoosterRoleConfigEmbed(config, anchor_role, title="Booster Role Config for {}".format(ctx.guild.name))
         await ctx.send(embed=embed)
+
+    @cog_ext.cog_subcommand(base="booster", subcommand_group="role", name="import",
+                            description="Import your current booster roles into this system.",
+                            guild_ids=[197972184466063381],
+                            options=[dict(name="user", description="Optionally choose a single user's roles to import.",
+                                          type=SlashCommandOptionType.USER, required=False)])
+    @commands.has_permissions(manage_guild=True)
+    async def _import_booster_roles(self, ctx: SlashContext, user: Member = None):
+        booster_config = BoosterRoleConfig.get_for_guild(ctx.guild)
+        anchor_role = ctx.guild.get_role(booster_config.anchor_role_id)
+        output = ""
+
+        # If an anchor isn't configured, find their "Nitro Booster" role.
+        if anchor_role is None:
+            anchor_role = discord.utils.get(ctx.guild.roles, is_premium_subscriber=True)
+
+        if user is not None:
+            users_to_import = [user]
+        else:
+            users_to_import = filter(lambda x: True if x.premium_since else False, ctx.guild.members)
+
+        for user in users_to_import:
+            formatted_username = "{}#{}".format(user.display_name, user.discriminator)
+            booster_role = _get_booster_role(user.roles, 0 if not anchor_role else anchor_role.position)
+
+            if BoosterRole.get_for_member(user):
+                output += "💡 {} already has a booster role in the system.\n".format(formatted_username)
+                continue
+
+            if booster_role is None:
+                output += "❎ Couldn't find a booster role for {}.\n".format(formatted_username)
+                continue
+
+            BoosterRole.add_for_member(ctx.author, booster_role)
+            output += "☑️Role set up for {}, the role name is {}.\n".format(formatted_username, booster_role.name)
+
+        await ctx.send("No users boost this server!" if 0 == len(output) else output)
 
     @cog_ext.cog_subcommand(base="booster", subcommand_group="role", name="enable",
                             description="Enable or disable booster roles for your server.",
