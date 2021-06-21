@@ -115,8 +115,6 @@ class BoosterRoleCog(commands.Cog, name="Booster Roles"):
     def __init__(self, client: commands.Bot):
         self.client = client
 
-        client.add_listener(_on_member_updated, "on_member_update")
-
     @commands.command(name="boosterrole", aliases=["br", "myrole"])
     async def _booster_role(self, ctx, instruction: str = None, field: str = None, *, value: str = None):
         """ A command that allows you to edit your own booster role! You must Nitro boost this server for it to work.
