@@ -1,7 +1,7 @@
 import logging
 
 import discord
-from discord import RawReactionActionEvent, Permissions, Embed, Colour
+from discord import RawReactionActionEvent, Permissions, Embed, Colour, Forbidden
 from discord.ext import commands
 from discord_slash import cog_ext, SlashContext, SlashCommandOptionType
 
@@ -62,8 +62,11 @@ async def _send_disappearing_notification(member: discord.Member, channel: disco
     # Send a disappearing message letting them know we've given them the roles.
     msg = prefix + "`{}` for that flair!"
 
-    alert = await channel.send(msg.format(member, ", ".join(formatted_roles)))
-    await alert.delete(delay=10)
+    try:
+        alert = await channel.send(msg.format(member, ", ".join(formatted_roles)))
+        await alert.delete(delay=10)
+    except Forbidden:
+        pass
 
 
 class Admin(commands.Cog):
