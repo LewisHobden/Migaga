@@ -11,8 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Users can edit the name and the colour for these booster roles.
 - If your server already uses booster roles, you can import them into Migaga to work instantly.
 
-### Fixes
+### Tweaks
 - Fixed the default number of dice when rolling without specifying a number of dice.
+- The ID of the user who caused an action is now included in server logs.
 
 ## [4.9.3] - 2021-06-17
 ### Features
