@@ -5,8 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### Fixes
+### Tweaks
 - Fixed the default number of dice when rolling without specifying a number of dice.
+- The ID of the user who caused an action is now included in server logs.
 
 ## [4.9.3] - 2021-06-17
 ### Features

@@ -18,6 +18,7 @@ async def _generate_boilerplate_embed(author: discord.Member, colour=None, chann
         e.add_field(name="Channel Link:", value=channel.mention)
 
     e.set_author(name=author.display_name, icon_url=author.avatar_url)
+    e.set_footer(text="Discord ID: {}".format(author.id))
     e.timestamp = datetime.datetime.now()
 
     return e
