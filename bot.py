@@ -57,15 +57,15 @@ async def on_ready():
     setattr(client, "whitelisted_bot_ids", config.get("Bot", "WhitelistedBotIds").split(" "))
     await slash.sync_all_commands()
 
-
-if __name__ == '__main__':
-    token = config.get("Env", "Token")
-
     for extension in extensions:
         try:
             client.load_extension(extension)
         except Exception as e:
             print('Failed to load extension {}\n{}: {}'.format(extension, type(e).__name__, e))
+
+
+if __name__ == '__main__':
+    token = config.get("Env", "Token")
 
     client.help_command = MinimalHelpCommand()
     client.run(token)

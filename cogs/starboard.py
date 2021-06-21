@@ -74,7 +74,7 @@ class Starboard(commands.Cog):
                     await self._update_starred_message(message_to_check, new_embed)
             except Exception as e:
                 # For debug purposes, temporarily widening error handling to find Webhook errors.
-                logger.error("There was an error running the starboard: {}".format(e), message_id=message_to_check.message_id)
+                logger.error("[{}] There was an error running the starboard: {}".format(message_to_check.message_id, e))
 
     @cleaner.before_loop
     async def before_cleaner(self):
