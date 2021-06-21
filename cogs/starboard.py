@@ -1,7 +1,6 @@
 import logging
 from datetime import *
 
-import discord
 from discord import RawReactionActionEvent
 from discord.ext import commands, tasks
 from discord.ext.commands import PartialEmojiConversionFailure
@@ -45,30 +44,37 @@ class Starboard(commands.Cog):
 
         # For each message, it updates the embed.
         for message_to_check in messages_to_check:
-            original_message_channel = self.client.get_channel(message_to_check.message_channel_id)
-            starboard_channel = self.client.get_channel(message_to_check.starboard.channel_id)
-            starboard_message = None
-
-            # The bot may have been removed from the server, in which case skip it for now.
-            if original_message_channel is None:
-                continue
-
             try:
-                original_message = await original_message_channel.fetch_message(message_to_check.message_id)
-                new_embed = await self._get_starred_embed(message_to_check, original_message)
-            except discord.NotFound:
-                new_embed = None
+                original_message_channel = self.client.get_channel(message_to_check.message_channel_id)
+                starboard_channel = self.client.get_channel(message_to_check.starboard.channel_id)
+                starboard_message = None
 
-            if message_to_check.embed_message_id:
-                starboard_message = await starboard_channel.fetch_message(message_to_check.embed_message_id)
+                # The bot may have been removed from the server, in which case skip it for now.
+                if original_message_channel is None:
+                    continue
 
-            star_threshold = message_to_check.starboard.star_threshold
-            number_of_stars = len(message_to_check.starrers)
+                try:
+                    original_message = await original_message_channel.fetch_message(message_to_check.message_id)
+                    new_embed = await self._get_starred_embed(message_to_check, original_message)
+                except discord.NotFound:
+                    new_embed = None
 
-            if message_to_check.starboard.star_threshold != 1 and number_of_stars < star_threshold:
-                await _delete_starred_message(message_to_check, starboard_message)
-            else:
-                await self._update_starred_message(message_to_check, new_embed)
+                if message_to_check.embed_message_id:
+                    try:
+                        starboard_message = await starboard_channel.fetch_message(message_to_check.embed_message_id)
+                    except discord.NotFound:
+                        continue
+
+                star_threshold = message_to_check.starboard.star_threshold
+                number_of_stars = len(message_to_check.starrers)
+
+                if message_to_check.starboard.star_threshold != 1 and number_of_stars < star_threshold:
+                    await _delete_starred_message(message_to_check, starboard_message)
+                else:
+                    await self._update_starred_message(message_to_check, new_embed)
+            except Exception as e:
+                # For debug purposes, temporarily widening error handling to find Webhook errors.
+                logger.error("There was an error running the starboard: {}".format(e), message_id=message_to_check.message_id)
 
     @cleaner.before_loop
     async def before_cleaner(self):

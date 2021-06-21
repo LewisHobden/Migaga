@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [4.10.0] - 2021-06-21
 ### Booster Features
 - You can now configure messages to be posted when a person newly boosts a server. 
 - You can now enable booster roles for your server - allowing users who boost the server to assign themselves roles.

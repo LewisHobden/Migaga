@@ -151,7 +151,6 @@ class BoosterRoleCog(commands.Cog, name="Booster Roles"):
 
     @cog_ext.cog_subcommand(base="booster", subcommand_group="role", name="setup",
                             description="Sets up booster roles for your guild!",
-                            guild_ids=[197972184466063381],
                             options=[dict(name="anchor_role",
                                           description="The role that booster roles will be placed directly below "
                                                       "when created.",
@@ -167,7 +166,6 @@ class BoosterRoleCog(commands.Cog, name="Booster Roles"):
 
     @cog_ext.cog_subcommand(base="booster", subcommand_group="role", name="import",
                             description="Import your current booster roles into this system.",
-                            guild_ids=[197972184466063381],
                             options=[dict(name="user", description="Optionally choose a single user's roles to import.",
                                           type=SlashCommandOptionType.USER, required=False)])
     @commands.has_permissions(manage_guild=True)
@@ -204,7 +202,6 @@ class BoosterRoleCog(commands.Cog, name="Booster Roles"):
 
     @cog_ext.cog_subcommand(base="booster", subcommand_group="role", name="enable",
                             description="Enable or disable booster roles for your server.",
-                            guild_ids=[197972184466063381],
                             options=[dict(name="enabled", description="Are booster roles enabled in this server?",
                                           type=SlashCommandOptionType.BOOLEAN, required=True)])
     @commands.has_permissions(manage_guild=True)
@@ -224,7 +221,6 @@ class BoosterNotificationCog(commands.Cog):
 
     @cog_ext.cog_subcommand(base="booster", subcommand_group="notification", name="add",
                             description="Sets up a new message for when somebody boosts the guild.",
-                            guild_ids=[197972184466063381],
                             options=[{"name": "channel", "description": "The channel to post the message in.",
                                       "type": SlashCommandOptionType.CHANNEL, "required": True},
                                      {"name": "message",
@@ -241,7 +237,6 @@ class BoosterNotificationCog(commands.Cog):
 
     @cog_ext.cog_subcommand(base="booster", subcommand_group="notification", name="delete",
                             description="Deletes a booster notification from the guild.",
-                            guild_ids=[197972184466063381],
                             options=[{"name": "reference", "description": "The reference of the message to delete.",
                                       "type": SlashCommandOptionType.STRING, "required": True}])
     @commands.has_permissions(manage_guild=True)
@@ -257,7 +252,6 @@ class BoosterNotificationCog(commands.Cog):
 
     @cog_ext.cog_subcommand(base="booster", subcommand_group="notification", name="list",
                             description="Lists all booster notifications in your guild.",
-                            guild_ids=[197972184466063381],
                             options=[{"name": "channel", "description": "The channel specifically to search.",
                                       "type": SlashCommandOptionType.CHANNEL, "required": False}])
     @commands.has_permissions(manage_guild=True)
