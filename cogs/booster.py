@@ -92,9 +92,30 @@ def _get_booster_role(roles, anchor_position):
             return role
 
 
+async def _on_member_updated(member_before: Member, member_after: Member):
+    if member_after.premium_since is not None:
+        return
+
+    booster_role = BoosterRole.get_for_member(member_after)
+
+    if booster_role is None:
+        return
+
+    assigned_role = discord.utils.get(member_after.roles, id=booster_role.role_id)
+
+    # The role may already be deleted.
+    if assigned_role is None:
+        return
+
+    await member_after.remove_roles(assigned_role)
+    await assigned_role.delete()
+
+
 class BoosterRoleCog(commands.Cog, name="Booster Roles"):
     def __init__(self, client: commands.Bot):
         self.client = client
+
+        client.add_listener(_on_member_updated, "on_member_update")
 
     @commands.command(name="boosterrole", aliases=["br", "myrole"])
     async def _booster_role(self, ctx, instruction: str = None, field: str = None, *, value: str = None):

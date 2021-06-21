@@ -72,6 +72,15 @@ class BoosterRole(BaseModel):
         return cls.create(guild_id=member.guild.id, user_id=member.id, role_id=role.id)
 
     @classmethod
+    def delete_for_member(cls, member: Member):
+        record = cls.get_or_none((cls.guild_id == member.guild.id) & (cls.user_id == member.id))
+
+        if record is None:
+            return
+
+        record.delete_instance()
+
+    @classmethod
     def get_for_member(cls, member: Member):
         return cls.get_or_none((cls.guild_id == member.guild.id) & (cls.user_id == member.id))
 

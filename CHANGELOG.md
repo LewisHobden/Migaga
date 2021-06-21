@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.10.1] - 2021-06-21
+### Booster Features
+- Booster roles are now automatically removed and deleted when a user no longer boosts the server.
+- Fixed a bug with the importer.
+
 ## [4.10.0] - 2021-06-21
 ### Booster Features
 - You can now configure messages to be posted when a person newly boosts a server. 
