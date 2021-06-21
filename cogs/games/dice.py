@@ -16,7 +16,7 @@ class DiceConverter(commands.Converter):
             raise KeyError("Unknown dice input: {}".format(argument))
 
         # Parse the input for its 2 components, its number of sides and how many to roll.
-        total_requested = dice_components[0] if dice_components[0].isnumeric() and int(dice_components[0]) > 0 else 0
+        total_requested = dice_components[0] if dice_components[0].isnumeric() and int(dice_components[0]) > 0 else 1
         dice_figure = dice_components[1] if dice_components[1].isnumeric() and int(dice_components[1]) > 0 else 0
 
         return [Die(total_sides=int(dice_figure)) for _ in range(0, int(total_requested))]
