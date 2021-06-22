@@ -86,7 +86,6 @@ class MessageEventCog(commands.Cog, name="Message Events"):
 
     @cog_ext.cog_subcommand(base="message", subcommand_group="event", name="delete",
                             description="Deletes a message event from your guild.",
-                            guild_ids=[197972184466063381],
                             options=[{"name": "reference", "description": "The reference of the message to delete.",
                                       "type": SlashCommandOptionType.STRING, "required": True}])
     @commands.has_permissions(manage_guild=True)
@@ -102,9 +101,7 @@ class MessageEventCog(commands.Cog, name="Message Events"):
         await self._cache_events()
 
     @cog_ext.cog_subcommand(base="message", subcommand_group="event", name="list",
-                            description="Lists all message events in your guild.",
-                            guild_ids=[197972184466063381]
-                            )
+                            description="Lists all message events in your guild.")
     @commands.has_permissions(manage_guild=True)
     async def _list_events(self, ctx: SlashContext):
         for event in MessageEvent.get_for_guild(ctx.guild.id):
@@ -112,7 +109,6 @@ class MessageEventCog(commands.Cog, name="Message Events"):
 
     @cog_ext.cog_subcommand(base="message", subcommand_group="event", name="add-auto-delete",
                             description="Adds an auto reply event if a message comes in that contains your criteria!",
-                            guild_ids=[197972184466063381],
                             options=[dict(name="contains",
                                           description="The content the message may contain to trigger a response.",
                                           type=SlashCommandOptionType.STRING, required=True),
@@ -135,7 +131,6 @@ class MessageEventCog(commands.Cog, name="Message Events"):
 
     @cog_ext.cog_subcommand(base="message", subcommand_group="event", name="add-auto-reply",
                             description="Adds an auto delete event if a message comes in that contains your criteria!",
-                            guild_ids=[197972184466063381],
                             options=[dict(name="contains",
                                           description="The content the message may contain to trigger a response.",
                                           type=SlashCommandOptionType.STRING, required=True),
