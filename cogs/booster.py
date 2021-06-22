@@ -2,9 +2,9 @@ import datetime
 from datetime import datetime
 
 import discord
-from discord import TextChannel, Member, Role, Colour
+from discord import TextChannel, Member, Role
 from discord.ext import commands
-from discord.ext.commands import ColourConverter
+from discord.ext.commands import ColourConverter, BadColourArgument
 from discord_slash import cog_ext, SlashCommandOptionType, SlashContext
 from peewee import DoesNotExist
 
@@ -165,7 +165,11 @@ class BoosterRoleCog(commands.Cog, name="Booster Roles"):
 
         if instruction in ["set", "edit"] and field is not None and value is not None:
             controller = BoosterRoleController(role)
-            await controller.set_role_attribute(ctx, field, value)
+            try:
+                await controller.set_role_attribute(ctx, field, value)
+            except BadColourArgument:
+                return await msg.edit(content="That colour was not recognised. "
+                                              "Remember to include the # if it's a hex colour. Try again?")
 
             role = controller.role
 
@@ -225,7 +229,7 @@ class BoosterRoleCog(commands.Cog, name="Booster Roles"):
     @cog_ext.cog_subcommand(base="booster", subcommand_group="role", name="enable",
                             description="Enable or disable booster roles for your server.",
                             options=[dict(name="enabled", description="Are booster roles enabled in this server?",
-                                          type=SlashCommandOptionType.BOOLEAN, required=True)])
+                                          type=SlashCommandOptionType.BOOLEAN, enabled=True)])
     @commands.has_permissions(manage_guild=True)
     async def _toggle_booster_roles(self, ctx: SlashContext, is_active: bool):
         config = BoosterRoleConfig.get_for_guild(ctx.guild)
