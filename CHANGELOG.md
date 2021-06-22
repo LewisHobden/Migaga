@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.11.0] - 2021-06-22
+### Message Events (Beta Testing)
+- Message events can be added/listed/deleted.
+- A message event is either an instruction to reply to / delete a message that contains / matches certain content.
+
+### Booster Features
+- This feature is no longer in beta testing after some improvements.
+
 ## [4.10.1] - 2021-06-21
 ### Booster Features
 - Booster roles are now automatically removed and deleted when a user no longer boosts the server.
