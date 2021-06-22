@@ -93,6 +93,7 @@ def _get_booster_role(roles, anchor_position):
 
 
 async def _on_member_updated(member_before: Member, member_after: Member):
+    # Only run this check if this event was for a premium subscription which is now lapsed.
     if not (member_before.premium_since is not None and member_after.premium_since is None):
         return
 
@@ -114,6 +115,8 @@ async def _on_member_updated(member_before: Member, member_after: Member):
 class BoosterRoleCog(commands.Cog, name="Booster Roles"):
     def __init__(self, client: commands.Bot):
         self.client = client
+
+        client.add_listener(_on_member_updated, "on_member_update")
 
     @commands.command(name="boosterrole", aliases=["br", "myrole"])
     async def _booster_role(self, ctx, instruction: str = None, field: str = None, *, value: str = None):
