@@ -43,12 +43,7 @@ class MessageEventCog(commands.Cog, name="Message Events"):
     @tasks.loop(minutes=30)
     async def _cache_events(self):
         for event in MessageEvent.select():
-            gid = event.guild_id
-
-            if gid in self._events:
-                self._events[gid].append(event)
-            else:
-                self._events[gid] = [event]
+            self.add_event(event)
 
     async def _on_message(self, message: Message):
         # Ignore ourselves, bots, etc.
@@ -86,6 +81,7 @@ class MessageEventCog(commands.Cog, name="Message Events"):
         )
 
         await ctx.send("New auto delete has been set up.")
+        self.add_event(event)
 
     @cog_ext.cog_subcommand(base="message", subcommand_group="events", name="add-auto-reply",
                             description="Adds an auto delete event if a message comes in that contains your criteria!",
@@ -110,12 +106,21 @@ class MessageEventCog(commands.Cog, name="Message Events"):
         )
 
         await ctx.send("New auto reply has been set up.")
+        self.add_event(event)
 
     def get_events(self, guild: Guild) -> List[MessageEvent]:
         if guild.id not in self._events:
             return []
 
         return self._events[guild.id]
+
+    def add_event(self, event: MessageEvent):
+        gid = event.guild_id
+
+        if gid in self._events:
+            self._events[gid].append(event)
+        else:
+            self._events[gid] = [event]
 
 
 def setup(client):
