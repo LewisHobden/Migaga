@@ -311,6 +311,24 @@ class GuildConfig(BaseModel):
         table_name = "discord_guild_configs"
 
 
+class MessageEvent(BaseModel):
+    reference = CharField(max_length=255, primary_key=True)
+    guild_id = BigIntegerField()
+    contains = TextField()
+    response = TextField(null=True)
+    is_strict = BooleanField()
+
+    @classmethod
+    def add_for_guild(cls, guild: Guild, contains: str, is_strict: bool, response: str = None) -> BoosterMessage:
+        reference = cls.generate_unique_reference()
+
+        return cls.create(reference=reference, guild_id=guild.id, contains=contains, response=response,
+                          is_strict=is_strict)
+
+    class Meta:
+        table_name = "discord_message_events"
+
+
 class PointTransaction(BaseModel):
     id = AutoField()
     guild_id = BigIntegerField()
