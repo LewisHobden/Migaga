@@ -55,7 +55,6 @@ async def on_ready():
 
     setattr(client, "client_id", config.get("Env", "ClientId"))
     setattr(client, "whitelisted_bot_ids", config.get("Bot", "WhitelistedBotIds").split(" "))
-    await slash.sync_all_commands()
 
     for extension in extensions:
         try:
@@ -63,6 +62,7 @@ async def on_ready():
         except Exception as e:
             print('Failed to load extension {}\n{}: {}'.format(extension, type(e).__name__, e))
 
+    await slash.sync_all_commands()
 
 if __name__ == '__main__':
     token = config.get("Env", "Token")
