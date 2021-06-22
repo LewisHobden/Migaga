@@ -36,6 +36,7 @@ extensions = [
     "cogs.config",
     "cogs.games.games",
     "cogs.customcommands",
+    "cogs.message_events",
     "cogs.profile",
     "cogs.games.fun",
     "cogs.people",
