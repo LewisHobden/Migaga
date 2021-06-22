@@ -325,6 +325,10 @@ class MessageEvent(BaseModel):
         return cls.create(reference=reference, guild_id=guild.id, contains=contains, response=response,
                           is_strict=is_strict)
 
+    @classmethod
+    def get_for_guild(cls, guild_id: int):
+        return cls.select().where((cls.guild_id == guild_id))
+
     class Meta:
         table_name = "discord_message_events"
 
