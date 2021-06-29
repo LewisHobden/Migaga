@@ -55,6 +55,7 @@ class MessageEventCog(commands.Cog, name="Message Events"):
         self._events = dict()
 
         self.client.add_listener(self._on_message, "on_message")
+        self.client.add_listener(self._on_message_edit, "on_message_edit")
         self._cache_events.start()
 
     def cog_unload(self):
@@ -67,6 +68,27 @@ class MessageEventCog(commands.Cog, name="Message Events"):
 
         for event in MessageEvent.select():
             self.add_event(event)
+
+    async def _on_message_edit(self, message_before: Message, message_after: Message):
+        # Ignore ourselves, bots, etc.
+        if message_after.author.bot:
+            return
+
+        for event in self.get_events(message_after.guild):
+            controller = MessageMatchingController(event.contains, event.is_strict)
+
+            # If the message matched before, then we shouldn't reply to it a second time.
+            if controller.check_match(message_before.clean_content):
+                continue
+
+            # Todo, should we keep track of our messages and delete a reply if the user edits it to no longer match?
+            if not controller.check_match(message_after.clean_content):
+                continue
+
+            if event.response is None:
+                await message_after.delete()
+            else:
+                await message_after.reply(event.response)
 
     async def _on_message(self, message: Message):
         # Ignore ourselves, bots, etc.

@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.11.1] - 2021-06-29
+### Tweaks
+- Made tweaks to the audit log behaviour for booster roles.
+- Performed maintenance on server logs. 
+- Message events now also respond to message edits, presuming they were not already responded to.
+
 ## [4.11.0] - 2021-06-22
 ### Message Events (Beta Testing)
 - Message events can be added/listed/deleted.

@@ -108,8 +108,11 @@ async def _on_member_updated(member_before: Member, member_after: Member):
     if assigned_role is None:
         return
 
-    await member_after.remove_roles(assigned_role)
-    await assigned_role.delete()
+    reason = "This person is no longer boosting the server. Role name: {}. Colour: {}".format(assigned_role.name,
+                                                                                              assigned_role.colour)
+
+    await member_after.remove_roles(assigned_role, reason=reason)
+    await assigned_role.delete(reason=reason)
 
 
 class BoosterRoleCog(commands.Cog, name="Booster Roles"):
