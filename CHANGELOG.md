@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.11.2] - 2022-02-22
+### Tweaks
+- Lowered number of Discord intents requested.
+
 ## [4.11.1] - 2021-06-29
 ### Tweaks
 - Made tweaks to the audit log behaviour for booster roles.
