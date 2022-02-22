@@ -23,7 +23,11 @@ config.read("config.ini")
 # Set up the bot.
 version = config.get("Env", "Version")
 bot_description = "Migaga {}".format(version)
-client = Migaga(command_prefix=prefix, description=bot_description, intents=discord.Intents.all(), pm_help=None,
+intents = discord.Intents.default()
+intents.members = True
+intents.messages = True
+
+client = Migaga(command_prefix=prefix, description=bot_description, intents=intents, pm_help=None,
                 activity=discord.Game(name="{}!".format(version)))
 slash = SlashCommand(client, override_type=True, application_id=int(config.get("Env", "ClientId")))
 

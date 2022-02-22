@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.10.2] - 2022-02-22
+### Tweaks
+- Lowered number of Discord intents requested.
+
 ## [4.10.1] - 2021-06-21
 ### Booster Features
 - Booster roles are now automatically removed and deleted when a user no longer boosts the server.
