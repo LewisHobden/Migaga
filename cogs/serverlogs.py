@@ -41,7 +41,7 @@ class ServerLogs(commands.Cog, name="Server Logs"):
         client.add_listener(self._on_message_delete, "on_message_delete")
         client.add_listener(self._on_message_edit, "on_message_edit")
         client.add_listener(self._on_member_join, "on_member_join")
-        client.add_listener(self._on_member_leave, "on_member_leave")
+        client.add_listener(self._on_member_leave, "on_member_remove")
         client.add_listener(self._on_member_banned, "on_member_ban")
         client.add_listener(self._on_member_unbanned, "on_member_unban")
         client.add_listener(self._on_member_updated, "on_member_update")
@@ -138,6 +138,9 @@ class ServerLogs(commands.Cog, name="Server Logs"):
                 e.set_thumbnail(url=after.avatar_url)
             except discord.errors.NotFound:
                 return
+
+        if len(e.fields) == 0:
+            return
 
         for guild in self.client.guilds:
             member = discord.utils.find(lambda m: m.id == after.id, guild.members)
