@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.12.0] - 2022-02-22
+### Moderation
+- Added a new `!massrole` command to bulk assign a role to people.
+- Added a new `!clearrole` command to remove a role from everybody with it.
+
 ## [4.11.2] - 2022-02-22
 ### Tweaks
 - Lowered number of Discord intents requested.

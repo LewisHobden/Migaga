@@ -11,6 +11,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    command: "tail -f /dev/null"
 
   migaga_database:
     container_name: migaga-database
@@ -23,7 +24,7 @@ services:
     volumes:
       - databasevolume:/var/lib/mysql
     ports:
-      - '3307:3307'
+      - '3306:3306'
 
   adminer:
     image: adminer

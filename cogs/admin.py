@@ -149,6 +149,65 @@ class Admin(commands.Cog):
             except discord.NotFound:
                 await ctx.send("I could not find the user \"{}\"".format(id))
 
+    @commands.command(no_pm=True)
+    @checks.has_permissions(manage_members=True)
+    async def massrole(self, ctx, role: discord.Role, users: commands.Greedy[discord.Member], *, reason: str = ""):
+        """
+        Given a list of users, will assign them the first role.
+        """
+        processed_users = []
+
+        async with ctx.channel.typing():
+            await ctx.message.add_reaction("⏳")
+
+            for user in users:
+                try:
+                    await user.add_roles(role, reason=reason)
+                    processed_users.append(user.display_name)
+
+                except discord.NotFound:
+                    continue
+
+            await ctx.message.add_reaction("✅")
+            await ctx.send("Bulk role assignment completed. I've given the {} role to the following people:\n{}".format(role.name, ", ".join(processed_users)))
+
+    @commands.command(no_pm=True, aliases=["rmrole","emptyrole","unrole"])
+    @checks.has_permissions(manage_members=True)
+    async def clearrole(self, ctx, role: discord.Role, *, reason: str = ""):
+        """
+        Removes all users from a given role.
+        """
+        processed_users = []
+        alert_threshold = 100
+
+        if len(role.members) > alert_threshold:
+            await ctx.send("Are you sure you want to do this? This will remove the role from over {} people! ☠️".format(alert_threshold))
+
+            confirmation = await self.client.wait_for(
+                "message", check=lambda m: m.author == ctx.message.author and m.channel == ctx.channel)
+
+            if not (confirmation.content.lower().startswith("y")):
+                await ctx.send("Ok, aborted!")
+                return
+
+        async with ctx.channel.typing():
+            await ctx.message.add_reaction("⏳")
+
+            for user in role.members:
+                try:
+                    await user.remove_roles(role, reason=reason)
+                    processed_users.append(user.display_name)
+
+                except discord.NotFound:
+                    continue
+
+            await ctx.message.add_reaction("✅")
+
+            if len(processed_users) == 0:
+                await ctx.send("Tried to remove that role from people but it doesn't look like there is anybody with the role!")
+            else:
+                await ctx.send("Bulk role removal completed. I've taken the the {} role from the following people: {}".format(role.name, ", ".join(processed_users)))
+
     @commands.command(no_pm=True, )
     @checks.has_permissions(ban_members=True)
     async def unban(self, ctx, member: discord.User):
