@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.12.2] - 2023-01-30
+### Tweaks
+- Fixed the Python versions when installing dependencies.
+
 ## [4.12.1] - 2023-01-30
 ### Fixes
 - Fixed an issue when enabling booster roles.
