@@ -1,10 +1,10 @@
 requests
-discord.py
+discord.py==1.7.2
 pymysql
 peewee
 pillow
 cryptography
 python-dateutil
 flask
-discord-py-slash-command
+discord-py-slash-command==3.0.3
 emoji
