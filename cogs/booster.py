@@ -234,9 +234,9 @@ class BoosterRoleCog(commands.Cog, name="Booster Roles"):
                             options=[dict(name="enabled", description="Are booster roles enabled in this server?",
                                           type=SlashCommandOptionType.BOOLEAN, enabled=True)])
     @commands.has_permissions(manage_guild=True)
-    async def _toggle_booster_roles(self, ctx: SlashContext, is_active: bool):
+    async def _toggle_booster_roles(self, ctx: SlashContext, enabled: bool):
         config = BoosterRoleConfig.get_for_guild(ctx.guild)
-        config.is_active = is_active
+        config.is_active = enabled
         config.save()
 
         return await ctx.send(embed=BoosterRoleConfigEmbed(config, ctx.guild.get_role(config.anchor_role_id),
