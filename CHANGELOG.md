@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [4.12.2] - 2023-01-30
+## [4.12.2|4.12.3] - 2023-01-30
 ### Tweaks
 - Fixed the Python versions when installing dependencies.
 
