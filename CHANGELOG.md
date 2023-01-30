@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.12.1] - 2023-01-30
+### Fixes
+- Fixed an issue when enabling booster roles.
+
 ## [4.12.0] - 2022-02-22
 ### Moderation
 - Added a new `!massrole` command to bulk assign a role to people.
