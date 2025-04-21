@@ -1,4 +1,4 @@
-name: CI and Publish Docker Image # Renamed for clarity
+name: CI and Publish Docker Image
 
 on:
   release:
