@@ -1,36 +1,56 @@
-name: CI
+name: CI and Publish Docker Image # Renamed for clarity
 
-# Controls when the action will run. Triggers the workflow on release.
 on:
   release:
     types: [published]
 
 jobs:
-  CI:
-    # The type of runner that the job will run on
+  build_and_push:
+    name: Build and Push Docker Image to GHCR
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v2
-  
-    - name: Install doctl
-      uses: digitalocean/action-doctl@v2
+    - name: Checkout repository
+      uses: actions/checkout@v4 # Updated to latest major version
+
+    - name: Log in to ghcr.io
+      uses: docker/login-action@v3 # Use the dedicated Docker login action
       with:
-        token: ${{ secrets.DIGITALOCEAN_TOKEN }}
-        
-    - name: Save Container Registry Config
-      run: doctl registry login
-      
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Copy config to secret
       run: echo "${{ secrets.MIGAGA_CONFIG }}" > config.ini
 
     - name: Add version number to config
-      run: sed -i 's/{{Version}}/${{ github.event.release.tag_name }}/' config.ini
-    
-    - name: Build Docker Container
-      run: docker build . -t registry.digitalocean.com/lewis/migaga
-      
-    - name: Push Container
-      run: docker push registry.digitalocean.com/lewis/migaga
+      run: sed -i 's/{{Version}}/${{ github.event.release.tag_name }}/' config.in
+
+    - name: Build and tag Docker image
+      id: build_image
+      run: |
+        IMAGE_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+
+        IMAGE_NAME="migaga"
+        IMAGE_TAG="${{ github.event.release.tag_name }}"
+
+        echo "Building image ghcr.io/${IMAGE_OWNER}/${IMAGE_NAME}:${IMAGE_TAG} and :latest"
+
+        docker build . \
+          --tag "ghcr.io/${IMAGE_OWNER}/${IMAGE_NAME}:${IMAGE_TAG}" \
+          --tag "ghcr.io/${IMAGE_OWNER}/${IMAGE_NAME}:latest"
+
+    - name: Push Docker image to ghcr.io
+      run: |
+        IMAGE_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+        IMAGE_NAME="migaga"
+        IMAGE_TAG="${{ github.event.release.tag_name }}"
+
+        echo "Pushing ghcr.io/${IMAGE_OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
+        docker push "ghcr.io/${IMAGE_OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
+
+        echo "Pushing ghcr.io/${IMAGE_OWNER}/${IMAGE_NAME}:latest"
+        docker push "ghcr.io/${IMAGE_OWNER}/${IMAGE_NAME}:latest"
