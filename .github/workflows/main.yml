@@ -27,7 +27,7 @@ jobs:
       run: echo "${{ secrets.MIGAGA_CONFIG }}" > config.ini
 
     - name: Add version number to config
-      run: sed -i 's/{{Version}}/${{ github.event.release.tag_name }}/' config.in
+      run: sed -i 's/{{Version}}/${{ github.event.release.tag_name }}/' config.ini
 
     - name: Build and tag Docker image
       id: build_image
